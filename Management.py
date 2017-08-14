@@ -15,7 +15,7 @@ else:
     # unfrozen
     program_location = os.path.dirname(os.path.realpath(__file__))
 
-db_loc = os.path.join(program_location, "DB\Request_DB")
+db_loc = os.path.join(program_location, "DB","Request_DB")
 
 class Manager(QtGui.QWidget):
     def __init__(self):
@@ -27,7 +27,7 @@ class Manager(QtGui.QWidget):
         self.loginWindow = LoginWindow(self)
         self.user_info = {}
 
-        #self.dbTest()
+        self.dbTest()
 
     def center(self):
         qr = self.frameGeometry()
@@ -38,13 +38,13 @@ class Manager(QtGui.QWidget):
     def loginDone(self):
         self.initUI()
 
-    # def dbTest(self):
-    #     print("initiating test")
-    #     self.cursor.execute("SELECT * FROM ECN")
-    #     test = self.cursor.fetchall()
-    #     print(len(test))
-    #     for item in test:
-    #         print(item)
+    def dbTest(self):
+        print("initiating test")
+        self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        test = self.cursor.fetchall()
+        print(len(test))
+        for item in test:
+            print(item)
 
         
 
