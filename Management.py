@@ -2,6 +2,7 @@ import os, re, sys
 import time, sqlite3
 from PySide import QtGui, QtCore
 from LoginWindow import *
+from SlidingStackedWidget import *
 from CompletedTab import *
 from MyRequestTab import *
 from QueueTab import *
@@ -45,32 +46,46 @@ class Manager(QtGui.QWidget):
     #     for item in test:
     #         print(item)
 
+        
+
     def initUI(self):
         mainLayout = QtGui.QVBoxLayout(self)
+
         #mainLayout.setMenuBar(self.menubar)
         self.tabWidget = QtGui.QTabWidget(self)
-        myRequestTab = MyRequestTab(self)
+        
+        self.myRequestTab = MyRequestTab(self)
         mainLayout.addWidget(self.tabWidget)
-        self.tabWidget.addTab(myRequestTab, "My Requests")
 
+
+        self.tabWidget.addTab(self.myRequestTab, "My Requests")
+        
         if self.user_info['role']=="Engineer":
-            queueTab = QueueTab(self)
-            self.tabWidget.addTab(queueTab, "My Queue")
+            self.queueTab = QueueTab(self)
+            self.tabWidget.addTab(self.queueTab, "My Queue")
 
-        completedTab = CompletedTab(self)
-        self.tabWidget.addTab(completedTab, "Completed")
+        self.completedTab = CompletedTab(self)
+        self.tabWidget.addTab(self.completedTab, "Completed")
+
 
         self.setGeometry(100,50,self.windowWidth,self.windowHeight)
-        self.setWindowTitle("Manager - Standard")
+        title = "Manager - User: " + self.user_info["user"]
+        self.setWindowTitle(title)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         self.center()
-        #self.setWindowOpacity(0)
         self.show()
-        #self.loadInAnimation()
+        self.loadInAnim()
 
-    #def readUser(self):
+    def loadInAnim(self):
+        loc = self.tabWidget.pos()
+        self.animation = QtCore.QPropertyAnimation(self.tabWidget,"pos")
+        self.animation.setDuration(1000)
+        self.animation.setEasingCurve(QtCore.QEasingCurve.OutBack)
+        self.animation.setStartValue(QtCore.QPoint(self.tabWidget.pos().x(),-self.windowHeight))
+        self.animation.setEndValue(QtCore.QPoint(loc))
 
+        self.animation.start()
 
 
 #execute the program
