@@ -1,6 +1,8 @@
-#obsoleted items
-Obsoleted
-
-#random stuff
-_pycache_
+#ignore these folders
 DB
+Obsoleted
+reference
+__pycache__
+
+#ignore self
+.gitignore

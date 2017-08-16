@@ -109,7 +109,7 @@ class NewRequestForm(QtGui.QWidget):
 
         self.line_requestor.setText(self.parent.parent.user_info['name'])
 
-        self.button_submit.clicked.connect(self.insertData)
+        self.button_submit.clicked.connect(self.submit)
         self.button_submitandclose.clicked.connect(self.submitAndClose)
 
         self.generateECNID()
@@ -135,10 +135,37 @@ class NewRequestForm(QtGui.QWidget):
             print(e)
             self.dispMsg("Error occured during data insertion!")
 
+    def updateData(self):
+        try:
+            data = (self.combo_type.currentText(),self.line_requestor.text(),self.date_request.date().toString("yyyy-MM-dd"),'Unassigned',self.line_ecntitle.text(),self.text_detail.toPlainText(),self.line_id.text())
+            self.cursor.execute("UPDATE ECN SET ECN_TYPE = ?, REQUESTOR = ?, REQ_DATE = ?, STATUS = ?, ECN_TITLE = ?, REQ_DETAILS = ? WHERE ECN_ID = ?",(data))
+            self.db.commit()
+            print('data updated')    
+        except Exception as e:
+            print(e)
+            self.dispMsg("Error occured during data update!")
+
     def submitAndClose(self):
-        self.insertData()
+        self.submit()
         self.close()
+
+    def submit(self):
+        if self.checkEcnID():
+            self.updateData()
+        else:
+            self.insertData()
         self.parent.repopulateTable()
+
+
+
+    def checkEcnID(self):
+        command = "select ECN_ID from ECN where ECN_ID = '" + self.line_id.text() + "'"
+        self.cursor.execute(command)
+        results = self.cursor.fetchall()
+        if len(results)!=0:
+            return True
+        else:
+            return False
 
     def dispMsg(self,msg):
         msgbox = QtGui.QMessageBox()

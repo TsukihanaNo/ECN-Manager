@@ -6,6 +6,7 @@ class MyRequestTab(QtGui.QWidget):
         super(MyRequestTab,self).__init__()
         self.parent = parent
         self.cursor = self.parent.cursor
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
         self.initUI()
 
@@ -38,24 +39,12 @@ class MyRequestTab(QtGui.QWidget):
 
     def initiateTable(self):
         titles = ['ECN ID','Type', 'Title', 'Status','Assigned To', 'Request Date', 'Assigned Date']
-        self.cursor.execute("SELECT * FROM ECN")
-        test = self.cursor.fetchall()
-        rowcount=0
-        self.table = QtGui.QTableWidget(len(test),len(titles),self)
+        self.table = QtGui.QTableWidget(1,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
-        for item in test:
-            print(item)
-            self.table.setItem(rowcount,0,QtGui.QTableWidgetItem(item[0]))
-            self.table.setItem(rowcount,1,QtGui.QTableWidgetItem(item[1]))
-            self.table.setItem(rowcount,2,QtGui.QTableWidgetItem(item[2]))
-            self.table.setItem(rowcount,3,QtGui.QTableWidgetItem(item[6]))
-            self.table.setItem(rowcount,4,QtGui.QTableWidgetItem("No One"))
-            self.table.setItem(rowcount,5,QtGui.QTableWidgetItem(item[7]))
-            self.table.setItem(rowcount,6,QtGui.QTableWidgetItem("Not yet!"))
-            rowcount+=1    
-        #self.table.resizeColumnsToContents()
+        self.repopulateTable()
+
 
     def repopulateTable(self):
         self.table.clearContents()
@@ -64,14 +53,13 @@ class MyRequestTab(QtGui.QWidget):
         rowcount=0
         self.table.setRowCount(len(test))
         for item in test:
-            print(item)
             self.table.setItem(rowcount,0,QtGui.QTableWidgetItem(item[0]))
             self.table.setItem(rowcount,1,QtGui.QTableWidgetItem(item[1]))
             self.table.setItem(rowcount,2,QtGui.QTableWidgetItem(item[2]))
             self.table.setItem(rowcount,3,QtGui.QTableWidgetItem(item[6]))
-            self.table.setItem(rowcount,4,QtGui.QTableWidgetItem("No One"))
+            self.table.setItem(rowcount,4,QtGui.QTableWidgetItem(item[5]))
             self.table.setItem(rowcount,5,QtGui.QTableWidgetItem(item[7]))
-            self.table.setItem(rowcount,6,QtGui.QTableWidgetItem("Not yet!"))
+            self.table.setItem(rowcount,6,QtGui.QTableWidgetItem(item[8]))
             rowcount+=1    
         #self.table.resizeColumnsToContents()
 

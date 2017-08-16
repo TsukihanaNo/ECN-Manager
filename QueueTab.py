@@ -7,6 +7,7 @@ class QueueTab(QtGui.QWidget):
         self.parent = parent
         self.db = self.parent.db
         self.cursor = self.parent.cursor
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.initUI()
 
     def initUI(self):
