@@ -7,8 +7,8 @@ class RequestWindow(QtGui.QWidget):
     def __init__(self, parent = None, load_id = None):
         super(RequestWindow,self).__init__()
         self.parent = parent
-        self.cursor = self.parent.parent.cursor
-        self.db = self.parent.parent.db
+        self.cursor = self.parent.cursor
+        self.db = self.parent.db
         self.windowWidth = 600
         self.windowHeight = 500
         self.load_id = load_id

@@ -4,8 +4,6 @@ class FileDwgTab(QtGui.QWidget):
     def __init__(self, parent = None):
         super(FileDwgTab,self).__init__()
         self.parent = parent
-        self.cursor = self.parent.parent.cursor
-        self.db = self.parent.parent.db
         
         self.initAtt()
         self.initUI()
