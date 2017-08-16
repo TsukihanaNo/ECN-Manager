@@ -1,14 +1,18 @@
 from PySide import QtGui, QtCore
-from NewRequestForm import *
+from RequestWindow import *
 import sqlite3
 class MyRequestTab(QtGui.QWidget):
     def __init__(self,parent=None):
         super(MyRequestTab,self).__init__()
         self.parent = parent
         self.cursor = self.parent.cursor
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-
+        self.db = self.parent.db
+        self.user_info = self.parent.user_info
+        self.initAtt()
         self.initUI()
+
+    def initAtt(self):
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
     def initUI(self):
         self.initiateTable()
@@ -35,7 +39,7 @@ class MyRequestTab(QtGui.QWidget):
         self.button_new.clicked.connect(self.newRequest)
 
     def newRequest(self):
-        self.newRequestForm = NewRequestForm(self)
+        self.requestwindow = RequestWindow(self)
 
     def initiateTable(self):
         titles = ['ECN ID','Type', 'Title', 'Status','Assigned To', 'Request Date', 'Assigned Date']
@@ -62,4 +66,5 @@ class MyRequestTab(QtGui.QWidget):
             self.table.setItem(rowcount,6,QtGui.QTableWidgetItem(item[8]))
             rowcount+=1    
         #self.table.resizeColumnsToContents()
+
 

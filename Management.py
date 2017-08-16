@@ -36,7 +36,11 @@ class Manager(QtGui.QWidget):
         self.move(qr.topLeft()-QtCore.QPoint(0,0))
 
     def loginDone(self):
+        self.initAtt()
         self.initUI()
+        self.center()
+        self.show()
+        self.loadInAnim()
 
     # def dbTest(self):
     #     print("initiating test")
@@ -46,7 +50,12 @@ class Manager(QtGui.QWidget):
     #     for item in test:
     #         print(item)
 
-        
+    def initAtt(self):
+        self.setGeometry(100,50,self.windowWidth,self.windowHeight)
+        title = "Manager - User: " + self.user_info["user"]
+        self.setWindowTitle(title)
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
 
     def initUI(self):
         mainLayout = QtGui.QVBoxLayout(self)
@@ -66,16 +75,7 @@ class Manager(QtGui.QWidget):
 
         self.completedTab = CompletedTab(self)
         self.tabWidget.addTab(self.completedTab, "Completed")
-
-
-        self.setGeometry(100,50,self.windowWidth,self.windowHeight)
-        title = "Manager - User: " + self.user_info["user"]
-        self.setWindowTitle(title)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
-        self.center()
-        self.show()
-        self.loadInAnim()
+        
 
     def loadInAnim(self):
         loc = self.tabWidget.pos()

@@ -76,6 +76,7 @@ class SlidingStackedWidget(QtGui.QStackedWidget):
 
         self.widget(index_next).move(pnext.x()-offsetx, pnext.y()-offsety)
         self.widget(index_next).show()
+        self.widget(index_next).raise_()
 
         self.animate_now = QtCore.QPropertyAnimation(self.widget(index_now),"pos")
         self.animate_now.setDuration(self.speed)
