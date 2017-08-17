@@ -1,8 +1,8 @@
 from PySide import QtGui, QtCore
 
-class FileDwgTab(QtGui.QWidget):
+class PlannerTab(QtGui.QWidget):
     def __init__(self, parent = None):
-        super(FileDwgTab,self).__init__()
+        super(PlannerTab,self).__init__()
         self.parent = parent
         self.initAtt()
         self.initUI()
@@ -16,16 +16,4 @@ class FileDwgTab(QtGui.QWidget):
         self.list_attachment = QtGui.QListWidget(self)
         mainlayout.addWidget(self.list_attachment)
 
-    def dropEvent(self, e):
-        urlList = e.mimeData().urls()
-        for item in urlList:
-            listItem = QtGui.QListWidgetItem(item.toLocalFile(),self.list_attachment)
-        print(self.list_attachment.count())
-
-
-    def dragEnterEvent(self,e):
-        if e.mimeData().hasUrls():
-            e.accept()
-        else:
-            e.ignore()
 

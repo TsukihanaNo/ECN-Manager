@@ -1,8 +1,6 @@
 #ignore these folders
-DB
-Obsoleted
-reference
-__pycache__
+DB/
+Obsoleted/
+reference/
+__pycache__/
 
-#ignore self
-.gitignore
