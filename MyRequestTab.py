@@ -39,6 +39,7 @@ class MyRequestTab(QtGui.QWidget):
         self.button_new.clicked.connect(self.newRequest)
         self.button_open.clicked.connect(self.openRequest)
 
+
     def newRequest(self):
         self.requestwindow = RequestWindow(self)
 
@@ -53,6 +54,8 @@ class MyRequestTab(QtGui.QWidget):
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+
+        self.table.doubleClicked.connect(self.openRequest)
         self.repopulateTable()
 
 
@@ -72,6 +75,6 @@ class MyRequestTab(QtGui.QWidget):
             self.table.setItem(rowcount,5,QtGui.QTableWidgetItem(item['REQ_DATE']))
             self.table.setItem(rowcount,6,QtGui.QTableWidgetItem(item['ASSIGN_DATE']))
             rowcount+=1    
-        #self.table.resizeColumnsToContents()
+        self.table.resizeColumnsToContents()
 
 

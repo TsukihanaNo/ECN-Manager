@@ -10,7 +10,7 @@ dbfolder = os.path.join(program_location, 'DB')
 if not os.path.isdir(dbfolder):
     os.mkdir(dbfolder)
 
-location_DB = os.path.join(dbfolder,"Request_DB")
+location_DB = os.path.join(dbfolder,"Request_DB.db")
 
 database = sqlite3.connect(location_DB)
 cursor = database.cursor()

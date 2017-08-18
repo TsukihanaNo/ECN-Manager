@@ -16,7 +16,7 @@ else:
     # unfrozen
     program_location = os.path.dirname(os.path.realpath(__file__))
 
-db_loc = os.path.join(program_location, "DB","Request_DB")
+db_loc = os.path.join(program_location, "DB","Request_DB.db")
 
 databaseRequirements = {"ECN": ["ECN_ID TEXT","ECN_TYPE TEXT","ECN_TITLE TEXT","REQ_DETAILS TEXT", "REQUESTOR TEXT", "ASSIGNED_ENG TEXT", "STATUS TEXT","REQ_DATE DATE", "ASSIGN_DATE DATE", "COMP_DATE DATE", "ENG_DETAILS TEXT"],
                         "COMMENT" : ["ECN_ID TEXT", "USER TEXT", "COMM_DATE DATE", "COMMENT TEXT"],
