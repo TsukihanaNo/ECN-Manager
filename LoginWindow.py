@@ -70,16 +70,16 @@ class LoginWindow(QtGui.QWidget):
     def checkUserPass(self):
         print("initiating check")
         self.cursor.execute("SELECT USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE  FROM USER WHERE USER_ID=:id",{"id":self.text_user.text()})
-        info = self.cursor.fetchall()
+        info = self.cursor.fetchone()
         # print(len(info))
         # for item in info:
         #     print(item)
         if len(info)!=0:
-            if self.text_pass.text()==info[0][1]:
-                self.parent.user_info['user'] = info[0][0]
-                self.parent.user_info['name'] = info[0][2]
-                self.parent.user_info['role'] = info[0][3]
-                self.parent.user_info['title'] = info[0][4]
+            if self.text_pass.text()==info['PASSWORD']:
+                self.parent.user_info['user'] = info['USER_ID']
+                self.parent.user_info['name'] = info['NAME']
+                self.parent.user_info['role'] = info['ROLE']
+                self.parent.user_info['title'] = info['JOB_TITLE']
                 self.parent.loginDone()
                 self.close()
             else:

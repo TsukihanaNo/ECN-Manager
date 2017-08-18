@@ -7,6 +7,7 @@ from TasksTab import *
 from EngineerTab import *
 from ShopTab import *
 from PlannerTab import *
+from ChangeLogTab import *
 
 class RequestWindow(QtGui.QWidget):
     def __init__(self, parent = None, load_id = None):
@@ -14,12 +15,21 @@ class RequestWindow(QtGui.QWidget):
         self.parent = parent
         self.cursor = self.parent.cursor
         self.db = self.parent.db
+        self.user_info = self.parent.user_info
         self.windowWidth = 600
         self.windowHeight = 500
         self.load_id = load_id
         self.tablist = []
+        self.typeindex = {'New Part':0, 'BOM Update':1, 'Firmware Update':2, 'Product EOL':3}
         self.initAtt()
-        self.initUI()
+        if self.load_id == None:
+            self.initReqUI()
+            self.generateECNID()
+        else:
+            self.initFullUI()
+            self.loadData()
+            self.getCurrentValues()
+            
         self.center()
         self.show()
 
@@ -35,7 +45,33 @@ class RequestWindow(QtGui.QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft()-QtCore.QPoint(0,0))
 
-    def initUI(self):
+    def initReqUI(self):
+        mainlayout = QtGui.QVBoxLayout(self)
+        
+        self.tabwidget = QtGui.QTabWidget(self)
+
+        self.tab_req = RequestTab(self)
+        self.tab_attach = FileDwgTab(self)
+
+        self.button_submit = QtGui.QPushButton("Submit",self)
+        self.button_submitandclose = QtGui.QPushButton("Submit & Close",self)
+
+        self.button_submit.clicked.connect(self.submit)
+        self.button_submitandclose.clicked.connect(self.submitAndClose)
+
+        self.tabwidget.addTab(self.tab_req, "Request")
+        self.tabwidget.addTab(self.tab_attach, "Attachment")
+
+        buttonlayout = QtGui.QHBoxLayout()
+        buttonlayout.addWidget(self.button_submit)
+        buttonlayout.addWidget(self.button_submitandclose)
+
+        mainlayout.addWidget(self.tabwidget)
+        mainlayout.addLayout(buttonlayout)
+
+
+
+    def initFullUI(self):
         mainlayout = QtGui.QVBoxLayout(self)
         
         self.tabwidget = QtGui.QTabWidget(self)
@@ -46,31 +82,31 @@ class RequestWindow(QtGui.QWidget):
         self.tab_attach = FileDwgTab(self)
         self.tab_task = TasksTab(self)
 
+        self.tab_changelog = ChangeLogTab(self,self.load_id)
+
         self.tab_purch = PurchaserTab(self)
         self.tab_planner = PlannerTab(self)
         self.tab_shop = ShopTab(self)
 
 
-        self.button_submit = QtGui.QPushButton("Submit",self)
-        self.button_submitandclose = QtGui.QPushButton("Submit & Close",self)
+        self.button_save = QtGui.QPushButton("Save",self)
+        self.button_saveandclose = QtGui.QPushButton("Save & Close",self)
 
-        self.button_submit.clicked.connect(self.submit)
-        self.button_submitandclose.clicked.connect(self.submitAndClose)
+        self.button_save.clicked.connect(self.save)
+        self.button_saveandclose.clicked.connect(self.saveAndClose)
 
         self.tabwidget.addTab(self.tab_req, "Request")
         self.tabwidget.addTab(self.tab_eng, "Engineer")
         self.tabwidget.addTab(self.tab_attach, "Attachment")
         self.tabwidget.addTab(self.tab_task, "Tasks")
+        self.tabwidget.addTab(self.tab_changelog, "Change Log")
 
         buttonlayout = QtGui.QHBoxLayout()
-        buttonlayout.addWidget(self.button_submit)
-        buttonlayout.addWidget(self.button_submitandclose)
+        buttonlayout.addWidget(self.button_save)
+        buttonlayout.addWidget(self.button_saveandclose)
 
         mainlayout.addWidget(self.tabwidget)
         mainlayout.addLayout(buttonlayout)
-
-        if self.load_id == None:
-            self.generateECNID()
 
     def printIndex(self):
         print(self.tabwidget.currentIndex())
@@ -140,16 +176,72 @@ class RequestWindow(QtGui.QWidget):
             print(e)
             self.dispMsg("Error occured during data update!")
 
+    def loadData(self):
+        command = "Select * from ECN where ECN_ID = '"+self.load_id +"'"
+        self.cursor.execute(command)
+        results = self.cursor.fetchone()
+        self.tab_req.line_id.setText(results['ECN_ID'])
+        self.tab_req.combo_type.setCurrentIndex(self.typeindex[results['ECN_TYPE']])
+        self.tab_req.line_ecntitle.setText(results['ECN_TITLE'])
+        self.tab_req.text_detail.setText(results['REQ_DETAILS'])
+        self.tab_req.line_requestor.setText(results['REQUESTOR'])
+        y,m,d = results['REQ_DATE'].split("-")
+        self.tab_req.date_request.setDate(QtCore.QDate(int(y),int(m),int(d)))
+            
+    def getCurrentValues(self):
+        print('getting values')
+        self.now_type = self.tab_req.combo_type.currentText()
+        self.now_title = self.tab_req.line_ecntitle.text()
+        self.now_req_details = self.tab_req.text_detail.toPlainText()
+        print(self.now_type)
+        print(self.now_title)
+        print(self.now_req_details)
+
     def submitAndClose(self):
         self.submit()
         self.close()
 
     def submit(self):
-        if self.checkEcnID():
-            self.updateData()
-        else:
+        if not self.checkEcnID():
             self.insertData()
+            self.parent.repopulateTable()
+        else:
+            self.dispMsg("ECN ID already exists")
+
+    def save(self):
+        self.updateData()
+        self.checkDiff()
         self.parent.repopulateTable()
+
+    def saveAndClose(self):
+        self.save()
+        self.close()
+
+    def checkDiff(self):
+        ecn_id = self.tab_req.line_id.text()
+        changedate = datetime.now().strftime('%Y%m%d-%H%M%S')
+        user = self.parent.user_info['name']
+        prevdata = self.now_type
+        newdata = self.tab_req.combo_type.currentText()
+        if newdata != prevdata:
+            data = (ecn_id,changedate,user,prevdata,newdata)
+            self.cursor.execute("INSERT INTO CHANGELOG(ECN_ID, CHANGEDATE, NAME, PREVDATA, NEWDATA) VALUES(?,?,?,?,?)",(data))
+            print('adding type change')
+        prevdata = self.now_title
+        newdata = self.tab_req.line_ecntitle.text()
+        if newdata != prevdata:
+            data = (ecn_id,changedate,user,prevdata,newdata)
+            self.cursor.execute("INSERT INTO CHANGELOG(ECN_ID, CHANGEDATE, NAME, PREVDATA, NEWDATA) VALUES(?,?,?,?,?)",(data))
+            print('adding title change')
+        prevdata = self.now_req_details
+        newdata = self.tab_req.text_detail.toPlainText()  
+        if newdata != prevdata:
+            data = (ecn_id,changedate,user,prevdata,newdata)
+            self.cursor.execute("INSERT INTO CHANGELOG(ECN_ID, CHANGEDATE, NAME, PREVDATA, NEWDATA) VALUES(?,?,?,?,?)",(data))
+            print('adding detail change')
+        self.db.commit()
+        
+
 
     def checkEcnID(self):
         command = "select ECN_ID from ECN where ECN_ID = '" + self.tab_req.line_id.text() + "'"

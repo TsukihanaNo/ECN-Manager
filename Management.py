@@ -5,7 +5,7 @@ from LoginWindow import *
 from SlidingStackedWidget import *
 from CompletedTab import *
 from MyRequestTab import *
-from QueueTab import *
+from MyQueueTab import *
 
 
 if getattr(sys, 'frozen', False):
@@ -24,10 +24,11 @@ class Manager(QtGui.QWidget):
         self.windowHeight = 500
         self.db = sqlite3.connect(db_loc)
         self.cursor = self.db.cursor()
+        self.cursor.row_factory = sqlite3.Row
         self.loginWindow = LoginWindow(self)
         self.user_info = {}
 
-        #self.dbTest()
+        self.dbTest()
 
     def center(self):
         qr = self.frameGeometry()
@@ -42,13 +43,15 @@ class Manager(QtGui.QWidget):
         self.show()
         self.loadInAnim()
 
-    # def dbTest(self):
-    #     print("initiating test")
-    #     self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    #     test = self.cursor.fetchall()
-    #     print(len(test))
-    #     for item in test:
-    #         print(item)
+    def dbTest(self):
+        print("initiating test")
+        #self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        self.cursor.execute("select * from CHANGELOG")
+        test = self.cursor.fetchall()
+        print(len(test))
+        for item in test:
+            for key in item.keys():
+                print(item[key])
 
     def initAtt(self):
         self.setGeometry(100,50,self.windowWidth,self.windowHeight)
@@ -70,7 +73,7 @@ class Manager(QtGui.QWidget):
         self.tabWidget.addTab(self.myRequestTab, "My Requests")
         
         if self.user_info['role']=="Engineer":
-            self.queueTab = QueueTab(self)
+            self.queueTab = MyQueueTab(self)
             self.tabWidget.addTab(self.queueTab, "My Queue")
 
         self.completedTab = CompletedTab(self)
