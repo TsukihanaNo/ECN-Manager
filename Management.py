@@ -6,6 +6,7 @@ from SlidingStackedWidget import *
 from CompletedTab import *
 from MyRequestTab import *
 from MyQueueTab import *
+from DataBaseUpdateWindow import *
 
 
 if getattr(sys, 'frozen', False):
@@ -16,6 +17,12 @@ else:
     program_location = os.path.dirname(os.path.realpath(__file__))
 
 db_loc = os.path.join(program_location, "DB","Request_DB")
+
+databaseRequirements = {"ECN": ["ECN_ID TEXT","ECN_TYPE TEXT","ECN_TITLE TEXT","REQ_DETAILS TEXT", "REQUESTOR TEXT", "ASSIGNED_ENG TEXT", "STATUS TEXT","REQ_DATE DATE", "ASSIGN_DATE DATE", "COMP_DATE DATE", "ENG_DETAILS TEXT"],
+                        "COMMENT" : ["ECN_ID TEXT", "USER TEXT", "COMM_DATE DATE", "COMMENT TEXT"],
+                        "USER" : ["USER_ID TEXT", "PASSWORD TEXT", "NAME TEXT", "ROLE TEXT", "JOB_TITLE TEXT"],
+                        "CHANGELOG" : ["ECN_ID TEXT", "CHANGEDATE DATETIME", "NAME TEXT", "PREVDATA TEXT", "NEWDATA TEXT"],
+                        }
 
 class Manager(QtGui.QWidget):
     def __init__(self):
@@ -28,7 +35,7 @@ class Manager(QtGui.QWidget):
         self.loginWindow = LoginWindow(self)
         self.user_info = {}
 
-        self.dbTest()
+        self.checkDBTables()
 
     def center(self):
         qr = self.frameGeometry()
@@ -42,6 +49,51 @@ class Manager(QtGui.QWidget):
         self.center()
         self.show()
         self.loadInAnim()
+
+    def checkDBTables(self):
+        addtable = {}
+        addcolumns = {}
+        removetables = []
+        checkedtable = []
+        self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        test = self.cursor.fetchall()
+        for item in test:
+            for key in item.keys():
+                #print(item[key],key,reqkeys)
+                if item[key] in databaseRequirements.keys():
+                    #print('has key', item[key])
+                    checkedtable.append(item[key])
+                    command = "PRAGMA table_info(" + item[key] + ")"
+                    self.cursor.execute(command)
+                    columns = self.cursor.fetchall()
+                    missingcol = []
+                    colcheck = []
+                    for colname in columns:
+                        col = colname[1]+ ' ' + colname[2]
+                        #print(col , databaseRequirements[item[key]])
+                        colcheck.append(col)
+                    for col in databaseRequirements[item[key]]:
+                        if col not in colcheck:
+                            #print('missing',col, item[key])
+                            missingcol.append(col)
+                    if len(missingcol)>0:
+                        addcolumns[item[key]] = missingcol
+                else:
+                    #print('not needed', item[key])
+                    removetables.append(item[key])
+        for item in databaseRequirements.keys():
+            if item not in checkedtable:
+                addtable[item] = databaseRequirements[item]
+
+        # print('tables to be added')
+        # print(addtable)
+        # print('tables to be removed')
+        # print(removetables)
+        # print('columns to be added')
+        # print(addcolumns)
+        if len(addtable)!= 0 or len(removetables) !=0 or len(addcolumns)!=0:
+            self.databaseupdate = DataBaseUpdateWindow(self,addtable,removetables,addcolumns)
+                
 
     def dbTest(self):
         print("initiating test")

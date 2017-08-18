@@ -13,9 +13,7 @@ class LoginWindow(QtGui.QWidget):
         self.db = self.parent.db
         self.cursor = self.parent.cursor
 
-        self.text_user = MyLineEdit(self)
-        self.text_pass = MyLineEdit(self)
-        self.button_login = QtGui.QPushButton("Login",self)
+        self.initAtt()
         self.initUI()
 
     def center(self):
@@ -25,6 +23,10 @@ class LoginWindow(QtGui.QWidget):
         self.move(qr.topLeft()-QtCore.QPoint(0,0))
 
     def loginMenu(self):
+        self.text_user = MyLineEdit(self)
+        self.text_pass = MyLineEdit(self)
+        self.button_login = QtGui.QPushButton("Login",self)
+
         self.button_login.setFixedWidth(100)
         textLayout = QtGui.QVBoxLayout(self)
         textLayout.setAlignment(QtCore.Qt.AlignCenter)
@@ -44,16 +46,18 @@ class LoginWindow(QtGui.QWidget):
         buttonLayout.addWidget(self.button_login)
         textLayout.addLayout(buttonLayout)
 
+    def initAtt(self):
+        self.setGeometry(100,50,self.windowWidth,self.windowHeight)
+        self.setWindowTitle("Manager")
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
+
     def initUI(self):
         self.loginMenu()
 
         self.button_login.clicked.connect(self.checkUserPass)
         self.text_pass.returnPressed.connect(self.checkUserPass)
 
-        self.setGeometry(100,50,self.windowWidth,self.windowHeight)
-        self.setWindowTitle("Manager")
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         self.center()
         self.show()
 
