@@ -7,6 +7,7 @@ from CompletedTab import *
 from MyRequestTab import *
 from MyQueueTab import *
 from DataBaseUpdateWindow import *
+from NewDBWindow import *
 
 
 if getattr(sys, 'frozen', False):
@@ -35,7 +36,7 @@ class Manager(QtGui.QWidget):
         self.loginWindow = LoginWindow(self)
         self.user_info = {}
 
-        self.checkDBTables()
+        #self.checkDBTables()
 
     def center(self):
         qr = self.frameGeometry()
@@ -95,15 +96,15 @@ class Manager(QtGui.QWidget):
             self.databaseupdate = DataBaseUpdateWindow(self,addtable,removetables,addcolumns)
                 
 
-    def dbTest(self):
-        print("initiating test")
-        #self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        self.cursor.execute("select * from CHANGELOG")
-        test = self.cursor.fetchall()
-        print(len(test))
-        for item in test:
-            for key in item.keys():
-                print(item[key])
+    # def dbTest(self):
+    #     print("initiating test")
+    #     #self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    #     self.cursor.execute("select * from CHANGELOG")
+    #     test = self.cursor.fetchall()
+    #     print(len(test))
+    #     for item in test:
+    #         for key in item.keys():
+    #             print(item[key])
 
     def initAtt(self):
         self.setGeometry(100,50,self.windowWidth,self.windowHeight)
@@ -113,7 +114,11 @@ class Manager(QtGui.QWidget):
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
 
     def initUI(self):
+        self.menubar = QtGui.QMenuBar(self)
         mainLayout = QtGui.QVBoxLayout(self)
+        mainLayout.setMenuBar(self.menubar)
+
+        self.createMenuActions()
 
         #mainLayout.setMenuBar(self.menubar)
         self.tabWidget = QtGui.QTabWidget(self)
@@ -130,6 +135,20 @@ class Manager(QtGui.QWidget):
 
         self.completedTab = CompletedTab(self)
         self.tabWidget.addTab(self.completedTab, "Completed")
+
+    def createMenuActions(self):
+        filemenu = self.menubar.addMenu("&File")
+        if self.user_info['role'] =="Admin":
+            newDBAction = QtGui.QAction("&New Database",self)
+            newDBAction.triggered.connect(self.newDB)
+            connectDBAction = QtGui.QAction("&Connect to existing Database",self)
+            filemenu.addAction(newDBAction)
+            filemenu.addAction(connectDBAction)
+        exitAction = QtGui.QAction("&Exit",self)
+        exitAction.triggered.connect(self.close)
+        exitAction.setShortcut("CTRL+Q")
+        filemenu.addAction(exitAction)
+
         
 
     def loadInAnim(self):
@@ -145,6 +164,9 @@ class Manager(QtGui.QWidget):
     def closeEvent(self, event):
         for w in QtGui.qApp.allWidgets():
             w.close()
+
+    def newDB(self):
+        self.newDBWindow = NewDBWindow(self)
 
 
 #execute the program

@@ -29,7 +29,7 @@ class RequestTab(QtGui.QWidget):
 
         self.line_id = QtGui.QLineEdit(self)
         self.combo_type = QtGui.QComboBox(self)
-        self.combo_type.addItems(['New Part', 'BOM Update', 'Firmware Update', 'Product EOL'])
+        self.combo_type.addItems(['New Part', 'BOM Update', 'Firmware Update', 'Configurator Update', 'Product EOL'])
         self.line_requestor = QtGui.QLineEdit(self)
         self.date_request = QtGui.QDateTimeEdit(QtCore.QDate.currentDate())
         self.date_request.setDisplayFormat("MM.dd.yyyy")

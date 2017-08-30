@@ -75,6 +75,6 @@ class MyRequestTab(QtGui.QWidget):
             self.table.setItem(rowcount,5,QtGui.QTableWidgetItem(item['REQ_DATE']))
             self.table.setItem(rowcount,6,QtGui.QTableWidgetItem(item['ASSIGN_DATE']))
             rowcount+=1    
-        self.table.resizeColumnsToContents()
+        #self.table.resizeColumnsToContents()
 
 

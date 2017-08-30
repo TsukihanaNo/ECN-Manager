@@ -20,7 +20,7 @@ class RequestWindow(QtGui.QWidget):
         self.windowHeight = 500
         self.load_id = load_id
         self.tablist = []
-        self.typeindex = {'New Part':0, 'BOM Update':1, 'Firmware Update':2, 'Product EOL':3}
+        self.typeindex = {'New Part':0, 'BOM Update':1, 'Firmware Update':2, 'Configurator Udpate' : 3,'Product EOL':4}
         self.initAtt()
         if self.load_id == None:
             self.initReqUI()

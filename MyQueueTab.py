@@ -43,6 +43,7 @@ class MyQueueTab(QtGui.QWidget):
     def initiateTable(self):
         titles = ['ECN ID','Type', 'Title', 'Requestor', 'Status', 'Request Date','Assigned To','Assigned Date']
         self.table = QtGui.QTableWidget(1,len(titles),self)
+        self.table.doubleClicked.connect(self.openRequest)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)

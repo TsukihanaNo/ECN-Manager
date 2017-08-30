@@ -54,5 +54,5 @@ class ChangeLogTab(QtGui.QWidget):
             self.table.setItem(rowcount,3,QtGui.QTableWidgetItem(item['PREVDATA']))
             self.table.setItem(rowcount,4,QtGui.QTableWidgetItem(item['NEWDATA']))
             rowcount+=1    
-        self.table.resizeColumnsToContents()
+        #self.table.resizeColumnsToContents()
 
