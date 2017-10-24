@@ -1,5 +1,5 @@
 from PySide import QtGui, QtCore
-import os
+import os, sys
 from MyTableWidget import *
 import sqlite3  
 
@@ -21,7 +21,7 @@ class NewDBWindow(QtGui.QWidget):
 
     def initAtt(self):
         self.setGeometry(100,50,self.windowWidth,self.windowHeight)
-        title = "Manager"
+        title = "DB Creator"
         self.setWindowTitle(title)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
@@ -114,3 +114,13 @@ class NewDBWindow(QtGui.QWidget):
         msgbox = QtGui.QMessageBox()
         msgbox.setText(msg+"        ")
         msgbox.exec_()
+
+# execute the program
+def main():
+    app = QtGui.QApplication(sys.argv)
+    DB = NewDBWindow()
+    sys.exit(app.exec_())
+
+
+if __name__ == '__main__':
+    main()

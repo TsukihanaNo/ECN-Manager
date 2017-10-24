@@ -3,4 +3,6 @@ DB/
 Obsoleted/
 reference/
 __pycache__/
+#ignore file
+setting.ini
 

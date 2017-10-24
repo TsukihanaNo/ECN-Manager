@@ -54,17 +54,14 @@ class RequestWindow(QtGui.QWidget):
         self.tab_attach = FileDwgTab(self)
 
         self.button_submit = QtGui.QPushButton("Submit",self)
-        self.button_submitandclose = QtGui.QPushButton("Submit & Close",self)
 
         self.button_submit.clicked.connect(self.submit)
-        self.button_submitandclose.clicked.connect(self.submitAndClose)
 
         self.tabwidget.addTab(self.tab_req, "Request")
         self.tabwidget.addTab(self.tab_attach, "Attachment")
 
         buttonlayout = QtGui.QHBoxLayout()
         buttonlayout.addWidget(self.button_submit)
-        buttonlayout.addWidget(self.button_submitandclose)
 
         mainlayout.addWidget(self.tabwidget)
         mainlayout.addLayout(buttonlayout)
@@ -90,10 +87,8 @@ class RequestWindow(QtGui.QWidget):
 
 
         self.button_save = QtGui.QPushButton("Save",self)
-        self.button_saveandclose = QtGui.QPushButton("Save & Close",self)
 
         self.button_save.clicked.connect(self.save)
-        self.button_saveandclose.clicked.connect(self.saveAndClose)
 
         self.tabwidget.addTab(self.tab_req, "Request")
         self.tabwidget.addTab(self.tab_eng, "Engineer")
@@ -103,7 +98,6 @@ class RequestWindow(QtGui.QWidget):
 
         buttonlayout = QtGui.QHBoxLayout()
         buttonlayout.addWidget(self.button_save)
-        buttonlayout.addWidget(self.button_saveandclose)
 
         mainlayout.addWidget(self.tabwidget)
         mainlayout.addLayout(buttonlayout)

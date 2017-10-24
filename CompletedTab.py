@@ -1,10 +1,11 @@
 from PySide import QtGui, QtCore
+from MyTableWidget import *
 
 class CompletedTab(QtGui.QWidget):
     def __init__(self,parent=None):
         super(CompletedTab,self).__init__()
         self.parent = parent
-        self.table = QtGui.QTableWidget(24,3,self)
+        self.table = MyTableWdiget(24,3,self)
         self.button_open = QtGui.QPushButton("Open",self)
         self.initUI()
 

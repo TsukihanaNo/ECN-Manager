@@ -1,5 +1,6 @@
 from PySide import QtGui, QtCore
 from RequestWindow import *
+from MyTableWidget import *
 import sqlite3
 class MyRequestTab(QtGui.QWidget):
     def __init__(self,parent=None):
@@ -50,7 +51,7 @@ class MyRequestTab(QtGui.QWidget):
 
     def initiateTable(self):
         titles = ['ECN ID','Type', 'Title', 'Status','Assigned To', 'Request Date', 'Assigned Date']
-        self.table = QtGui.QTableWidget(1,len(titles),self)
+        self.table = MyTableWdiget(1,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
