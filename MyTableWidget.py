@@ -9,10 +9,11 @@ class MyTableWdiget(QtGui.QTableWidget):
         self.combos = {}
         self.checkcols = []
 
-    def resizeEvent(self,event):
-        width = int(self.width()/self.columnCount())-3
-        for x in range(self.columnCount()):
-            self.setColumnWidth(x,width)
+    # def resizeEvent(self,event):
+    #     width = int(self.width()/self.columnCount())-3
+    #     for x in range(self.columnCount()):
+    #         self.setColumnWidth(x,width)
+    #     print(self.parent.width())
 
 
     def keyPressEvent(self,event):

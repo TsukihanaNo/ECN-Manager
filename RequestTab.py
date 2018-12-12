@@ -54,7 +54,7 @@ class RequestTab(QtGui.QWidget):
         headerMainLayout.addWidget(self.line_ecntitle)
 
         layout_body = QtGui.QVBoxLayout()
-        self.label_detail = QtGui.QLabel("Details")
+        self.label_detail = QtGui.QLabel("Enter request and additional information below:")
         self.text_detail = QtGui.QTextEdit(self)
 
         layout_body.addWidget(self.label_detail)
@@ -62,7 +62,7 @@ class RequestTab(QtGui.QWidget):
 
 
         groupbox_header = QtGui.QGroupBox("ECN Header")
-        groupbox_detail = QtGui.QGroupBox("ECN Details")
+        groupbox_detail = QtGui.QGroupBox("ECN Request Details")
 
         groupbox_header.setLayout(headerMainLayout)
         groupbox_detail.setLayout(layout_body)

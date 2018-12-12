@@ -5,7 +5,6 @@ import time
 import sqlite3
 from PySide import QtGui, QtCore
 from LoginWindow import *
-from SlidingStackedWidget import *
 from CompletedTab import *
 from MyRequestTab import *
 from MyQueueTab import *

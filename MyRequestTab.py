@@ -59,6 +59,11 @@ class MyRequestTab(QtGui.QWidget):
         self.table.doubleClicked.connect(self.openRequest)
         self.repopulateTable()
 
+    def resizeEvent(self,event):
+        width = int(self.table.width()/self.table.columnCount())-3
+        for x in range(self.table.columnCount()):
+            self.table.setColumnWidth(x,width)
+
 
     def repopulateTable(self):
         self.table.clearContents()
