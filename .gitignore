@@ -1,6 +1,5 @@
 #ignore these folders
 DB/
-Obsoleted/
 reference/
 __pycache__/
 #ignore file
