@@ -36,6 +36,7 @@ class Manager(QtWidgets.QWidget):
         self.windowHeight = 580
         self.startUpCheck()
         self.user_info = {}
+        self.programLoc = program_location
         
         self.nameList = []
 

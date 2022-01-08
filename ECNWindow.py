@@ -9,6 +9,7 @@ from PlannerTab import *
 from ChangeLogTab import *
 from SignatureTab import *
 from CommentTab import *
+from string import Template
 
 class ECNWindow(QtWidgets.QWidget):
     def __init__(self, parent = None, load_id = None):
@@ -119,10 +120,10 @@ class ECNWindow(QtWidgets.QWidget):
         self.loadData()
         
         mainlayout.addWidget(self.tabwidget)
+        buttonlayout = QtWidgets.QHBoxLayout()
+
         
         if self.tab_ecn.line_status.text()!="Completed":
-            buttonlayout = QtWidgets.QHBoxLayout()
-            
             if self.parent.user_info['name']==self.tab_ecn.line_author.text():
                 self.button_save = QtWidgets.QPushButton("Save",self)
                 self.button_release = QtWidgets.QPushButton("Release")
@@ -143,8 +144,12 @@ class ECNWindow(QtWidgets.QWidget):
                 self.tab_ecn.line_ecntitle.setReadOnly(True)
                 self.tab_ecn.text_summary.setReadOnly(True)
                 self.tab_ecn.text_reason.setReadOnly(True)
+        else:
+            self.button_exportHTML = QtWidgets.QPushButton("Export")
+            self.button_exportHTML.clicked.connect(self.exportHTML)
+            buttonlayout.addWidget(self.button_exportHTML)
             
-            mainlayout.addLayout(buttonlayout)
+        mainlayout.addLayout(buttonlayout)
 
     def printIndex(self):
         print(self.tabwidget.currentIndex())
@@ -404,6 +409,46 @@ class ECNWindow(QtWidgets.QWidget):
     def saveAndClose(self):
         self.save()
         self.close()
+
+    def exportHTML(self):
+        foldername = QtWidgets.QFileDialog().getExistingDirectory()
+        if foldername:
+            with open(self.parent.parent.programLoc+'\\template.html') as f:
+                lines = f.read() 
+                #print(lines)
+                f.close()
+
+                t = Template(lines)
+                id = self.tab_ecn.line_id.text()
+                title = self.tab_ecn.line_ecntitle.text()
+                author = self.tab_ecn.line_author.text()
+                reason = self.tab_ecn.text_reason.toPlainText()
+                summary = self.tab_ecn.text_summary.toPlainText()
+                signature = "<tr>"
+                attachment ="<tr>"
+
+                #attachments
+                if self.tab_attach.table.rowCount()>0:
+                    for x in range(self.tab_attach.table.rowCount()):
+                        attachment += "<td>"+self.tab_attach.table.item(x,0).text()+"</td>"
+                        attachment += "<td>"+self.tab_attach.table.item(x,1).text()+"</td></tr>"
+                else:
+                    attachment="<tr><td></td><td></td></tr>"
+                #signatures
+                if self.tab_signature.table.rowCount()>0:
+                    for x in range(self.tab_signature.table.rowCount()):
+                        signature += "<td>"+self.tab_signature.table.item(x,0).text()+"</td>"
+                        signature += "<td>"+self.tab_signature.table.item(x,1).text()+"</td>"
+                        signature += "<td>"+self.tab_signature.table.item(x,3).text()+"</td></tr>"
+                else:
+                    signature="<tr><td></td><td></td><td></td></tr>"
+                #print(id, title, author,reason,summary)
+                export = t.substitute(ECNID=id,ECNTitle=title,Requestor="req",Department="dept",Author=author, Reason=reason,Summary=summary,Attachment=attachment,Signature=signature)
+            
+                with open(foldername+'\\'+id+'.html', 'w') as f:
+                    f.write(export)
+                    f.close()
+
 
     def checkDiff(self):
         ecn_id = self.tab_ecn.line_id.text()
