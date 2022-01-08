@@ -1,0 +1,447 @@
+from PySide2 import QtWidgets, QtCore, QtWidgets
+from datetime import datetime
+from AttachmentTab import *
+from ECNTab import *
+from PurchaserTab import *
+from TasksTab import *
+from ShopTab import *
+from PlannerTab import *
+from ChangeLogTab import *
+from SignatureTab import *
+from CommentTab import *
+
+class ECNWindow(QtWidgets.QWidget):
+    def __init__(self, parent = None, load_id = None):
+        super(ECNWindow,self).__init__()
+        self.parent = parent
+        self.cursor = self.parent.cursor
+        self.db = self.parent.db
+        self.user_info = self.parent.user_info
+        self.windowWidth = 580
+        self.windowHeight = 830
+        self.load_id = load_id
+        self.tablist = []
+        self.typeindex = {'New Part':0, 'BOM Update':1, 'Firmware Update':2, 'Configurator Udpate' : 3,'Product EOL':4}
+        self.initAtt()
+        if self.load_id == None:
+            self.initReqUI()
+            self.generateECNID()
+        else:
+            self.initFullUI()
+            self.getCurrentValues()
+            
+        self.center()
+        self.show()
+
+    def initAtt(self):
+        self.setGeometry(100,50,self.windowWidth,self.windowHeight)
+        self.setWindowTitle("Manager - ECN")
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
+        self.setMinimumWidth(self.windowWidth)
+
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QtWidgets.QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft()-QtCore.QPoint(0,0))
+
+    def initReqUI(self):
+        mainlayout = QtWidgets.QVBoxLayout(self)
+        
+        
+        self.tabwidget = QtWidgets.QTabWidget(self)
+
+        self.tab_ecn = ECNTab(self)
+        self.tab_ecn.line_author.setText(self.parent.parent.user_info['user'])
+        self.tab_ecn.line_status.setText("Draft")
+        self.tab_attach = AttachmentTab(self)
+        self.tab_comments = CommentTab(self)
+        self.tab_comments.enterText.setDisabled(True)
+        self.tab_signature = SignatureTab(self)
+
+        self.button_save = QtWidgets.QPushButton("Save",self)
+        self.button_release = QtWidgets.QPushButton("Release")
+        self.button_release.setDisabled(True)
+        self.button_save.clicked.connect(self.save)
+        self.button_release.clicked.connect(self.release)
+
+        self.tabwidget.addTab(self.tab_ecn, "ECN")
+        self.tabwidget.addTab(self.tab_attach, "Attachment")
+        self.tabwidget.addTab(self.tab_comments, "Comments")
+        self.tabwidget.addTab(self.tab_signature, "Signatures")
+                
+        self.tab_purch = PurchaserTab(self)
+        self.tab_planner = PlannerTab(self)
+        self.tab_shop = ShopTab(self)
+
+        buttonlayout = QtWidgets.QHBoxLayout()
+        buttonlayout.addWidget(self.button_save)
+        buttonlayout.addWidget(self.button_release)
+
+        mainlayout.addWidget(self.tabwidget)
+        mainlayout.addLayout(buttonlayout)
+        
+        
+
+
+
+    def initFullUI(self):
+        mainlayout = QtWidgets.QVBoxLayout(self)
+        
+        self.tabwidget = QtWidgets.QTabWidget(self)
+        #self.tabwidget.currentChanged.connect(self.printIndex)
+
+        self.tab_ecn = ECNTab(self)
+        self.tab_ecn.box_requestor.setDisabled(True)
+        self.tab_ecn.combo_type.setDisabled(True)
+        #self.tab_eng = EngineerTab(self)
+        self.tab_attach = AttachmentTab(self)
+        #self.tab_task = TasksTab(self)
+        self.tab_comments = CommentTab(self)
+        self.tab_signature = SignatureTab(self)
+
+        self.tab_changelog = ChangeLogTab(self,self.load_id)
+
+        #self.tab_purch = PurchaserTab(self)
+        #self.tab_planner = PlannerTab(self)
+        #self.tab_shop = ShopTab(self)
+        
+        self.tabwidget.addTab(self.tab_ecn, "ECN")
+        #self.tabwidget.addTab(self.tab_eng, "Engineer")
+        self.tabwidget.addTab(self.tab_attach, "Attachment")
+        self.tab_comments.enterText.setDisabled(False)
+        #self.tabwidget.addTab(self.tab_task, "Tasks")
+        self.tabwidget.addTab(self.tab_comments, "Comments")
+        self.tabwidget.addTab(self.tab_signature, "Signatures")
+        self.tabwidget.addTab(self.tab_changelog, "Change Log")
+                    
+        self.loadData()
+        
+        mainlayout.addWidget(self.tabwidget)
+        
+        if self.tab_ecn.line_status.text()!="Completed":
+            buttonlayout = QtWidgets.QHBoxLayout()
+            
+            if self.parent.user_info['name']==self.tab_ecn.line_author.text():
+                self.button_save = QtWidgets.QPushButton("Save",self)
+                self.button_release = QtWidgets.QPushButton("Release")
+                self.button_save.clicked.connect(self.save)
+                self.button_release.clicked.connect(self.release)
+                buttonlayout.addWidget(self.button_save)
+                buttonlayout.addWidget(self.button_release)
+                self.tab_ecn.line_ecntitle.setReadOnly(False)
+                self.tab_ecn.text_reason.setReadOnly(False)
+                self.tab_ecn.text_summary.setReadOnly(False)
+            else:
+                self.button_approve = QtWidgets.QPushButton("Approve")
+                self.button_approve.clicked.connect(self.approve)
+                self.button_reject = QtWidgets.QPushButton("Reject",self)
+                self.button_reject.clicked.connect(self.reject)
+                buttonlayout.addWidget(self.button_approve)
+                buttonlayout.addWidget(self.button_reject)
+                self.tab_ecn.line_ecntitle.setReadOnly(True)
+                self.tab_ecn.text_summary.setReadOnly(True)
+                self.tab_ecn.text_reason.setReadOnly(True)
+            
+            mainlayout.addLayout(buttonlayout)
+
+    def printIndex(self):
+        print(self.tabwidget.currentIndex())
+        
+    def togglePurchTab(self):
+        if self.tab_ecn.cbpurch.isChecked():
+            self.tabwidget.insertTab(len(self.tablist)+2,self.tab_purch, "Purchasing")
+            self.tablist.append("purch")
+        else:
+            self.tabwidget.removeTab(self.tablist.index("purch")+2)
+            self.tablist.remove("purch")
+
+    def togglePlannerTab(self):
+        if self.tab_ecn.cbplanner.isChecked():
+            self.tabwidget.insertTab(len(self.tablist)+2,self.tab_planner, "Planner")
+            self.tablist.append("planner")
+        else:
+            self.tabwidget.removeTab(self.tablist.index("planner")+2)
+            self.tablist.remove("planner")
+
+    def toggleShopTab(self):
+        if self.tab_ecn.cbshop.isChecked():
+            self.tabwidget.insertTab(len(self.tablist)+2,self.tab_shop, "Shop")
+            self.tablist.append("shop")
+        else:
+            self.tabwidget.removeTab(self.tablist.index("shop")+2)
+            self.tablist.remove("shop")
+
+    def generateECNID(self):
+        date_time = datetime.now().strftime('%Y%m%d-%H%M%S')
+        self.tab_ecn.line_id.setText('ECN-'+date_time[2:])
+
+    def insertData(self):
+        #inserting to ECN table
+        try:
+            ecn_id = self.tab_ecn.line_id.text()
+            ecn_type = self.tab_ecn.combo_type.currentText()
+            author = self.tab_ecn.line_author.text()
+            requestor = self.tab_ecn.box_requestor.currentText()
+            status = 'Draft'
+            title = self.tab_ecn.line_ecntitle.text()
+            reason =self.tab_ecn.text_reason.toPlainText()
+            summary = self.tab_ecn.text_summary.toPlainText()
+            data = (ecn_id,ecn_type,author,requestor,status,title,reason,summary)
+            self.cursor.execute("INSERT INTO ECN(ECN_ID,ECN_TYPE,AUTHOR,REQUESTOR,STATUS,ECN_TITLE,ECN_REASON,ECN_SUMMARY) VALUES(?,?,?,?,?,?,?,?)",(data))
+            self.db.commit()
+            
+            if self.tab_attach.table.rowCount()>0:
+                for x in range(self.tab_attach.table.rowCount()):
+                    filename = self.tab_attach.table.item(x, 0).text()
+                    filepath = self.tab_attach.table.item(x, 1).text()
+                    data = (ecn_id, filename, filepath)
+                    self.cursor.execute("INSERT INTO ATTACHMENTS(ECN_ID,FILENAME,FILEPATH) VALUES(?,?,?)",(data))
+                    self.db.commit()
+            #print('data inserted')
+            if self.tab_comments.enterText.toPlainText()!="":
+                self.addComment(ecn_id)
+            
+            self.dispMsg("ECN has been saved!")
+        except Exception as e:
+            print(e)
+            self.dispMsg("Error occured during data insertion!")
+        
+    def approve(self):
+        try:
+            approvedate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+            data = (approvedate,self.tab_ecn.line_id.text(),self.parent.user_info['user'])
+            self.cursor.execute("UPDATE SIGNATURE SET SIGNED_DATE = ? WHERE ECN_ID = ? and USER_ID = ?",(data))
+            self.db.commit()
+            self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = '" + approvedate +"'")
+            self.tab_signature.repopulateTable()
+            self.checkComplete()
+        except Exception as e:
+            print(e)
+            self.dispMsg("Error occured during data insertion!")
+    
+    def reject(self):
+        pass
+    
+    def AddSignatures(self):
+        #inserting to signature table
+        #SIGNATURE(ECN_ID TEXT, NAME TEXT, USER_ID TEXT, HAS_SIGNED TEXT, SIGNED_DATE TEXT)
+        try:
+            for x in range(self.tab_signature.table.rowCount()):
+                ecn_id = self.tab_ecn.line_id.text()
+                job_title = self.tab_signature.table.cellWidget(x, 0).currentText()
+                name = self.tab_signature.table.cellWidget(x,1).currentText()
+                user_id = self.tab_signature.table.cellWidget(x,2).currentText()
+                data = (ecn_id,job_title,name,user_id,)
+                self.cursor.execute("INSERT INTO SIGNATURE(ECN_ID,JOB_TITLE,NAME,USER_ID) VALUES(?,?,?,?)",(data))
+            self.db.commit()
+            #print('data inserted')
+        except Exception as e:
+            print(e)
+            self.dispMsg("Error occured during data insertion!")
+
+    def updateData(self):
+        try:
+            ecn_id = self.tab_ecn.line_id.text()
+            ecn_type = self.tab_ecn.combo_type.currentText()
+            requestor = self.tab_ecn.box_requestor.currentText()
+            title = self.tab_ecn.line_ecntitle.text()
+            reason =self.tab_ecn.text_reason.toPlainText()
+            summary = self.tab_ecn.text_summary.toPlainText()
+            modifieddate = datetime.now().strftime('%Y%m%d-%H%M%S')
+            data = (ecn_type,requestor,title,reason,summary,modifieddate,ecn_id)
+
+            #data = (self.combo_type.currentText(),self.box_requestor.text(),self.date_request.date().toString("yyyy-MM-dd"),'Unassigned',self.line_ecntitle.text(),self.text_detail.toPlainText(),self.line_id.text())
+            self.cursor.execute("UPDATE ECN SET ECN_TYPE = ?, REQUESTOR = ?, ECN_TITLE = ?, ECN_REASON = ?, ECN_SUMMARY = ?, LAST_MODIFIED = ? WHERE ECN_ID = ?",(data))
+            self.db.commit()
+            
+            if self.tab_attach.table.rowCount()>0:
+                self.cursor.execute("DELETE FROM ATTACHMENTS WHERE ECN_ID = '" + ecn_id + "'")
+                self.db.commit()
+                for x in range(self.tab_attach.table.rowCount()):
+                    filename = self.tab_attach.table.item(x, 0).text()
+                    filepath = self.tab_attach.table.item(x, 1).text()
+                    data = (ecn_id, filename, filepath)
+                    self.cursor.execute("INSERT INTO ATTACHMENTS(ECN_ID,FILENAME,FILEPATH) VALUES(?,?,?)",(data))
+                    self.db.commit()
+                    
+            if self.tab_comments.enterText.toPlainText()!="":
+                self.addComment(ecn_id)
+                
+            self.dispMsg("ECN has been updated!")
+        except Exception as e:
+            print(e)
+            self.dispMsg("Error occured during data update!")
+
+    def loadData(self):
+        command = "Select * from ECN where ECN_ID = '"+self.load_id +"'"
+        self.cursor.execute(command)
+        results = self.cursor.fetchone()
+        self.tab_ecn.line_id.setText(results['ECN_ID'])
+        self.tab_ecn.combo_type.setCurrentIndex(self.typeindex[results['ECN_TYPE']])
+        self.tab_ecn.line_ecntitle.setText(results['ECN_TITLE'])
+        self.tab_ecn.text_reason.setText(results['ECN_REASON'])
+        self.tab_ecn.text_summary.setText(results['ECN_SUMMARY'])
+        self.tab_ecn.line_author.setText(results['AUTHOR'])
+        self.tab_ecn.box_requestor.setEditText(results['REQUESTOR'])
+        self.tab_ecn.line_status.setText(results['STATUS'])
+        
+        command = "Select * from SIGNATURE where ECN_ID= '"+self.load_id +"'"
+        self.cursor.execute(command)
+        results = self.cursor.fetchall()
+        self.tab_signature.table.setRowCount(len(results))
+        rowcount=0
+        for result in results:
+            print(result['JOB_TITLE'],result['SIGNED_DATE'])
+            self.tab_signature.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['JOB_TITLE']))
+            self.tab_signature.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['NAME']))
+            self.tab_signature.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['USER_ID']))
+            self.tab_signature.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['SIGNED_DATE']))
+            rowcount+=1
+            
+        command = "Select * from ATTACHMENTS where ECN_ID= '"+self.load_id +"'"
+        self.cursor.execute(command)
+        results = self.cursor.fetchall()
+        self.tab_attach.table.setRowCount(len(results))
+        rowcount=0
+        for result in results:
+            self.tab_attach.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['FILENAME']))
+            self.tab_attach.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['FILEPATH']))
+            rowcount+=1
+            
+        self.loadComments()    
+
+    def addComment(self,ecn_id):
+        #COMMENTS(ECN_ID TEXT, NAME TEXT, USER TEXT, COMM_DATE DATE, COMMENT TEXT
+        data = (ecn_id, self.parent.user_info['user'],datetime.now().strftime('%Y/%m/%d-%H:%M:%S'),self.tab_comments.enterText.toPlainText())
+        self.cursor.execute("INSERT INTO COMMENTS(ECN_ID, USER, COMM_DATE, COMMENT) VALUES(?,?,?,?)",(data))
+        self.db.commit()
+        self.tab_comments.enterText.clear()
+        self.tab_comments.mainText.clear()
+        self.loadComments()
+            
+    def loadComments(self):
+            self.tab_comments.enterText.clear()
+            self.tab_comments.mainText.clear()
+            command = "Select * from COMMENTS where ECN_ID = '" + self.load_id+"'"
+            self.cursor.execute(command)
+            results = self.cursor.fetchall()
+            for result in results:
+                if self.tab_ecn.line_author.text() == result['USER']:
+                    self.tab_comments.mainText.setTextColor(QtGui.QColor(255,0,0))
+                else:
+                    self.tab_comments.mainText.setTextColor(QtGui.QColor(0,0,0))
+                self.tab_comments.mainText.append(result['COMMENT'] + "\r <>" + result['USER']+ " - " + result['COMM_DATE'] +"\r\r")
+                
+    def release(self):
+        self.tab_ecn.line_status.setText("Out For Approval")
+        try:
+            modifieddate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+            data = (modifieddate, "Out For Approval",self.tab_ecn.line_id.text())
+            self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = ?, STATUS = ? WHERE ECN_ID = ?",(data))
+            self.db.commit()
+            self.parent.repopulateTable()
+            self.dispMsg("ECN has been sent out for signing!")
+        except Exception as e:
+            print(e)
+            self.dispMsg("Error occured during data update!")
+            
+    def getCurrentValues(self):
+        #print('getting values')
+        self.now_type = self.tab_ecn.combo_type.currentText()
+        self.now_title = self.tab_ecn.line_ecntitle.text()
+        self.now_req_details = self.tab_ecn.text_reason.toPlainText()
+        #print(self.now_type)
+        #print(self.now_title)
+        #print(self.now_req_details)
+        
+    def checkComplete(self):
+        try:
+            command = "Select * from SIGNATURE where ECN_ID ='" + self.tab_ecn.line_id.text() + "'"
+            self.cursor.execute(command)
+            results = self.cursor.fetchall()
+            completed = True
+            for result in results:
+                if result['SIGNED_DATE'] == None or result['SIGNED_DATE']== "":
+                    completed = False
+            if completed:
+                completeddate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+                data = (completeddate, "Completed",self.tab_ecn.line_id.text())
+                self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = ?, STATUS = ? WHERE ECN_ID = ?",(data))
+                self.db.commit()
+                self.parent.repopulateTable()
+                self.parent.parent.completedTab.repopulateTable()
+                self.dispMsg("ECN is now completed")
+        except Exception as e:
+            print(e)
+            self.dispMsg(e)
+            
+
+    # def submitAndClose(self):
+    #     self.submit()
+    #     self.close()
+
+    # def submit(self):
+    #     if not self.checkEcnID():
+    #         self.insertData()
+    #         self.AddSignatures()
+    #         self.parent.repopulateTable()
+    #     else:
+    #         self.dispMsg("ECN ID already exists")
+
+    def save(self):
+        if not self.checkEcnID():
+            self.insertData()
+            self.AddSignatures()
+            self.parent.repopulateTable()
+            self.button_release.setDisabled(False)
+        else:
+            self.updateData()
+            self.checkDiff()
+            self.parent.repopulateTable()
+
+    def saveAndClose(self):
+        self.save()
+        self.close()
+
+    def checkDiff(self):
+        ecn_id = self.tab_ecn.line_id.text()
+        changedate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+        user = self.parent.user_info['name']
+        prevdata = self.now_type
+        newdata = self.tab_ecn.combo_type.currentText()
+        if newdata != prevdata:
+            data = (ecn_id,changedate,user,prevdata,newdata)
+            self.cursor.execute("INSERT INTO CHANGELOG(ECN_ID, CHANGEDATE, NAME, PREVDATA, NEWDATA) VALUES(?,?,?,?,?)",(data))
+            print('adding type change')
+        prevdata = self.now_title
+        newdata = self.tab_ecn.line_ecntitle.text()
+        if newdata != prevdata:
+            data = (ecn_id,changedate,user,prevdata,newdata)
+            self.cursor.execute("INSERT INTO CHANGELOG(ECN_ID, CHANGEDATE, NAME, PREVDATA, NEWDATA) VALUES(?,?,?,?,?)",(data))
+            print('adding title change')
+        prevdata = self.now_req_details
+        newdata = self.tab_ecn.text_reason.toPlainText()  
+        if newdata != prevdata:
+            data = (ecn_id,changedate,user,prevdata,newdata)
+            self.cursor.execute("INSERT INTO CHANGELOG(ECN_ID, CHANGEDATE, NAME, PREVDATA, NEWDATA) VALUES(?,?,?,?,?)",(data))
+            print('adding detail change')
+        self.db.commit()
+        self.tab_changelog.repopulateTable()
+        
+
+
+    def checkEcnID(self):
+        command = "select ECN_ID from ECN where ECN_ID = '" + self.tab_ecn.line_id.text() + "'"
+        self.cursor.execute(command)
+        results = self.cursor.fetchall()
+        if len(results)!=0:
+            return True
+        else:
+            return False
+
+    def dispMsg(self,msg):
+        msgbox = QtWidgets.QMessageBox()
+        msgbox.setText(msg+"        ")
+        msgbox.exec_()

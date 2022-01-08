@@ -1,6 +1,6 @@
-from PySide import QtGui, QtCore
+from PySide2 import QtWidgets, QtCore, QtWidgets
 
-class PurchaserTab(QtGui.QWidget):
+class PurchaserTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(PurchaserTab,self).__init__()
         self.parent = parent
@@ -9,11 +9,8 @@ class PurchaserTab(QtGui.QWidget):
 
     def initAtt(self):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        self.setAcceptDrops(True)
 
     def initUI(self):
-        mainlayout = QtGui.QVBoxLayout(self)
-        self.list_attachment = QtGui.QListWidget(self)
-        mainlayout.addWidget(self.list_attachment)
+        mainlayout = QtWidgets.QVBoxLayout(self)
 
 

@@ -1,10 +1,10 @@
 import os, re, sys
 import time
 import sqlite3
-from PySide import QtGui, QtCore
+from PySide2 import QtGui, QtCore, QtWidgets
 from MyLineEdit import *
 
-class LoginWindow(QtGui.QWidget):
+class LoginWindow(QtWidgets.QWidget):
     def __init__(self,parent=None):
         super(LoginWindow,self).__init__()
         self.parent = parent
@@ -17,28 +17,33 @@ class LoginWindow(QtGui.QWidget):
         self.initUI()
 
     def center(self):
-        qr = self.frameGeometry()
-        cp = QtGui.QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft()-QtCore.QPoint(0,0))
+        window = self.window()
+        window.setGeometry(
+            QtWidgets.QStyle.alignedRect(
+            QtCore.Qt.LeftToRight,
+            QtCore.Qt.AlignCenter,
+            window.size(),
+            QtGui.QGuiApplication.primaryScreen().availableGeometry(),
+        ),
+    )
 
     def loginMenu(self):
         self.text_user = MyLineEdit(self)
         self.text_pass = MyLineEdit(self)
-        self.button_login = QtGui.QPushButton("Login",self)
+        self.button_login = QtWidgets.QPushButton("Login",self)
 
         self.button_login.setFixedWidth(100)
-        textLayout = QtGui.QVBoxLayout(self)
+        textLayout = QtWidgets.QVBoxLayout(self)
         textLayout.setAlignment(QtCore.Qt.AlignCenter)
-        buttonLayout = QtGui.QHBoxLayout(self)
+        buttonLayout = QtWidgets.QHBoxLayout(self)
         buttonLayout.setAlignment(QtCore.Qt.AlignCenter)
         self.text_pass.setFixedWidth(300)
         self.text_pass.setAlignment(QtCore.Qt.AlignCenter)
-        self.text_pass.setEchoMode(QtGui.QLineEdit.Password)
+        self.text_pass.setEchoMode(QtWidgets.QLineEdit.Password)
         self.text_user.setFixedWidth(300)
         self.text_user.setAlignment(QtCore.Qt.AlignCenter)
-        label_user = QtGui.QLabel("User:")
-        label_pass = QtGui.QLabel("Password:")
+        label_user = QtWidgets.QLabel("User:")
+        label_pass = QtWidgets.QLabel("Password:")
         textLayout.addWidget(label_user)
         textLayout.addWidget(self.text_user)
         textLayout.addWidget(label_pass)
@@ -63,7 +68,7 @@ class LoginWindow(QtGui.QWidget):
 
     def loginAnimation(self):
         # for x in range(50):
-        #     QtGui.QApplication.processEvents()
+        #     QtWidgets.QApplication.processEvents()
         #     self.setWindowOpacity(1-2*x/100)
         #     time.sleep(0.01)
         #self.hide()
@@ -93,6 +98,6 @@ class LoginWindow(QtGui.QWidget):
         
 
     def dispMsg(self,msg):
-        msgbox = QtGui.QMessageBox()
+        msgbox = QtWidgets.QMessageBox()
         msgbox.setText(msg+"        ")
         msgbox.exec_()

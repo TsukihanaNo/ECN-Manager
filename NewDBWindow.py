@@ -1,9 +1,9 @@
-from PySide import QtGui, QtCore
+from PySide2 import QtWidgets, QtCore, QtWidgets
 import os, sys
 from MyTableWidget import *
 import sqlite3  
 
-class NewDBWindow(QtGui.QWidget):
+class NewDBWindow(QtWidgets.QWidget):
     def __init__(self,parent=None):
         super(NewDBWindow,self).__init__()
         self.windowHeight = 400
@@ -14,7 +14,7 @@ class NewDBWindow(QtGui.QWidget):
 
     def center(self):
         qr = self.frameGeometry()
-        cp = QtGui.QDesktopWidget().availableGeometry().center()
+        cp = QtWidgets.QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft()-QtCore.QPoint(0,0))
 
@@ -28,11 +28,11 @@ class NewDBWindow(QtGui.QWidget):
         self.center()
 
     def initUI(self):
-        loc_layout = QtGui.QHBoxLayout()
+        loc_layout = QtWidgets.QHBoxLayout()
 
-        loc_label = QtGui.QLabel("DB Location: ")
-        self.loc_line = QtGui.QLineEdit(self)
-        self.loc_button = QtGui.QPushButton("Browse",self)
+        loc_label = QtWidgets.QLabel("DB Location: ")
+        self.loc_line = QtWidgets.QLineEdit(self)
+        self.loc_button = QtWidgets.QPushButton("Browse",self)
         self.loc_button.clicked.connect(self.getDirectory)
 
         loc_layout.addWidget(loc_label)
@@ -48,13 +48,13 @@ class NewDBWindow(QtGui.QWidget):
         self.table.setCombos(4,combo2)
         self.table.generateRow(True)
 
-        self.textedit = QtGui.QTextEdit(self)
+        self.textedit = QtWidgets.QTextEdit(self)
         self.textedit.setReadOnly(True)
 
-        self.button = QtGui.QPushButton("Generate",self)
+        self.button = QtWidgets.QPushButton("Generate",self)
         self.button.clicked.connect(self.generateTable)
 
-        mainlayout = QtGui.QVBoxLayout(self)
+        mainlayout = QtWidgets.QVBoxLayout(self)
 
         mainlayout.addLayout(loc_layout)
         mainlayout.addWidget(self.table)
@@ -62,7 +62,7 @@ class NewDBWindow(QtGui.QWidget):
         mainlayout.addWidget(self.button)
 
     def getDirectory(self):
-        file_dialog = QtGui.QFileDialog(self)
+        file_dialog = QtWidgets.QFileDialog(self)
         directory = file_dialog.getExistingDirectory()
         self.loc_line.setText(directory)
 
@@ -78,23 +78,23 @@ class NewDBWindow(QtGui.QWidget):
         cur = database.cursor()
         cur.execute('CREATE TABLE ECN(ECN_ID TEXT, ECN_TYPE TEXT, ECN_TITLE TEXT, REQ_DETAILS TEXT, REQUESTOR TEXT, ASSIGNED_ENG TEXT, STATUS TEXT, REQ_DATE DATE, ASSIGN_DATE DATE, COMP_DATE DATE, ENG_DETAILS TEXT)')
         self.textedit.append("--ECN table created")
-        QtGui.QApplication.processEvents()
+        QtWidgets.QApplication.processEvents()
         cur.execute('CREATE TABLE COMMENT(ECN_ID TEXT, USER TEXT, COMM_DATE DATE, COMMENT TEXT)')
         self.textedit.append("--COMMENT table created")
-        QtGui.QApplication.processEvents()
+        QtWidgets.QApplication.processEvents()
         #cur.execute('CREATE TABLE TAG_PRODUCT(ECN_ID TEXT, PRODUCT TEXT)')
         #cur.execute('CREATE TABLE SIGNATURE(ECN_ID TEXT, SIGS TEXT, JOB_TITLE TEXT, HAS_SIGNED TEXT, SIGNED_DATE TEXT)')
         #cur.execute('CREATE TABLE FILES(ECN_ID TEXT, FILENAME TEXT, FILE_LOC TEXT)')
         #cur.execute('CREATE TABLE DRAWING(ECN_ID TEXT, DRAWING_NAME TEXT, DRAWING_LOC TEXT)')
         cur.execute('CREATE TABLE USER(USER_ID TEXT, PASSWORD TEXT, NAME TEXT, ROLE TEXT, JOB_TITLE TEXT)')
         self.textedit.append("--USER table created")
-        QtGui.QApplication.processEvents()
+        QtWidgets.QApplication.processEvents()
         cur.execute('CREATE TABLE CHANGELOG(ECN_ID TEXT, CHANGEDATE DATETIME, NAME TEXT, PREVDATA TEXT, NEWDATA TEXT)')
         self.textedit.append("--CHANGELOG table created")
-        QtGui.QApplication.processEvents()
+        QtWidgets.QApplication.processEvents()
         cur.execute('CREATE TABLE TASKS(ECN_ID TEXT, CREATEDATE DATE, DUEDATE DATE, CREATEDBY TEXT, ASSIGNTO TEXT, TASK TEXT, STATUS TEXT)')
         self.textedit.append("--TASKS table created")
-        QtGui.QApplication.processEvents()
+        QtWidgets.QApplication.processEvents()
 
         cur.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE) VALUES(?,?,?,?,?)',('admin','admin','admin','Admin','Admin'))
         for rows in range(self.table.rowCount()):
@@ -106,18 +106,18 @@ class NewDBWindow(QtGui.QWidget):
             data = (user,password,name,role,title)
             cur.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE) VALUES(?,?,?,?,?)',(data))
             self.textedit.append("****Created User: "+user)
-            QtGui.QApplication.processEvents()
+            QtWidgets.QApplication.processEvents()
         database.commit()
         database.close()
 
     def dispMsg(self,msg):
-        msgbox = QtGui.QMessageBox()
+        msgbox = QtWidgets.QMessageBox()
         msgbox.setText(msg+"        ")
         msgbox.exec_()
 
 # execute the program
 def main():
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     DB = NewDBWindow()
     sys.exit(app.exec_())
 

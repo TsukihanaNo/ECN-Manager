@@ -1,6 +1,6 @@
-from PySide import QtGui, QtCore
+from PySide2 import QtWidgets, QtCore, QtWidgets
 
-class ShopTab(QtGui.QWidget):
+class ShopTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(ShopTab,self).__init__()
         self.parent = parent
@@ -12,8 +12,8 @@ class ShopTab(QtGui.QWidget):
         self.setAcceptDrops(True)
 
     def initUI(self):
-        mainlayout = QtGui.QVBoxLayout(self)
-        self.list_attachment = QtGui.QListWidget(self)
+        mainlayout = QtWidgets.QVBoxLayout(self)
+        self.list_attachment = QtWidgets.QListWidget(self)
         mainlayout.addWidget(self.list_attachment)
 
 

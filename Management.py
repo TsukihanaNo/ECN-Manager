@@ -3,10 +3,10 @@ import re
 import sys
 import time
 import sqlite3
-from PySide import QtGui, QtCore
+from PySide2 import QtGui, QtCore, QtWidgets
 from LoginWindow import *
 from CompletedTab import *
-from MyRequestTab import *
+from MyECNTab import *
 from MyQueueTab import *
 from DataBaseUpdateWindow import *
 from NewDBWindow import *
@@ -22,28 +22,35 @@ else:
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
 initfile = os.path.join(program_location, "setting.ini")
 
-databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT", "REQ_DETAILS TEXT", "REQUESTOR TEXT", "ASSIGNED_ENG TEXT", "STATUS TEXT", "REQ_DATE DATE", "ASSIGN_DATE DATE", "COMP_DATE DATE", "ENG_DETAILS TEXT"],
+databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT", "ECN_REASON TEXT","REQUESTOR TEXT" ,"AUTHOR TEXT", "STATUS TEXT", "COMP_DATE DATE", "ECN_SUMMARY TEXT", "LAST_CHANGE_DATE DATE"],
                         "COMMENT": ["ECN_ID TEXT", "USER TEXT", "COMM_DATE DATE", "COMMENT TEXT"],
-                        "USER": ["USER_ID TEXT", "PASSWORD TEXT", "NAME TEXT", "ROLE TEXT", "JOB_TITLE TEXT"],
-                        "CHANGELOG": ["ECN_ID TEXT", "CHANGEDATE DATETIME", "NAME TEXT", "PREVDATA TEXT", "NEWDATA TEXT"],
+                        "USER": ["USER_ID TEXT", "PASSWORD TEXT", "NAME TEXT", "ROLE TEXT", "JOB_TITLE TEXT", "STATUS TEXT"],
+                        "CHANGELOG": ["ECN_ID TEXT", "CHANGEDATE DATETIME", "NAME TEXT","DATABLOCK TEXT" ,"PREVDATA TEXT", "NEWDATA TEXT"],
                         }
 
 
-class Manager(QtGui.QWidget):
+class Manager(QtWidgets.QWidget):
     def __init__(self):
         super(Manager, self).__init__()
-        self.windowWidth = 800
-        self.windowHeight = 500
+        self.windowWidth = 830
+        self.windowHeight = 580
         self.startUpCheck()
         self.user_info = {}
+        
+        self.nameList = []
 
         # self.checkDBTables()
 
     def center(self):
-        qr = self.frameGeometry()
-        cp = QtGui.QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft() - QtCore.QPoint(0, 0))
+        window = self.window()
+        window.setGeometry(
+            QtWidgets.QStyle.alignedRect(
+            QtCore.Qt.LeftToRight,
+            QtCore.Qt.AlignCenter,
+            window.size(),
+            QtGui.QGuiApplication.primaryScreen().availableGeometry(),
+        ),
+    )
 
     def loginDone(self):
         self.initAtt()
@@ -55,13 +62,13 @@ class Manager(QtGui.QWidget):
     def startUpCheck(self):
         if not os.path.exists(initfile):
             print("need to generate ini file")
-            msgbox = QtGui.QMessageBox(self)
+            msgbox = QtWidgets.QMessageBox(self)
             msgbox.setText("No database detected, please select an existing database or ask the admin to make a new one using the included tool.")
-            openbutton = msgbox.addButton("Open DB", QtGui.QMessageBox.ActionRole)
-            cancelbutton = msgbox.addButton(QtGui.QMessageBox.Close)
+            openbutton = msgbox.addButton("Open DB", QtWidgets.QMessageBox.ActionRole)
+            cancelbutton = msgbox.addButton(QtWidgets.QMessageBox.Close)
             ret = msgbox.exec_()
             if msgbox.clickedButton() == openbutton:
-                db_loc = QtGui.QFileDialog.getOpenFileName(self,self.tr("Open DB"),program_location,self.tr("DB Files (*.DB)"))[0]
+                db_loc = QtWidgets.QFileDialog.getOpenFileName(self,self.tr("Open DB"),program_location,self.tr("DB Files (*.DB)"))[0]
                 self.db = sqlite3.connect(db_loc)
                 self.cursor = self.db.cursor()
                 self.cursor.row_factory = sqlite3.Row
@@ -137,25 +144,25 @@ class Manager(QtGui.QWidget):
         self.setWindowTitle(title)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
+        self.getNameList()
 
     def initUI(self):
-        self.menubar = QtGui.QMenuBar(self)
-        mainLayout = QtGui.QVBoxLayout(self)
+        self.menubar = QtWidgets.QMenuBar(self)
+        mainLayout = QtWidgets.QVBoxLayout(self)
         mainLayout.setMenuBar(self.menubar)
 
         self.createMenuActions()
 
         # mainLayout.setMenuBar(self.menubar)
-        self.tabWidget = QtGui.QTabWidget(self)
-
-        self.myRequestTab = MyRequestTab(self)
+        self.tabWidget = QtWidgets.QTabWidget(self)
         mainLayout.addWidget(self.tabWidget)
+        
+        if self.user_info["role"]!="Signer":
+            self.myECNTab = MyECNTab(self)
+            self.tabWidget.addTab(self.myECNTab, "My ECNs")
 
-        self.tabWidget.addTab(self.myRequestTab, "My Requests")
-
-        if self.user_info['role'] == "Engineer":
-            self.queueTab = MyQueueTab(self)
-            self.tabWidget.addTab(self.queueTab, "My Queue")
+        self.queueTab = MyQueueTab(self)
+        self.tabWidget.addTab(self.queueTab, "My Queue")
 
         self.completedTab = CompletedTab(self)
         self.tabWidget.addTab(self.completedTab, "Completed")
@@ -163,26 +170,26 @@ class Manager(QtGui.QWidget):
     def createMenuActions(self):
         filemenu = self.menubar.addMenu("&File")
         if self.user_info['role'] == "Admin":
-            newDBAction = QtGui.QAction("&New Database", self)
+            newDBAction = QtWidgets.QAction("&New Database", self)
             newDBAction.triggered.connect(self.newDB)
-            connectDBAction = QtGui.QAction(
+            connectDBAction = QtWidgets.QAction(
                 "&Connect to existing Database", self)
             filemenu.addAction(newDBAction)
             filemenu.addAction(connectDBAction)
-        exitAction = QtGui.QAction("&Exit", self)
+        exitAction = QtWidgets.QAction("&Exit", self)
         exitAction.triggered.connect(self.close)
         exitAction.setShortcut("CTRL+Q")
         filemenu.addAction(exitAction)
 
     def dispMsg(self,msg):
-        msgbox = QtGui.QMessageBox()
+        msgbox = QtWidgets.QMessageBox()
         msgbox.setText(msg+"        ")
         msgbox.exec_()
 
 
     def loadInAnim(self):
         loc = self.tabWidget.pos()
-        self.animation = QtCore.QPropertyAnimation(self.tabWidget, "pos")
+        self.animation = QtCore.QPropertyAnimation(self.tabWidget, b"pos")
         self.animation.setDuration(1000)
         self.animation.setEasingCurve(QtCore.QEasingCurve.OutBack)
         self.animation.setStartValue(QtCore.QPoint(
@@ -192,16 +199,25 @@ class Manager(QtGui.QWidget):
         self.animation.start()
 
     def closeEvent(self, event):
-        for w in QtGui.qApp.allWidgets():
+        self.db.close()
+        for w in QtWidgets.QApplication.allWidgets():
             w.close()
 
     def newDB(self):
         self.newDBWindow = NewDBWindow(self)
+        
+    def getNameList(self):
+        command = "Select NAME from USER where STATUS ='Active'"
+        self.cursor.execute(command)
+        results = self.cursor.fetchall()
+        for result in results:
+            self.nameList.append(result[0])
+        print(self.nameList)
 
 
 # execute the program
 def main():
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     manager = Manager()
     sys.exit(app.exec_())
 

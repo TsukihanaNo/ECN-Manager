@@ -1,6 +1,6 @@
-from PySide import QtGui, QtCore
+from PySide2 import QtWidgets, QtCore, QtWidgets
 
-class MyLineEdit(QtGui.QLineEdit):
+class MyLineEdit(QtWidgets.QLineEdit):
     def __init__(self,parent = None):
         super(MyLineEdit,self).__init__(parent)
         self.setStyleSheet("border: 2px solid gray; border-radius: 10px; padding: 0 8px")

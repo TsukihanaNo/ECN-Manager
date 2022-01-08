@@ -1,8 +1,8 @@
-from PySide import QtGui, QtCore
+from PySide2 import QtWidgets, QtCore, QtWidgets
 
-class MyTableWdiget(QtGui.QTableWidget):
+class MyTableWidget(QtWidgets.QTableWidget):
     def __init__(self,row=1, column=1, parent = None):
-        super(MyTableWdiget,self).__init__(parent)
+        super(MyTableWidget,self).__init__(parent)
         self.parent = parent  
         self.setRowCount(row)
         self.setColumnCount(column)
@@ -64,11 +64,11 @@ class MyTableWdiget(QtGui.QTableWidget):
         if len(self.combos)!=0:
             if new:
                 for index in self.combos.keys():
-                    box = QtGui.QComboBox()
+                    box = QtWidgets.QComboBox()
                     box.addItems(self.combos[index])
                     self.setCellWidget(0,index,box)
             else:
                 for index in self.combos.keys():
-                    box = QtGui.QComboBox()
+                    box = QtWidgets.QComboBox()
                     box.addItems(self.combos[index])
                     self.setCellWidget(self.currentRow(),index,box)
