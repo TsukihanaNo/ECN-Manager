@@ -168,6 +168,10 @@ class Manager(QtWidgets.QWidget):
         self.completedTab = CompletedTab(self)
         self.tabWidget.addTab(self.completedTab, "Completed")
 
+        timer = QtCore.QTimer(self)
+        timer.timeout.connect(self.updateQueue)
+        timer.start(5000)
+
     def createMenuActions(self):
         filemenu = self.menubar.addMenu("&File")
         if self.user_info['role'] == "Admin":
@@ -181,6 +185,9 @@ class Manager(QtWidgets.QWidget):
         exitAction.triggered.connect(self.close)
         exitAction.setShortcut("CTRL+Q")
         filemenu.addAction(exitAction)
+
+    def updateQueue(self):
+        self.queueTab.repopulateTable()
 
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()

@@ -201,8 +201,10 @@ class ECNWindow(QtWidgets.QWidget):
             title = self.tab_ecn.line_ecntitle.text()
             reason =self.tab_ecn.text_reason.toPlainText()
             summary = self.tab_ecn.text_summary.toPlainText()
-            data = (ecn_id,ecn_type,author,requestor,status,title,reason,summary)
-            self.cursor.execute("INSERT INTO ECN(ECN_ID,ECN_TYPE,AUTHOR,REQUESTOR,STATUS,ECN_TITLE,ECN_REASON,ECN_SUMMARY) VALUES(?,?,?,?,?,?,?,?)",(data))
+            modifieddate = datetime.now().strftime('%Y%m%d-%H%M%S')
+
+            data = (ecn_id,ecn_type,author,requestor,status,title,reason,summary,modifieddate)
+            self.cursor.execute("INSERT INTO ECN(ECN_ID,ECN_TYPE,AUTHOR,REQUESTOR,STATUS,ECN_TITLE,ECN_REASON,ECN_SUMMARY,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?,?)",(data))
             self.db.commit()
             
             if self.tab_attach.table.rowCount()>0:
@@ -345,7 +347,7 @@ class ECNWindow(QtWidgets.QWidget):
     def addComment(self,ecn_id,comment,commentType):
         #COMMENTS(ECN_ID TEXT, NAME TEXT, USER TEXT, COMM_DATE DATE, COMMENT TEXT
         data = (ecn_id, self.parent.user_info['user'],datetime.now().strftime('%Y/%m/%d-%H:%M:%S'),comment,commentType)
-        self.cursor.execute("INSERT INTO COMMENTS(ECN_ID, USER, COMM_DATE, COMMENT,TYPE) VALUES(?,?,?,?)",(data))
+        self.cursor.execute("INSERT INTO COMMENTS(ECN_ID, USER, COMM_DATE, COMMENT,TYPE) VALUES(?,?,?,?,?)",(data))
         self.db.commit()
         self.tab_comments.enterText.clear()
         self.tab_comments.mainText.clear()
@@ -478,14 +480,14 @@ class ECNWindow(QtWidgets.QWidget):
                     f.close()
                     
                     
-                page = QtWebEngineWidgets.QWebEnginePage()
+                # page = QtWebEngineWidgets.QWebEnginePage()
                 
-                def handle_load_finished(status):
-                    if status:
-                        page.printToPdf(foldername+'\\'+id+'.pdf')
+                # def handle_load_finished(status):
+                #     if status:
+                #         page.printToPdf(foldername+'\\'+id+'.pdf')
                         
-                page.loadFinished.connect(handle_load_finished)
-                page.load(QtCore.QUrl.fromLocalFile(foldername+'\\'+id+'.html'))
+                # page.loadFinished.connect(handle_load_finished)
+                # page.load(QtCore.QUrl.fromLocalFile(foldername+'\\'+id+'.html'))
                 
                 self.dispMsg("Export Completed!")
         

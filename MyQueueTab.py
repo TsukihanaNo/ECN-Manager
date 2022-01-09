@@ -56,6 +56,7 @@ class MyQueueTab(QtWidgets.QWidget):
 
     def repopulateTable(self):
         self.table.clearContents()
+        self.table.setRowCount(0)
         command = "Select ECN_ID from SIGNATURE where USER_ID ='" + self.user_info['user'] + "'"
         self.cursor.execute(command)
         results = self.cursor.fetchall()
@@ -63,7 +64,7 @@ class MyQueueTab(QtWidgets.QWidget):
         for result in results:
             ecn_id.append(result[0])
             
-        print(ecn_id)
+        #print(ecn_id)
         rowcount=0
         for ecn in ecn_id:
             command = "Select * from ECN where ECN_ID ='" + ecn + "' and STATUS='Out For Approval'"

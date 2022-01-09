@@ -24,3 +24,5 @@
 - color coding table row based on the status of ECN
 
 - add remainder of data to change log check
+
+- search completed ECNS
