@@ -22,6 +22,7 @@ class ECNTab(QtWidgets.QWidget):
         layout_author = QtWidgets.QVBoxLayout()
         layout_requestor = QtWidgets.QVBoxLayout()
         layout_summary = QtWidgets.QVBoxLayout()
+        layout_dept = QtWidgets.QVBoxLayout()
         #layout_department = QtWidgets.QVBoxLayout()
         
 
@@ -31,6 +32,7 @@ class ECNTab(QtWidgets.QWidget):
         self.label_requestor = QtWidgets.QLabel("Requested By")
         self.label_title = QtWidgets.QLabel("ECN Title")
         self.label_status = QtWidgets.QLabel("Status")
+        self.label_dept = QtWidgets.QLabel("Dept.")
         #self.label_department = QtWidgets.QLabel("Department")
 
         self.line_id = QtWidgets.QLineEdit(self)
@@ -39,6 +41,8 @@ class ECNTab(QtWidgets.QWidget):
         self.line_id.setDisabled(True)
         self.combo_type = QtWidgets.QComboBox(self)
         self.combo_type.addItems(['New Part', 'BOM Update', 'Firmware Update', 'Configurator Update', 'Product EOL'])
+        self.combo_dept = QtWidgets.QComboBox(self)
+        self.combo_dept.addItems(["Elec","FoamPro","Lighting"])
         self.line_status = QtWidgets.QLineEdit(self)
         self.line_status.setReadOnly(True)
         self.line_status.setDisabled(True)
@@ -75,6 +79,8 @@ class ECNTab(QtWidgets.QWidget):
         layout_id.addWidget(self.line_id)
         layout_type.addWidget(self.label_type)
         layout_type.addWidget(self.combo_type)
+        layout_dept.addWidget(self.label_dept)
+        layout_dept.addWidget(self.combo_dept)
         layout_status.addWidget(self.label_status)
         layout_status.addWidget(self.line_status)
         layout_author.addWidget(self.label_author)
@@ -84,6 +90,7 @@ class ECNTab(QtWidgets.QWidget):
 
         headersubLayout.addLayout(layout_id)
         headersubLayout.addLayout(layout_type)
+        headersubLayout.addLayout(layout_dept)
         headersubLayout.addLayout(layout_status)
         headersubLayout.addLayout(layout_author)
         headersubLayout.addLayout(layout_requestor)

@@ -18,7 +18,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.cursor = self.parent.cursor
         self.db = self.parent.db
         self.user_info = self.parent.user_info
-        self.windowWidth = 580
+        self.windowWidth =  1170
         self.windowHeight = 830
         self.load_id = load_id
         self.tablist = []
@@ -78,7 +78,9 @@ class ECNWindow(QtWidgets.QWidget):
         mainlayout.addWidget(self.tabwidget)
         mainlayout.addLayout(buttonlayout)
         
+        self.tab_ecn.combo_dept.currentIndexChanged.connect(self.tab_signature.prepopulateTable)
         
+        self.tab_signature.prepopulateTable()
 
 
 

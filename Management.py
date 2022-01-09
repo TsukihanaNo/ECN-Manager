@@ -32,8 +32,8 @@ databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT"
 class Manager(QtWidgets.QWidget):
     def __init__(self):
         super(Manager, self).__init__()
-        self.windowWidth = 830
-        self.windowHeight = 580
+        self.windowWidth = 1200
+        self.windowHeight = 900
         self.startUpCheck()
         self.user_info = {}
         self.programLoc = program_location
@@ -170,7 +170,7 @@ class Manager(QtWidgets.QWidget):
 
         timer = QtCore.QTimer(self)
         timer.timeout.connect(self.updateQueue)
-        timer.start(5000)
+        timer.start(15000)
 
     def createMenuActions(self):
         filemenu = self.menubar.addMenu("&File")
@@ -187,7 +187,9 @@ class Manager(QtWidgets.QWidget):
         filemenu.addAction(exitAction)
 
     def updateQueue(self):
+        self.myECNTab.repopulateTable()
         self.queueTab.repopulateTable()
+        self.completedTab.repopulateTable()
 
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()

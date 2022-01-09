@@ -71,9 +71,41 @@ class SignatureTab(QtWidgets.QWidget):
         box.addItems(names)
         self.table.setCellWidget(self.table.rowCount()-1, 2, box)
         
-        
-        
-        
+    def prepopulateTable(self):
+        #department specific roles are: buyer, planner, supervisor
+        #non-specific roles are: engineer (author), engineering manager, purchasing manager, production manager, planning manager
+        self.table.clearContents()
+        self.table.setRowCount(0)
+        dept = self.parent.tab_ecn.combo_dept.currentText()
+        command = f"Select JOB_TITLE, NAME, USER_ID from USER where STATUS='Active' and (DEPT is NULL OR DEPT='{dept}')"
+        self.parent.cursor.execute(command)
+        results = self.parent.cursor.fetchall()
+        userList =[]
+        for result in results:
+            userList.append([result[0],result[1],result[2]])
+        #print(userList)
+        #setting on specifics
+        sigs = ["Engineering Manager","Purchasing Manager","Production Manager","Planning Manager","Buyer","Planner"]
+        rowcount=0
+        for role in sigs:
+            info = userList[self.findUserIndex(userList, role)]
+            #print(info)
+            self.table.insertRow(rowcount)
+            self.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(info[0]))
+            self.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(info[1]))
+            self.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(info[2]))
+            rowcount+=1
+            
+    def findUserIndex(self,userList, role):
+        index = 0
+        try:
+            for user in userList:
+                if user[0]==role:
+                    return index
+                else:
+                    index+=1
+        except Exception as e:
+            print(e)
 
         
     def removeRow(self):
