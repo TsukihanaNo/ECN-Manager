@@ -1,4 +1,4 @@
-from PySide2 import QtWidgets, QtCore, QtWidgets
+from PySide2 import QtWidgets, QtCore, QtWebEngineWidgets
 from datetime import datetime
 from AttachmentTab import *
 from ECNTab import *
@@ -476,6 +476,19 @@ class ECNWindow(QtWidgets.QWidget):
                 with open(foldername+'\\'+id+'.html', 'w') as f:
                     f.write(export)
                     f.close()
+                    
+                    
+                page = QtWebEngineWidgets.QWebEnginePage()
+                
+                def handle_load_finished(status):
+                    if status:
+                        page.printToPdf(foldername+'\\'+id+'.pdf')
+                        
+                page.loadFinished.connect(handle_load_finished)
+                page.load(QtCore.QUrl.fromLocalFile(foldername+'\\'+id+'.html'))
+                
+                self.dispMsg("Export Completed!")
+        
 
 
     def checkDiff(self):
