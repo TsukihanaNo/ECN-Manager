@@ -52,7 +52,6 @@ class ECNWindow(QtWidgets.QWidget):
         
         
         self.tabwidget = QtWidgets.QTabWidget(self)
-
         self.tab_ecn = ECNTab(self)
         self.tab_ecn.line_author.setText(self.parent.parent.user_info['user'])
         self.tab_ecn.line_status.setText("Draft")
@@ -60,13 +59,11 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_comments = CommentTab(self)
         self.tab_comments.enterText.setDisabled(True)
         self.tab_signature = SignatureTab(self)
-
         self.button_save = QtWidgets.QPushButton("Save",self)
         self.button_release = QtWidgets.QPushButton("Release")
         self.button_release.setDisabled(True)
         self.button_save.clicked.connect(self.save)
         self.button_release.clicked.connect(self.release)
-
         self.tabwidget.addTab(self.tab_ecn, "ECN")
         self.tabwidget.addTab(self.tab_attach, "Attachment")
         self.tabwidget.addTab(self.tab_comments, "Comments")
@@ -75,11 +72,9 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_purch = PurchaserTab(self)
         self.tab_planner = PlannerTab(self)
         self.tab_shop = ShopTab(self)
-
         buttonlayout = QtWidgets.QHBoxLayout()
         buttonlayout.addWidget(self.button_save)
         buttonlayout.addWidget(self.button_release)
-
         mainlayout.addWidget(self.tabwidget)
         mainlayout.addLayout(buttonlayout)
         
@@ -92,7 +87,6 @@ class ECNWindow(QtWidgets.QWidget):
         
         self.tabwidget = QtWidgets.QTabWidget(self)
         #self.tabwidget.currentChanged.connect(self.printIndex)
-
         self.tab_ecn = ECNTab(self)
         self.tab_ecn.box_requestor.setDisabled(True)
         self.tab_ecn.combo_type.setDisabled(True)
@@ -101,9 +95,7 @@ class ECNWindow(QtWidgets.QWidget):
         #self.tab_task = TasksTab(self)
         self.tab_comments = CommentTab(self)
         self.tab_signature = SignatureTab(self)
-
         self.tab_changelog = ChangeLogTab(self,self.load_id)
-
         #self.tab_purch = PurchaserTab(self)
         #self.tab_planner = PlannerTab(self)
         #self.tab_shop = ShopTab(self)
@@ -111,7 +103,6 @@ class ECNWindow(QtWidgets.QWidget):
         self.tabwidget.addTab(self.tab_ecn, "ECN")
         #self.tabwidget.addTab(self.tab_eng, "Engineer")
         self.tabwidget.addTab(self.tab_attach, "Attachment")
-        self.tab_comments.enterText.setDisabled(False)
         #self.tabwidget.addTab(self.tab_task, "Tasks")
         self.tabwidget.addTab(self.tab_comments, "Comments")
         self.tabwidget.addTab(self.tab_signature, "Signatures")
@@ -121,7 +112,24 @@ class ECNWindow(QtWidgets.QWidget):
         
         mainlayout.addWidget(self.tabwidget)
         buttonlayout = QtWidgets.QHBoxLayout()
-
+        
+        #disable signature and attachment adding if not author and completed
+        if self.parent.user_info['name']==self.tab_ecn.line_author.text() and self.tab_ecn.line_status.text()!="Completed":
+            self.tab_signature.button_add.setEnabled(True)
+            self.tab_signature.button_remove.setEnabled(True)
+            self.tab_attach.button_add.setEnabled(True)
+            self.tab_attach.button_remove.setEnabled(True)
+            self.tab_comments.enterText.setEnabled(True)
+            self.tab_comments.label_enterText.setVisible(True)
+            self.tab_comments.enterText.setVisible(True)
+        else:
+            self.tab_signature.button_add.setDisabled(True)
+            self.tab_signature.button_remove.setDisabled(True)
+            self.tab_attach.button_add.setDisabled(True)
+            self.tab_attach.button_remove.setDisabled(True)
+            self.tab_comments.enterText.setDisabled(True)
+            self.tab_comments.label_enterText.setVisible(False)
+            self.tab_comments.enterText.setVisible(False)
         
         if self.tab_ecn.line_status.text()!="Completed":
             if self.parent.user_info['name']==self.tab_ecn.line_author.text():
@@ -206,12 +214,10 @@ class ECNWindow(QtWidgets.QWidget):
                     self.db.commit()
             #print('data inserted')
             if self.tab_comments.enterText.toPlainText()!="":
-                self.addComment(ecn_id)
-            
-            self.dispMsg("ECN has been saved!")
+                self.addComment(ecn_id,self.tab_comments.enterText.toPlainText(),"Author")
         except Exception as e:
             print(e)
-            self.dispMsg("Error occured during data insertion!")
+            self.dispMsg("Error occured during data insertion (insertData)!")
         
     def approve(self):
         try:
@@ -224,27 +230,47 @@ class ECNWindow(QtWidgets.QWidget):
             self.checkComplete()
         except Exception as e:
             print(e)
-            self.dispMsg("Error occured during data insertion!")
+            self.dispMsg("Error occured during data insertion (approve)!")
     
     def reject(self):
-        pass
+        comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Comment", "")
+        if ok and comment!="":
+            self.addComment(self.tab_ecn.line_id.text(), comment,"Reject")
+        try:
+            modifieddate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+            data = (modifieddate, "Rejected",self.tab_ecn.line_id.text())
+            self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = ?, STATUS = ? WHERE ECN_ID = ?",(data))
+            self.db.commit()
+            self.parent.repopulateTable()
+            self.dispMsg("ECN has been updated!")
+            self.tab_ecn.line_status.setText("Rejected")
+        except Exception as e:
+            print(e)
+            self.dispMsg("Error occured during data update (reject)!")
     
     def AddSignatures(self):
         #inserting to signature table
         #SIGNATURE(ECN_ID TEXT, NAME TEXT, USER_ID TEXT, HAS_SIGNED TEXT, SIGNED_DATE TEXT)
         try:
+            ecn_id = self.tab_ecn.line_id.text()
+            self.cursor.execute("DELETE FROM SIGNATURE WHERE ECN_ID = '" + ecn_id + "'")
+            self.db.commit()
             for x in range(self.tab_signature.table.rowCount()):
-                ecn_id = self.tab_ecn.line_id.text()
-                job_title = self.tab_signature.table.cellWidget(x, 0).currentText()
-                name = self.tab_signature.table.cellWidget(x,1).currentText()
-                user_id = self.tab_signature.table.cellWidget(x,2).currentText()
+                if isinstance(self.tab_signature.table.item(x, 0),QtWidgets.QTableWidgetItem):
+                    job_title = self.tab_signature.table.item(x, 0).text()
+                    name = self.tab_signature.table.item(x,1).text()
+                    user_id = self.tab_signature.table.item(x,2).text()
+                else:
+                    job_title = self.tab_signature.table.cellWidget(x, 0).currentText()
+                    name = self.tab_signature.table.cellWidget(x,1).currentText()
+                    user_id = self.tab_signature.table.cellWidget(x,2).currentText()
                 data = (ecn_id,job_title,name,user_id,)
                 self.cursor.execute("INSERT INTO SIGNATURE(ECN_ID,JOB_TITLE,NAME,USER_ID) VALUES(?,?,?,?)",(data))
             self.db.commit()
             #print('data inserted')
         except Exception as e:
             print(e)
-            self.dispMsg("Error occured during data insertion!")
+            self.dispMsg("Error occured during data update (signature)!")
 
     def updateData(self):
         try:
@@ -272,12 +298,11 @@ class ECNWindow(QtWidgets.QWidget):
                     self.db.commit()
                     
             if self.tab_comments.enterText.toPlainText()!="":
-                self.addComment(ecn_id)
+                self.addComment(ecn_id,self.tab_comments.enterText.toPlainText(),"Author")
                 
-            self.dispMsg("ECN has been updated!")
         except Exception as e:
             print(e)
-            self.dispMsg("Error occured during data update!")
+            self.dispMsg("Error occured during data update (updateData)!")
 
     def loadData(self):
         command = "Select * from ECN where ECN_ID = '"+self.load_id +"'"
@@ -298,7 +323,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_signature.table.setRowCount(len(results))
         rowcount=0
         for result in results:
-            print(result['JOB_TITLE'],result['SIGNED_DATE'])
+            #print(result['JOB_TITLE'],result['SIGNED_DATE'])
             self.tab_signature.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['JOB_TITLE']))
             self.tab_signature.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['NAME']))
             self.tab_signature.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['USER_ID']))
@@ -317,10 +342,10 @@ class ECNWindow(QtWidgets.QWidget):
             
         self.loadComments()    
 
-    def addComment(self,ecn_id):
+    def addComment(self,ecn_id,comment,commentType):
         #COMMENTS(ECN_ID TEXT, NAME TEXT, USER TEXT, COMM_DATE DATE, COMMENT TEXT
-        data = (ecn_id, self.parent.user_info['user'],datetime.now().strftime('%Y/%m/%d-%H:%M:%S'),self.tab_comments.enterText.toPlainText())
-        self.cursor.execute("INSERT INTO COMMENTS(ECN_ID, USER, COMM_DATE, COMMENT) VALUES(?,?,?,?)",(data))
+        data = (ecn_id, self.parent.user_info['user'],datetime.now().strftime('%Y/%m/%d-%H:%M:%S'),comment,commentType)
+        self.cursor.execute("INSERT INTO COMMENTS(ECN_ID, USER, COMM_DATE, COMMENT,TYPE) VALUES(?,?,?,?)",(data))
         self.db.commit()
         self.tab_comments.enterText.clear()
         self.tab_comments.mainText.clear()
@@ -337,20 +362,20 @@ class ECNWindow(QtWidgets.QWidget):
                     self.tab_comments.mainText.setTextColor(QtGui.QColor(255,0,0))
                 else:
                     self.tab_comments.mainText.setTextColor(QtGui.QColor(0,0,0))
-                self.tab_comments.mainText.append(result['COMMENT'] + "\r <>" + result['USER']+ " - " + result['COMM_DATE'] +"\r\r")
+                self.tab_comments.mainText.append(">>  " + result['COMMENT'] + "\r    :: " + result['USER']+ " - " + result['COMM_DATE'] +"\r\r")
                 
     def release(self):
-        self.tab_ecn.line_status.setText("Out For Approval")
         try:
             modifieddate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
             data = (modifieddate, "Out For Approval",self.tab_ecn.line_id.text())
             self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = ?, STATUS = ? WHERE ECN_ID = ?",(data))
             self.db.commit()
+            self.tab_ecn.line_status.setText("Out For Approval")
             self.parent.repopulateTable()
             self.dispMsg("ECN has been sent out for signing!")
         except Exception as e:
             print(e)
-            self.dispMsg("Error occured during data update!")
+            self.dispMsg("Error occured during data update (release)!")
             
     def getCurrentValues(self):
         #print('getting values')
@@ -399,10 +424,13 @@ class ECNWindow(QtWidgets.QWidget):
         if not self.checkEcnID():
             self.insertData()
             self.AddSignatures()
+            self.dispMsg("ECN has been saved!")
             self.parent.repopulateTable()
             self.button_release.setDisabled(False)
         else:
             self.updateData()
+            self.AddSignatures()
+            self.dispMsg("ECN has been updated!")
             self.checkDiff()
             self.parent.repopulateTable()
 
@@ -422,8 +450,8 @@ class ECNWindow(QtWidgets.QWidget):
                 id = self.tab_ecn.line_id.text()
                 title = self.tab_ecn.line_ecntitle.text()
                 author = self.tab_ecn.line_author.text()
-                reason = self.tab_ecn.text_reason.toPlainText()
-                summary = self.tab_ecn.text_summary.toPlainText()
+                reason = self.tab_ecn.text_reason.toHtml()[316:-14]
+                summary = self.tab_ecn.text_summary.toHtml()[316:-14]
                 signature = "<tr>"
                 attachment ="<tr>"
 

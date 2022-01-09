@@ -213,7 +213,7 @@ class Manager(QtWidgets.QWidget):
         results = self.cursor.fetchall()
         for result in results:
             self.nameList.append(result[0])
-        print(self.nameList)
+        #print(self.nameList)
 
 
 # execute the program

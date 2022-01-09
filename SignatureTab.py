@@ -18,17 +18,16 @@ class SignatureTab(QtWidgets.QWidget):
         self.label_signatures = QtWidgets.QLabel("Signatures",self)
         mainlayout.addWidget(self.label_signatures)
         mainlayout.addWidget(self.table)
-        
-        print(self.parent.user_info['name'],self.parent.tab_ecn.line_author.text())
-        if self.parent.user_info['name']==self.parent.tab_ecn.line_author.text():
-            hlayout = QtWidgets.QHBoxLayout(self)
-            self.button_add = QtWidgets.QPushButton("Add Signature")
-            self.button_add.clicked.connect(self.addRow)
-            self.button_remove = QtWidgets.QPushButton("Remove Signature")
-            self.button_remove.clicked.connect(self.removeRow)
-            hlayout.addWidget(self.button_add)
-            hlayout.addWidget(self.button_remove)
-            mainlayout.addLayout(hlayout)
+                
+        hlayout = QtWidgets.QHBoxLayout(self)
+        self.button_add = QtWidgets.QPushButton("Add Signature")
+        self.button_add.clicked.connect(self.addRow)
+        self.button_remove = QtWidgets.QPushButton("Remove Signature")
+        self.button_remove.clicked.connect(self.removeRow)
+        hlayout.addWidget(self.button_add)
+        hlayout.addWidget(self.button_remove)
+        mainlayout.addLayout(hlayout)
+
         
         self.setLayout(mainlayout)       
 
