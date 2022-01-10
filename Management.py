@@ -67,7 +67,7 @@ class Manager(QtWidgets.QWidget):
             msgbox.setText("No database detected, please select an existing database or ask the admin to make a new one using the included tool.")
             openbutton = msgbox.addButton("Open DB", QtWidgets.QMessageBox.ActionRole)
             cancelbutton = msgbox.addButton(QtWidgets.QMessageBox.Close)
-            ret = msgbox.exec_()
+            ret = msgbox.exec()
             if msgbox.clickedButton() == openbutton:
                 db_loc = QtWidgets.QFileDialog.getOpenFileName(self,self.tr("Open DB"),program_location,self.tr("DB Files (*.DB)"))[0]
                 self.db = sqlite3.connect(db_loc)
@@ -196,7 +196,7 @@ class Manager(QtWidgets.QWidget):
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()
         msgbox.setText(msg+"        ")
-        msgbox.exec_()
+        msgbox.exec()
 
 
     def loadInAnim(self):

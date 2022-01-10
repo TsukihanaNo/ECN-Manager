@@ -118,13 +118,13 @@ class NewDBWindow(QtWidgets.QWidget):
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()
         msgbox.setText(msg+"        ")
-        msgbox.exec_()
+        msgbox.exec()
 
 # execute the program
 def main():
     app = QtWidgets.QApplication(sys.argv)
     DB = NewDBWindow()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == '__main__':

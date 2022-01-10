@@ -100,4 +100,4 @@ class LoginWindow(QtWidgets.QWidget):
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()
         msgbox.setText(msg+"        ")
-        msgbox.exec_()
+        msgbox.exec()

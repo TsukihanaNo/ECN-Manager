@@ -253,6 +253,7 @@ class ECNWindow(QtWidgets.QWidget):
             self.parent.repopulateTable()
             self.dispMsg("ECN has been updated!")
             self.tab_ecn.line_status.setText("Rejected")
+            self.addNotification(self.tab_ecn.line_id.text(), "Rejected")
         except Exception as e:
             print(e)
             self.dispMsg("Error occured during data update (reject)!")
@@ -382,6 +383,7 @@ class ECNWindow(QtWidgets.QWidget):
             self.tab_ecn.line_status.setText("Out For Approval")
             self.parent.repopulateTable()
             self.dispMsg("ECN has been sent out for signing!")
+            self.addNotification(self.tab_ecn.line_id.text(), "Released")
         except Exception as e:
             print(e)
             self.dispMsg("Error occured during data update (release)!")
@@ -412,6 +414,7 @@ class ECNWindow(QtWidgets.QWidget):
                 self.parent.repopulateTable()
                 self.parent.parent.completedTab.repopulateTable()
                 self.dispMsg("ECN is now completed")
+                self.addNotification(self.tab_ecn.line_id.text(), "Completed")
         except Exception as e:
             print(e)
             self.dispMsg(e)
@@ -459,6 +462,9 @@ class ECNWindow(QtWidgets.QWidget):
                 id = self.tab_ecn.line_id.text()
                 title = self.tab_ecn.line_ecntitle.text()
                 author = self.tab_ecn.line_author.text()
+                dept = self.tab_ecn.combo_dept.currentText()
+                requestor = self.tab_ecn.box_requestor.currentText()
+                #316 front html wrapper characters and 14 ending html wrapper from qt.tohtml
                 reason = self.tab_ecn.text_reason.toHtml()[316:-14]
                 summary = self.tab_ecn.text_summary.toHtml()[316:-14]
                 signature = "<tr>"
@@ -480,7 +486,7 @@ class ECNWindow(QtWidgets.QWidget):
                 else:
                     signature="<tr><td></td><td></td><td></td></tr>"
                 #print(id, title, author,reason,summary)
-                export = t.substitute(ECNID=id,ECNTitle=title,Requestor="req",Department="dept",Author=author, Reason=reason,Summary=summary,Attachment=attachment,Signature=signature)
+                export = t.substitute(ECNID=id,ECNTitle=title,Requestor=requestor,Department=dept,Author=author, Reason=reason,Summary=summary,Attachment=attachment,Signature=signature)
             
                 with open(foldername+'\\'+id+'.html', 'w') as f:
                     f.write(export)
@@ -499,9 +505,21 @@ class ECNWindow(QtWidgets.QWidget):
                 self.dispMsg("Export Completed!")
         
     def addNotification(self,ecn_id,notificationType):
-        data = (ecn_id,"Not Sent",notificationType)
-        self.cursor.execute("INSERT INTO NOTIFICATION(ECN_ID, STATUS, TYPE) VALUES(?,?,?)",(data))
+        if self.existNotification(ecn_id):
+            data = (notificationType,ecn_id)
+            self.cursor.execute("UPDATE NOTIFICATION SET TYPE = ? WHERE ECN_ID = ?",(data))
+        else:
+            data = (ecn_id,"Not Sent",notificationType)
+            self.cursor.execute("INSERT INTO NOTIFICATION(ECN_ID, STATUS, TYPE) VALUES(?,?,?)",(data))
         self.db.commit()
+        
+    def existNotification(self,ecn_id):
+        self.cursor.execute(f"Select * from NOTIFICATION where ECN_ID='{ecn_id}' and STATUS='Not Sent'")
+        result = self.cursor.fetchone()
+        if result is not None:
+            return True
+        else:
+            return False
 
 
     def checkDiff(self):
@@ -543,4 +561,4 @@ class ECNWindow(QtWidgets.QWidget):
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()
         msgbox.setText(msg+"        ")
-        msgbox.exec_()
+        msgbox.exec()

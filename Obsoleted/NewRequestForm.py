@@ -170,7 +170,7 @@ class NewRequestForm(QtGui.QWidget):
     def dispMsg(self,msg):
         msgbox = QtGui.QMessageBox()
         msgbox.setText(msg+"        ")
-        msgbox.exec_()
+        msgbox.exec()
 
     def dropEvent(self, e):
         urlList = e.mimeData().urls()

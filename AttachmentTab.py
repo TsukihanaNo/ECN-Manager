@@ -74,7 +74,7 @@ class AttachmentTab(QtWidgets.QWidget):
     def addFiles(self):
         dialog = QtWidgets.QFileDialog(self)
         dialog.setFileMode(QtWidgets.QFileDialog.ExistingFiles)
-        if dialog.exec_():
+        if dialog.exec():
             fileNames = dialog.selectedFiles()
             row=self.table.rowCount()
             for url in fileNames:
