@@ -75,9 +75,10 @@ class Manager(QtWidgets.QWidget):
                 self.cursor.row_factory = sqlite3.Row
                 self.loginWindow = LoginWindow(self)
                 #save setting
-                f = open(initfile,"w+")
-                f.write("DB_LOC : "+db_loc)
-                f.close()
+                if db_loc!="":
+                    f = open(initfile,"w+")
+                    f.write("DB_LOC : "+db_loc)
+                    f.close()
             else:
                 exit()
         else:
@@ -230,7 +231,7 @@ class Manager(QtWidgets.QWidget):
 def main():
     app = QtWidgets.QApplication(sys.argv)
     manager = Manager()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == '__main__':

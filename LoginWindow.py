@@ -8,8 +8,8 @@ class LoginWindow(QtWidgets.QWidget):
     def __init__(self,parent=None):
         super(LoginWindow,self).__init__()
         self.parent = parent
-        self.windowWidth = 400
-        self.windowHeight = 175
+        self.windowWidth = 350
+        self.windowHeight = 200
         self.db = self.parent.db
         self.cursor = self.parent.cursor
 
@@ -77,13 +77,13 @@ class LoginWindow(QtWidgets.QWidget):
         self.close()
 
     def checkUserPass(self):
-        print("initiating check")
+        #print("initiating check")
         self.cursor.execute("SELECT USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE  FROM USER WHERE USER_ID=:id",{"id":self.text_user.text()})
         info = self.cursor.fetchone()
         # print(len(info))
         # for item in info:
         #     print(item)
-        if len(info)!=0:
+        if info is not None:
             if self.text_pass.text()==info['PASSWORD']:
                 self.parent.user_info['user'] = info['USER_ID']
                 self.parent.user_info['name'] = info['NAME']
