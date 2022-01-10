@@ -3,6 +3,7 @@ from MyTableWidget import *
 import sqlite3
 import os
 import sys
+import smtplib, ssl
 
 
 if getattr(sys, 'frozen', False):
@@ -24,6 +25,11 @@ class Notifier(QtWidgets.QWidget):
         self.programLoc = program_location
         self.userList={}
         self.getUserList()
+        self.port = ""
+        self.from_address = ""
+        self.password = ""
+        self.smtp_address = ""
+        self.context = ssl.create_default_context()
         self.initAtt()
         self.initUI()
         self.center()
@@ -164,6 +170,11 @@ class Notifier(QtWidgets.QWidget):
         results = self.cursor.fetchall()
         for result in results:
             print(f"send email to user: {result[0]} @ email: {self.userList[result[0]]} notifying ecn release")
+            
+    def sendEmail(self,to_address,message):
+        with smtplib.SMTP_SSL(self.smtp_address,self.port,context=self.context) as server:
+            server.login(self.from_address, self.password)
+            server.sendmail(self.from_address, to_address, message)
             
 def main():
     app = QtWidgets.QApplication(sys.argv)
