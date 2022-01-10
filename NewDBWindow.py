@@ -1,4 +1,4 @@
-from PySide2 import QtWidgets, QtCore, QtWidgets
+from PySide6 import QtWidgets, QtCore
 import os, sys
 from MyTableWidget import *
 import sqlite3  
@@ -13,10 +13,15 @@ class NewDBWindow(QtWidgets.QWidget):
         self.show()
 
     def center(self):
-        qr = self.frameGeometry()
-        cp = QtWidgets.QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft()-QtCore.QPoint(0,0))
+        window = self.window()
+        window.setGeometry(
+            QtWidgets.QStyle.alignedRect(
+            QtCore.Qt.LeftToRight,
+            QtCore.Qt.AlignCenter,
+            window.size(),
+            QtGui.QGuiApplication.primaryScreen().availableGeometry(),
+        ),
+    )
 
 
     def initAtt(self):

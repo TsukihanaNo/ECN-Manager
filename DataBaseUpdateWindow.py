@@ -1,6 +1,6 @@
 import os, re, sys
 import sqlite3
-from PySide2 import QtWidgets, QtCore, QtWidgets
+from PySide6 import QtWidgets, QtCore, QtWidgets
 
 class DataBaseUpdateWindow(QtWidgets.QWidget):
     def __init__(self,parent=None, addtables = None, removetables = None, addcolumns = None):
@@ -21,10 +21,15 @@ class DataBaseUpdateWindow(QtWidgets.QWidget):
         self.initiateUpdate()
 
     def center(self):
-        qr = self.frameGeometry()
-        cp = QtWidgets.QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft()-QtCore.QPoint(0,0))
+        window = self.window()
+        window.setGeometry(
+            QtWidgets.QStyle.alignedRect(
+            QtCore.Qt.LeftToRight,
+            QtCore.Qt.AlignCenter,
+            window.size(),
+            QtGui.QGuiApplication.primaryScreen().availableGeometry(),
+        ),
+    )
 
     def initAtt(self):
         self.setGeometry(100,50,self.windowWidth,self.windowHeight)

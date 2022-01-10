@@ -1,7 +1,7 @@
 import os, re, sys
 import time
 import sqlite3
-from PySide2 import QtGui, QtCore, QtWidgets
+from PySide6 import QtGui, QtCore, QtWidgets
 from MyLineEdit import *
 
 class LoginWindow(QtWidgets.QWidget):

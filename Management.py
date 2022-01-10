@@ -3,7 +3,7 @@ import re
 import sys
 import time
 import sqlite3
-from PySide2 import QtGui, QtCore, QtWidgets
+from PySide6 import QtGui, QtCore, QtWidgets
 from LoginWindow import *
 from CompletedTab import *
 from MyECNTab import *
@@ -175,19 +175,20 @@ class Manager(QtWidgets.QWidget):
     def createMenuActions(self):
         filemenu = self.menubar.addMenu("&File")
         if self.user_info['role'] == "Admin":
-            newDBAction = QtWidgets.QAction("&New Database", self)
+            newDBAction = QtGui.QAction("&New Database", self)
             newDBAction.triggered.connect(self.newDB)
-            connectDBAction = QtWidgets.QAction(
+            connectDBAction = QtGui.QAction(
                 "&Connect to existing Database", self)
             filemenu.addAction(newDBAction)
             filemenu.addAction(connectDBAction)
-        exitAction = QtWidgets.QAction("&Exit", self)
+        exitAction = QtGui.QAction("&Exit", self)
         exitAction.triggered.connect(self.close)
         exitAction.setShortcut("CTRL+Q")
         filemenu.addAction(exitAction)
 
     def updateQueue(self):
-        self.myECNTab.repopulateTable()
+        if self.user_info["role"]!="Signer":
+            self.myECNTab.repopulateTable()
         self.queueTab.repopulateTable()
         self.completedTab.repopulateTable()
 

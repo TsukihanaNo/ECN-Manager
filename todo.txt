@@ -16,8 +16,6 @@
 
 - check for required fields before allowing for release
 
-- make presets for signatures
-
 - create DB setup
     - generate base DB at set location
 

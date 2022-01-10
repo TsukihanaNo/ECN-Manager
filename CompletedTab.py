@@ -1,4 +1,4 @@
-from PySide2 import QtGui, QtCore, QtWidgets
+from PySide6 import QtGui, QtCore, QtWidgets
 from ECNWindow import *
 from MyTableWidget import *
 class CompletedTab(QtWidgets.QWidget):

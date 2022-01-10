@@ -1,4 +1,4 @@
-from PySide2 import QtWidgets, QtCore, QtWidgets
+from PySide6 import QtWidgets, QtCore
 from ECNWindow import *
 import sqlite3  
 from MyTableWidget import *

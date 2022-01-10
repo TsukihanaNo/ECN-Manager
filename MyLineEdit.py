@@ -1,4 +1,4 @@
-from PySide2 import QtWidgets, QtCore, QtWidgets
+from PySide6 import QtWidgets, QtCore
 
 class MyLineEdit(QtWidgets.QLineEdit):
     def __init__(self,parent = None):

@@ -1,4 +1,4 @@
-from PySide2 import QtWidgets, QtCore, QtWidgets
+from PySide6 import QtWidgets, QtCore
 
 class MyTableWidget(QtWidgets.QTableWidget):
     def __init__(self,row=1, column=1, parent = None):

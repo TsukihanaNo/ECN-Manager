@@ -1,4 +1,4 @@
-from PySide2 import QtWidgets, QtCore, QtWebEngineWidgets
+from PySide6 import QtWidgets, QtCore
 from datetime import datetime
 from AttachmentTab import *
 from ECNTab import *
@@ -42,10 +42,15 @@ class ECNWindow(QtWidgets.QWidget):
         self.setMinimumWidth(self.windowWidth)
 
     def center(self):
-        qr = self.frameGeometry()
-        cp = QtWidgets.QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft()-QtCore.QPoint(0,0))
+        window = self.window()
+        window.setGeometry(
+            QtWidgets.QStyle.alignedRect(
+            QtCore.Qt.LeftToRight,
+            QtCore.Qt.AlignCenter,
+            window.size(),
+            QtGui.QGuiApplication.primaryScreen().availableGeometry(),
+        ),
+    )
 
     def initReqUI(self):
         mainlayout = QtWidgets.QVBoxLayout(self)
@@ -493,6 +498,10 @@ class ECNWindow(QtWidgets.QWidget):
                 
                 self.dispMsg("Export Completed!")
         
+    def addNotification(self,ecn_id,notificationType):
+        data = (ecn_id,"Not Sent",notificationType)
+        self.cursor.execute("INSERT INTO NOTIFICATION(ECN_ID, STATUS, TYPE) VALUES(?,?,?)",(data))
+        self.db.commit()
 
 
     def checkDiff(self):

@@ -1,4 +1,4 @@
-from PySide2 import QtWidgets, QtCore, QtWidgets
+from PySide6 import QtWidgets, QtCore
 
 class ShopTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
