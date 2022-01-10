@@ -80,4 +80,8 @@ class MyECNTab(QtWidgets.QWidget):
             self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['ECN_TITLE']))
             self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
             self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
+            if item["STATUS"]=="Rejected":
+                self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,203,203))
+            if item["STATUS"]=="Out For Approval":
+                self.table.item(rowcount, 3).setBackground(QtGui.QColor(231,251,190))
             rowcount+=1

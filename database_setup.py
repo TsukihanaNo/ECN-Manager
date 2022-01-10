@@ -28,7 +28,7 @@ cursor.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE, STATU
 cursor.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE, STATUS, DEPT, EMAIL) VALUES(?,?,?,?,?,?,?,?)',('plannerE','pass','Planner Elec','Signer','Planner','Active','Elec','something@e.com'))
 cursor.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE, STATUS, DEPT, EMAIL) VALUES(?,?,?,?,?,?,?,?)',('plannerF','pass','Planner FoamPro','Signer','Planner','Active','FoamPro','something@e.com'))
 cursor.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE, STATUS, EMAIL) VALUES(?,?,?,?,?,?,?)',('eng1','eng','E1','Engineer','Engineer','Active','something@e.com'))
-cursor.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE, STATUS) VALUES(?,?,?,?,?,?)',('eng2','eng','E2','Engineer','Engineer','Active'))
+cursor.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE, STATUS, EMAIL) VALUES(?,?,?,?,?,?,?)',('eng2','eng','E2','Engineer','Engineer','Active','something@e.com'))
 cursor.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE, STATUS, DEPT) VALUES(?,?,?,?,?,?,?)',('buyerL','pass','Buyer Lighting','Signer','Buyer','Active','Lighting'))
 cursor.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE, STATUS, DEPT) VALUES(?,?,?,?,?,?,?)',('buyerE','pass','Buyer Elec','Signer','Buyer','Active','Elec'))
 cursor.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE, STATUS, DEPT) VALUES(?,?,?,?,?,?,?)',('buyerF','pass','Buyer FoamPro','Signer','Buyer','Active','FoamPro'))

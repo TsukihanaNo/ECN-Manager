@@ -1,13 +1,5 @@
 - notification server
-    - email for completion
     - email for past due ecn
-    - email for rejection
-    - email for release
-
-- start adding notification flag to actions
-    - Inquire: "need more info" - send notification to author 
-    - reject: "rejected" - send notification to author
-    - completed: "Completed" - send notification to author and all signers 
 
 - new parts list for ecn
     - check for visual set up
@@ -18,8 +10,6 @@
 
 - create DB setup
     - generate base DB at set location
-
-- color coding table row based on the status of ECN
 
 - add remainder of data to change log check
 

@@ -87,7 +87,7 @@ class Manager(QtWidgets.QWidget):
             settings = {}
             for line in f:
                 key,value = line.split(" : ")
-                settings[key]=value
+                settings[key]=value.strip()
             print(settings)
             f.close()
             self.db = sqlite3.connect(settings["DB_LOC"])
@@ -231,7 +231,7 @@ class Manager(QtWidgets.QWidget):
 def main():
     app = QtWidgets.QApplication(sys.argv)
     manager = Manager()
-    sys.exit(app.exec())
+    sys.exit(app.exec_())
 
 
 if __name__ == '__main__':

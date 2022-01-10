@@ -208,7 +208,7 @@ class ECNWindow(QtWidgets.QWidget):
             title = self.tab_ecn.line_ecntitle.text()
             reason =self.tab_ecn.text_reason.toPlainText()
             summary = self.tab_ecn.text_summary.toPlainText()
-            modifieddate = datetime.now().strftime('%Y%m%d-%H%M%S')
+            modifieddate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
 
             data = (ecn_id,ecn_type,author,requestor,status,title,reason,summary,modifieddate)
             self.cursor.execute("INSERT INTO ECN(ECN_ID,ECN_TYPE,AUTHOR,REQUESTOR,STATUS,ECN_TITLE,ECN_REASON,ECN_SUMMARY,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?,?)",(data))
@@ -290,7 +290,7 @@ class ECNWindow(QtWidgets.QWidget):
             title = self.tab_ecn.line_ecntitle.text()
             reason =self.tab_ecn.text_reason.toPlainText()
             summary = self.tab_ecn.text_summary.toPlainText()
-            modifieddate = datetime.now().strftime('%Y%m%d-%H%M%S')
+            modifieddate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
             data = (ecn_type,requestor,title,reason,summary,modifieddate,ecn_id)
 
             #data = (self.combo_type.currentText(),self.box_requestor.text(),self.date_request.date().toString("yyyy-MM-dd"),'Unassigned',self.line_ecntitle.text(),self.text_detail.toPlainText(),self.line_id.text())
@@ -443,6 +443,7 @@ class ECNWindow(QtWidgets.QWidget):
             self.updateData()
             self.AddSignatures()
             self.dispMsg("ECN has been updated!")
+            self.getCurrentValues()
             self.checkDiff()
             self.parent.repopulateTable()
 

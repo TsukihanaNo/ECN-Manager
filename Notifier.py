@@ -1,10 +1,10 @@
 from PySide6 import QtGui, QtCore, QtWidgets
 from MyTableWidget import *
+from email.mime.text import MIMEText
 import sqlite3
 import os
 import sys
-import smtplib, ssl
-
+import smtplib
 
 if getattr(sys, 'frozen', False):
     # frozen
@@ -21,15 +21,11 @@ class Notifier(QtWidgets.QWidget):
         super(Notifier, self).__init__()
         self.windowWidth = 1200
         self.windowHeight = 900
-        self.startUpCheck()
         self.programLoc = program_location
         self.userList={}
+        self.settings = {}
+        self.startUpCheck()
         self.getUserList()
-        self.port = ""
-        self.from_address = ""
-        self.password = ""
-        self.smtp_address = ""
-        self.context = ssl.create_default_context()
         self.initAtt()
         self.initUI()
         self.center()
@@ -96,13 +92,12 @@ class Notifier(QtWidgets.QWidget):
         else:
             #read settings
             f = open(initfile,'r')
-            settings = {}
             for line in f:
                 key,value = line.split(" : ")
-                settings[key]=value
-            print(settings)
+                self.settings[key]=value.strip()
+            print(self.settings)
             f.close()
-            self.db = sqlite3.connect(settings["DB_LOC"])
+            self.db = sqlite3.connect(self.settings["DB_LOC"])
             self.cursor = self.db.cursor()
             self.cursor.row_factory = sqlite3.Row
             
@@ -144,42 +139,55 @@ class Notifier(QtWidgets.QWidget):
                 
     def updateStatus(self,ecn_id):
         data = ("Sent",ecn_id)
-        # self.cursor.execute("UPDATE NOTIFICATION SET STATUS = ? WHERE ECN_ID = ?",(data))
-        # self.db.commit()
+        self.cursor.execute("UPDATE NOTIFICATION SET STATUS = ? WHERE ECN_ID = ?",(data))
+        self.db.commit()
         
     def rejectNotification(self,ecn_id):
-        print(f"send notification to the author for ecn: {ecn_id}")
         self.cursor.execute(f"select Author from ECN where ECN_ID='{ecn_id}'")
         result = self.cursor.fetchone()
-        print(f"send email to author -> user: {result[0]} @ email: {self.userList[result[0]]} for rejection")
+        message = f"ECN#: {ecn_id} has been rejected, please check comments and update accordingly and releasing again."
+        receivers = [self.userList[result[0]]]
+        print(f"send email to these addresses: {receivers} for rejection")
+        self.sendEmail(ecn_id,receivers, message)
         
         
     def completionNotification(self,ecn_id):
-        print(f"send notification to author and all users on the signature block for ecn: {ecn_id}")
+        receivers = []
         self.cursor.execute(f"select Author from ECN where ECN_ID='{ecn_id}'")
         result = self.cursor.fetchone()
-        print(f"send email to author -> user: {result[0]} @ email: {self.userList[result[0]]} for completion")
+        receivers.append(self.userList[result[0]])
         self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}'")
         results = self.cursor.fetchall()
+        message = f"ECN#: {ecn_id} has been completed! You can now view it in the completed tab."
         for result in results:
-            print(f"send email to user: {result[0]} @ email: {self.userList[result[0]]} notifying ecn completion")
+            receivers.append(self.userList[result[0]])
+        print(f"send email to these addresses: {receivers} notifying ecn completion")
+        self.sendEmail(ecn_id,receivers, message)
         
     def releaseNotification(self,ecn_id):
-        print(f"send notification to all users on the signature block for ecn: {ecn_id}")
         self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}'")
         results = self.cursor.fetchall()
+        receivers = []
+        message = f"ECN#: {ecn_id} has been released! Please review and approve."
         for result in results:
-            print(f"send email to user: {result[0]} @ email: {self.userList[result[0]]} notifying ecn release")
+            receivers.append(self.userList[result[0]])
+        print(f"send email these addresses: {receivers} notifying ecn release")
+        self.sendEmail(ecn_id,receivers, message)
             
-    def sendEmail(self,to_address,message):
-        with smtplib.SMTP_SSL(self.smtp_address,self.port,context=self.context) as server:
-            server.login(self.from_address, self.password)
-            server.sendmail(self.from_address, to_address, message)
+    def sendEmail(self,ecn_id,receivers,message):
+        with smtplib.SMTP(self.settings["SMTP"],self.settings["port"]) as server:
+            msg = MIMEText(message)
+            msg['Subject']=f"Notification for ECN: {ecn_id}"
+            msg['From'] = self.settings["From_Address"]
+            msg['To'] = ", ".join(receivers)
+            server.sendmail(self.settings["From_Address"], receivers, msg.as_string())
+            print(f"Successfully sent email to {receivers}")
+            
             
 def main():
     app = QtWidgets.QApplication(sys.argv)
     notifier = Notifier()
-    sys.exit(app.exec())
+    sys.exit(app.exec_())
 
 
 if __name__ == '__main__':

@@ -19,6 +19,6 @@ results = cursor.execute("Select * from NOTIFICATION")
 for result in results:
     print(result)
 
-#cursor.execute("update NOTIFICATION set STATUS='Not Sent'")
-#database.commit()
+# cursor.execute("update NOTIFICATION set STATUS='Not Sent'")
+# database.commit()
 database.close()

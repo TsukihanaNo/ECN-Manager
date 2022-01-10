@@ -4,5 +4,6 @@ reference/
 __pycache__/
 #ignore file
 setting.ini
+test.py
 
 .vscode
