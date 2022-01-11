@@ -10,6 +10,7 @@ from MyECNTab import *
 from MyQueueTab import *
 from DataBaseUpdateWindow import *
 from NewDBWindow import *
+from UsersWindow import *
 
 
 if getattr(sys, 'frozen', False):
@@ -66,6 +67,7 @@ class Manager(QtWidgets.QWidget):
             msgbox = QtWidgets.QMessageBox(self)
             msgbox.setText("No database detected, please select an existing database or ask the admin to make a new one using the included tool.")
             openbutton = msgbox.addButton("Open DB", QtWidgets.QMessageBox.ActionRole)
+            addbutton = msgbox.addButton("Add DB", QtWidgets.QMessageBox.ActionRole)
             cancelbutton = msgbox.addButton(QtWidgets.QMessageBox.Close)
             ret = msgbox.exec()
             if msgbox.clickedButton() == openbutton:
@@ -79,6 +81,8 @@ class Manager(QtWidgets.QWidget):
                     f = open(initfile,"w+")
                     f.write("DB_LOC : "+db_loc)
                     f.close()
+            elif msgbox.clickedButton() == addbutton:
+                self.newDB()
             else:
                 exit()
         else:
@@ -182,6 +186,9 @@ class Manager(QtWidgets.QWidget):
                 "&Connect to existing Database", self)
             filemenu.addAction(newDBAction)
             filemenu.addAction(connectDBAction)
+            userAction = QtGui.QAction("&Users Window",self)
+            userAction.triggered.connect(self.launchUsers)
+            filemenu.addAction(userAction)
         exitAction = QtGui.QAction("&Exit", self)
         exitAction.triggered.connect(self.close)
         exitAction.setShortcut("CTRL+Q")
@@ -217,6 +224,9 @@ class Manager(QtWidgets.QWidget):
 
     def newDB(self):
         self.newDBWindow = NewDBWindow(self)
+        
+    def launchUsers(self):
+        self.userWindow = UsersWindow(self)
         
     def getNameList(self):
         command = "Select NAME from USER where STATUS ='Active'"

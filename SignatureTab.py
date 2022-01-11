@@ -154,7 +154,7 @@ class SignatureTab(QtWidgets.QWidget):
 
             rowcount+=1
             
-        def resizeEvent(self,event):
-                width = int(self.table.width()/self.table.columnCount())-3
-                for x in range(self.table.columnCount()):
-                    self.table.setColumnWidth(x,width)
+    def resizeEvent(self,event):
+            width = int(self.table.width()/self.table.columnCount())-3
+            for x in range(self.table.columnCount()):
+                self.table.setColumnWidth(x,width)
