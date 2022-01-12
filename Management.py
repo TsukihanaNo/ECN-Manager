@@ -23,6 +23,7 @@ else:
 
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
 initfile = os.path.join(program_location, "setting.ini")
+lockfile = os.path.join(program_location, "ecn.lock")
 
 databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT", "ECN_REASON TEXT","REQUESTOR TEXT" ,"AUTHOR TEXT", "STATUS TEXT", "COMP_DATE DATE", "ECN_SUMMARY TEXT", "LAST_CHANGE_DATE DATE"],
                         "COMMENT": ["ECN_ID TEXT", "USER TEXT", "COMM_DATE DATE", "COMMENT TEXT"],
@@ -32,10 +33,12 @@ databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT"
 
 
 class Manager(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self,ecn = None):
         super(Manager, self).__init__()
-        self.windowWidth = 1200
-        self.windowHeight = 900
+        self.windowWidth = QtGui.QGuiApplication.primaryScreen().availableGeometry().width() *0.5
+        self.windowHeight = self.windowWidth *.75
+        self.ecn = ecn
+        self.generateLockFile()
         self.startUpCheck()
         self.user_info = {}
         self.programLoc = program_location
@@ -54,6 +57,14 @@ class Manager(QtWidgets.QWidget):
             QtGui.QGuiApplication.primaryScreen().availableGeometry(),
         ),
     )
+        
+    def generateLockFile(self):
+        f = open(lockfile,"w+")
+        f.write("program started, lock trigger")
+        f.close()
+        
+    def removeLockFile(self):
+        os.remove(lockfile)
 
     def loginDone(self):
         self.initAtt()
@@ -68,6 +79,9 @@ class Manager(QtWidgets.QWidget):
         self.worker.moveToThread(self.thread)
         self.thread.started.connect(self.worker.run)
         self.thread.start()
+        
+        if self.ecn is not None:
+            self.HookEcn(self.ecn)
 
     def startUpCheck(self):
         if not os.path.exists(initfile):
@@ -231,6 +245,7 @@ class Manager(QtWidgets.QWidget):
 
     def closeEvent(self, event):
         self.db.close()
+        self.removeLockFile()
         for w in QtWidgets.QApplication.allWidgets():
             w.close()
 
@@ -251,8 +266,12 @@ class Manager(QtWidgets.QWidget):
 
 # execute the program
 def main():
+    print(sys.argv)
     app = QtWidgets.QApplication(sys.argv)
-    manager = Manager()
+    if len(sys.argv)>1:
+        manager=Manager(sys.argv[1])
+    else:
+        manager = Manager()
     sys.exit(app.exec_())
 
 

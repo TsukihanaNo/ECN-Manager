@@ -83,7 +83,7 @@ class SignatureTab(QtWidgets.QWidget):
         userList =[]
         for result in results:
             userList.append([result[0],result[1],result[2]])
-        #print(userList)
+        print(userList)
         #setting on specifics
         sigs = ["Engineering Manager","Purchasing Manager","Production Manager","Planning Manager","Buyer","Planner"]
         rowcount=0
@@ -105,6 +105,7 @@ class SignatureTab(QtWidgets.QWidget):
                     return index
                 else:
                     index+=1
+            self.dispMsg(f"No users found matching role:{role}. Please add user or remove role from requirements.")
         except Exception as e:
             print(e)
 
@@ -153,6 +154,11 @@ class SignatureTab(QtWidgets.QWidget):
             self.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['SIGNED_DATE']))
 
             rowcount+=1
+            
+    def dispMsg(self,msg):
+        msgbox = QtWidgets.QMessageBox()
+        msgbox.setText(msg+"        ")
+        msgbox.exec()
             
     def resizeEvent(self,event):
             width = int(self.table.width()/self.table.columnCount())-3

@@ -107,7 +107,7 @@ class NewRequestForm(QtGui.QWidget):
         mainLayout.addWidget(self.groupbox_attachment)
         mainLayout.addLayout(layout_submit)
 
-        self.line_requestor.setText(self.parent.parent.user_info['name'])
+        self.line_requestor.setText(self.parent.parent.user_info['user'])
 
         self.button_submit.clicked.connect(self.submit)
         self.button_submitandclose.clicked.connect(self.submitAndClose)

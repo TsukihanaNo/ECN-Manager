@@ -69,7 +69,7 @@ class MyECNTab(QtWidgets.QWidget):
 
     def repopulateTable(self):
         self.table.clearContents()
-        command = "Select * from ECN where AUTHOR ='" + self.user_info['name'] + "' and STATUS !='Completed'"
+        command = "Select * from ECN where AUTHOR ='" + self.user_info['user'] + "' and STATUS !='Completed'"
         self.cursor.execute(command)
         test = self.cursor.fetchall()
         rowcount=0

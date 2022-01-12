@@ -12,6 +12,7 @@ class LoginWindow(QtWidgets.QWidget):
         self.windowHeight = 200
         self.db = self.parent.db
         self.cursor = self.parent.cursor
+        self.logged = False
 
         self.initAtt()
         self.initUI()
@@ -90,11 +91,16 @@ class LoginWindow(QtWidgets.QWidget):
                 self.parent.user_info['role'] = info['ROLE']
                 self.parent.user_info['title'] = info['JOB_TITLE']
                 self.parent.loginDone()
+                self.logged = True
                 self.close()
             else:
                 self.dispMsg("Incorrect password")
         else:
             self.dispMsg("User does not exist")
+            
+    def closeEvent(self, event):
+        if self.logged == False:
+            self.parent.close()
         
 
     def dispMsg(self,msg):

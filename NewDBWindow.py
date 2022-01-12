@@ -90,18 +90,17 @@ class NewDBWindow(QtWidgets.QWidget):
         cur.execute('CREATE TABLE USER(USER_ID TEXT, PASSWORD TEXT, NAME TEXT, ROLE TEXT, JOB_TITLE TEXT, DEPT TEXT, STATUS TEXT, EMAIL TEXT)')
         cur.execute('CREATE TABLE CHANGELOG(ECN_ID TEXT, CHANGEDATE DATETIME, NAME TEXT,DATABLOCK TEXT, PREVDATA TEXT, NEWDATA TEXT)')
         cur.execute('CREATE TABLE NOTIFICATION(ECN_ID TEXT, STATUS TEXT, TYPE TEXT)')
-        cur.execute('CREATE TABLE ECN(ECN_ID TEXT, ECN_TYPE TEXT, ECN_TITLE TEXT, REQ_DETAILS TEXT, REQUESTOR TEXT, ASSIGNED_ENG TEXT, STATUS TEXT, REQ_DATE DATE, ASSIGN_DATE DATE, COMP_DATE DATE, ENG_DETAILS TEXT)')
-        cur.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE) VALUES(?,?,?,?,?)',('admin','admin','admin','Admin','Admin'))
         for rows in range(self.table.rowCount()):
             user = self.table.item(rows,0).text()
             password = self.table.item(rows,1).text()
             name = self.table.item(rows,2).text()
             role = self.table.cellWidget(rows,3).currentText()
             title = self.table.cellWidget(rows,4).currentText()
-            data = (user,password,name,role,title)
-            cur.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE) VALUES(?,?,?,?,?)',(data))
+            data = (user,password,name,role,title,"Active")
+            cur.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE, Status) VALUES(?,?,?,?,?,?)',(data))
             self.textedit.append("****Created User: "+user)
             QtWidgets.QApplication.processEvents()
+        self.textedit.append("Database has been created")
         database.commit()
         database.close()
 
@@ -114,7 +113,7 @@ class NewDBWindow(QtWidgets.QWidget):
 def main():
     app = QtWidgets.QApplication(sys.argv)
     DB = NewDBWindow()
-    sys.exit(app.exec())
+    sys.exit(app.exec_())
 
 
 if __name__ == '__main__':

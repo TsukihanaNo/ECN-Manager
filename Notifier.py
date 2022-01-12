@@ -1,6 +1,9 @@
 from PySide6 import QtGui, QtCore, QtWidgets
 from MyTableWidget import *
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 import sqlite3
 import os
 import sys
@@ -128,6 +131,7 @@ class Notifier(QtWidgets.QWidget):
         
         if len(results)>0:
             for result in results:
+                self.generateECNX(result[0])
                 if result['TYPE']=="Rejected":
                     self.rejectNotification(result[0])
                 elif result['TYPE']=="Completed":
@@ -135,6 +139,7 @@ class Notifier(QtWidgets.QWidget):
                 else:
                     self.releaseNotification(result[0])
                 self.updateStatus(result[0])
+                self.removeECNX(result[0])
         self.repopulateTable()
                 
     def updateStatus(self,ecn_id):
@@ -145,7 +150,7 @@ class Notifier(QtWidgets.QWidget):
     def rejectNotification(self,ecn_id):
         self.cursor.execute(f"select Author from ECN where ECN_ID='{ecn_id}'")
         result = self.cursor.fetchone()
-        message = f"ECN#: {ecn_id} has been rejected, please check comments and update accordingly and releasing again."
+        message = f"{ecn_id} has been rejected, please check comments and update accordingly and releasing again.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
         receivers = [self.userList[result[0]]]
         print(f"send email to these addresses: {receivers} for rejection")
         self.sendEmail(ecn_id,receivers, message)
@@ -158,7 +163,7 @@ class Notifier(QtWidgets.QWidget):
         receivers.append(self.userList[result[0]])
         self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}'")
         results = self.cursor.fetchall()
-        message = f"ECN#: {ecn_id} has been completed! You can now view it in the completed tab."
+        message = f"{ecn_id} has been completed! You can now view it in the completed tab.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
         for result in results:
             receivers.append(self.userList[result[0]])
         print(f"send email to these addresses: {receivers} notifying ecn completion")
@@ -168,7 +173,7 @@ class Notifier(QtWidgets.QWidget):
         self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}'")
         results = self.cursor.fetchall()
         receivers = []
-        message = f"ECN#: {ecn_id} has been released! Please review and approve."
+        message = f"{ecn_id} has been released! You can see it in the myQueueTab. Please review and approve.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
         for result in results:
             receivers.append(self.userList[result[0]])
         print(f"send email these addresses: {receivers} notifying ecn release")
@@ -176,12 +181,33 @@ class Notifier(QtWidgets.QWidget):
             
     def sendEmail(self,ecn_id,receivers,message):
         with smtplib.SMTP(self.settings["SMTP"],self.settings["port"]) as server:
-            msg = MIMEText(message)
-            msg['Subject']=f"Notification for ECN: {ecn_id}"
+            
+            msg = MIMEMultipart()
             msg['From'] = self.settings["From_Address"]
             msg['To'] = ", ".join(receivers)
+            msg['Subject']=f"Notification for ECN: {ecn_id}"
+            msg.attach(MIMEText(message,'plain'))
+            ecnx = os.path.join(program_location,ecn_id+'.ecnx')
+            filename = f'{ecn_id}.ecnx'
+            attach_file = open(ecnx,'rb')
+            payload = MIMEBase('application', 'octet-stream')
+            payload.set_payload(attach_file.read())
+            encoders.encode_base64(payload)
+            #print(ecnx, filename)
+            payload.add_header('Content-Disposition','attachment',filename = filename)
+            msg.attach(payload)
             server.sendmail(self.settings["From_Address"], receivers, msg.as_string())
             print(f"Successfully sent email to {receivers}")
+            
+    def generateECNX(self,ecn_id):
+        ecnx = os.path.join(program_location,ecn_id+'.ecnx')
+        f = open(ecnx,"w+")
+        f.write(f"{ecn_id}")
+        f.close()
+        
+    def removeECNX(eslf,ecn_id):
+        ecnx = os.path.join(program_location,ecn_id+'.ecnx')
+        os.remove(ecnx)
             
             
 def main():

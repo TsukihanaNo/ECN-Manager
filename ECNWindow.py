@@ -18,11 +18,11 @@ class ECNWindow(QtWidgets.QWidget):
         self.cursor = self.parent.cursor
         self.db = self.parent.db
         self.user_info = self.parent.user_info
-        self.windowWidth =  1170
-        self.windowHeight = 830
+        self.windowWidth =  QtGui.QGuiApplication.primaryScreen().availableGeometry().width() *0.55
+        self.windowHeight = self.windowWidth * 0.75
         self.load_id = load_id
         self.tablist = []
-        self.typeindex = {'New Part':0, 'BOM Update':1, 'Firmware Update':2, 'Configurator Udpate' : 3,'Product EOL':4}
+        self.typeindex = {'New Part':0, 'BOM Update':1, 'Firmware Update':2, 'Configurator Update' : 3,'Product EOL':4}
         self.initAtt()
         if self.load_id == None:
             self.initReqUI()
@@ -85,7 +85,7 @@ class ECNWindow(QtWidgets.QWidget):
         
         self.tab_ecn.combo_dept.currentIndexChanged.connect(self.tab_signature.prepopulateTable)
         
-        self.tab_signature.prepopulateTable()
+        #self.tab_signature.prepopulateTable()
 
 
 
@@ -121,7 +121,7 @@ class ECNWindow(QtWidgets.QWidget):
         buttonlayout = QtWidgets.QHBoxLayout()
         
         #disable signature and attachment adding if not author and completed
-        if self.parent.user_info['name']==self.tab_ecn.line_author.text() and self.tab_ecn.line_status.text()!="Completed":
+        if self.parent.user_info['user']==self.tab_ecn.line_author.text() and self.tab_ecn.line_status.text()!="Completed":
             self.tab_signature.button_add.setEnabled(True)
             self.tab_signature.button_remove.setEnabled(True)
             self.tab_attach.button_add.setEnabled(True)
@@ -139,7 +139,7 @@ class ECNWindow(QtWidgets.QWidget):
             self.tab_comments.enterText.setVisible(False)
         
         if self.tab_ecn.line_status.text()!="Completed":
-            if self.parent.user_info['name']==self.tab_ecn.line_author.text():
+            if self.parent.user_info['user']==self.tab_ecn.line_author.text():
                 self.button_save = QtWidgets.QPushButton("Save",self)
                 self.button_release = QtWidgets.QPushButton("Release")
                 self.button_save.clicked.connect(self.save)
@@ -526,7 +526,7 @@ class ECNWindow(QtWidgets.QWidget):
     def checkDiff(self):
         ecn_id = self.tab_ecn.line_id.text()
         changedate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
-        user = self.parent.user_info['name']
+        user = self.parent.user_info['user']
         prevdata = self.now_type
         newdata = self.tab_ecn.combo_type.currentText()
         if newdata != prevdata:

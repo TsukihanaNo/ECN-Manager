@@ -145,11 +145,9 @@ class UsersWindow(QtWidgets.QWidget):
     
     def editUser(self):
         row = self.table.currentRow()
-        if row:
-            user = self.table.item(row,0).text()
-            self.userPanel = UserPanel(self,user,"edit")
-        else:
-            self.dispMsg("No row selected, please pick a row")
+        user = self.table.item(row,0).text()
+        self.userPanel = UserPanel(self,user,"edit")
+
 
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()

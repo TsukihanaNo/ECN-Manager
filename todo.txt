@@ -16,3 +16,8 @@
 - add remainder of data to change log check
 
 - search completed ECNS
+
+ - disable approve/reject button if the user has already signed
+ - disable reject button if the ecn is already in rejected status
+ - comments tabs should be disabled when its a new ecn.
+ - make it so that you host the package host and have a local location for the settings and cache files.
