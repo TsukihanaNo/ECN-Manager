@@ -11,6 +11,7 @@ from MyQueueTab import *
 from DataBaseUpdateWindow import *
 from NewDBWindow import *
 from UsersWindow import *
+from Hook import *
 
 
 if getattr(sys, 'frozen', False):
@@ -60,6 +61,13 @@ class Manager(QtWidgets.QWidget):
         self.center()
         self.show()
         self.loadInAnim()
+        
+        self.thread = QtCore.QThread()
+        self.worker = Hook()
+        self.worker.launch.connect(self.HookEcn)
+        self.worker.moveToThread(self.thread)
+        self.thread.started.connect(self.worker.run)
+        self.thread.start()
 
     def startUpCheck(self):
         if not os.path.exists(initfile):
@@ -204,6 +212,10 @@ class Manager(QtWidgets.QWidget):
         msgbox = QtWidgets.QMessageBox()
         msgbox.setText(msg+"        ")
         msgbox.exec()
+        
+    def HookEcn(self,ecn_id):
+        print("info received",ecn_id)
+        self.ecnWindow = ECNWindow(self,ecn_id)
 
 
     def loadInAnim(self):

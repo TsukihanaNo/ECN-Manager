@@ -2,6 +2,7 @@ from PySide6 import QtWidgets, QtCore, QtGui
 import os, sys
 from MyTableWidget import *
 from UserPanel import *
+from Hook import *
 import sqlite3  
 
 
@@ -59,6 +60,8 @@ class UsersWindow(QtWidgets.QWidget):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         self.center()
+        
+        
 
     def initUI(self):
         main_layout = QtWidgets.QVBoxLayout(self)

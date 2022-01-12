@@ -8,6 +8,9 @@
 
 - add parts tab
 
+- add ecn handling in email
+    - prototype done
+
 - check for required fields before allowing for release
 
 - add remainder of data to change log check

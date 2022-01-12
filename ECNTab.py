@@ -4,7 +4,8 @@ class ECNTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(ECNTab,self).__init__()
         self.parent = parent
-
+        self.nameList = []
+        self.getNameList()
         self.initAtt()
         self.initUI()
 
@@ -54,7 +55,7 @@ class ECNTab(QtWidgets.QWidget):
         self.box_requestor.setMinimumWidth(100)
         self.box_requestor.completer().setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
         self.box_requestor.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
-        self.box_requestor.addItems(self.parent.parent.parent.nameList) 
+        self.box_requestor.addItems(self.nameList) 
         self.line_ecntitle = QtWidgets.QLineEdit(self)
 
         #self.label_departments = QtWidgets.QLabel("Required Departments:",self)
@@ -120,4 +121,12 @@ class ECNTab(QtWidgets.QWidget):
         mainLayout.addWidget(groupbox_summary)
 
         #self.line_author.setText(self.parent.parent.user_info['name'])
+        
+        
+    def getNameList(self):
+        command = "Select NAME from USER where STATUS ='Active'"
+        self.parent.cursor.execute(command)
+        results = self.parent.cursor.fetchall()
+        for result in results:
+            self.nameList.append(result[0])
 

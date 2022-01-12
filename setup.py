@@ -3,7 +3,7 @@ from cx_Freeze import setup, Executable
 
 # Dependencies are automatically detected, but it might need fine tuning.
 build_exe_options = {
-                    "packages": ["os","PySide"],
+                    "packages": ["os"],
                     "excludes": ["tkinter"],
                     "optimize": True
                     }
@@ -18,4 +18,4 @@ setup(  name = "ECN Manager",
         version = "1.0",
         description = "ECN Manager",
         options = {"build_exe": build_exe_options},
-        executables = [Executable("Management.py",base = base)])
+        executables = [Executable("Launcher.py",base = base)])
