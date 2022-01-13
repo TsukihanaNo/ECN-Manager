@@ -36,7 +36,7 @@ class ECNWindow(QtWidgets.QWidget):
 
     def initAtt(self):
         self.setGeometry(100,50,self.windowWidth,self.windowHeight)
-        self.setWindowTitle("Manager - ECN")
+        self.setWindowTitle(f"ECN-Viewer - user: {self.parent.user_info['user']}")
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         self.setMinimumWidth(self.windowWidth)
@@ -73,6 +73,8 @@ class ECNWindow(QtWidgets.QWidget):
         self.tabwidget.addTab(self.tab_attach, "Attachment")
         self.tabwidget.addTab(self.tab_comments, "Comments")
         self.tabwidget.addTab(self.tab_signature, "Signatures")
+        
+        self.tabwidget.setTabVisible(2, False)
                 
         self.tab_purch = PurchaserTab(self)
         self.tab_planner = PlannerTab(self)
@@ -149,6 +151,8 @@ class ECNWindow(QtWidgets.QWidget):
                 self.tab_ecn.line_ecntitle.setReadOnly(False)
                 self.tab_ecn.text_reason.setReadOnly(False)
                 self.tab_ecn.text_summary.setReadOnly(False)
+                if self.tab_ecn.line_status.text()=="Out For Approval":
+                    self.button_release.setDisabled(True)
             else:
                 self.button_approve = QtWidgets.QPushButton("Approve")
                 self.button_approve.clicked.connect(self.approve)
@@ -159,6 +163,14 @@ class ECNWindow(QtWidgets.QWidget):
                 self.tab_ecn.line_ecntitle.setReadOnly(True)
                 self.tab_ecn.text_summary.setReadOnly(True)
                 self.tab_ecn.text_reason.setReadOnly(True)
+                if self.tab_ecn.line_status.text()=="Rejected":
+                    self.button_reject.setDisabled(True)
+                if self.isUserSignable():
+                    if self.hasUserSigned():
+                        self.button_approve.setDisabled(True)
+                else:
+                    self.button_approve.setDisabled(True)
+                    self.button_reject.setDisabled(True)
         else:
             self.button_exportHTML = QtWidgets.QPushButton("Export")
             self.button_exportHTML.clicked.connect(self.exportHTML)
@@ -236,6 +248,8 @@ class ECNWindow(QtWidgets.QWidget):
             self.db.commit()
             self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = '" + approvedate +"'")
             self.tab_signature.repopulateTable()
+            self.dispMsg("ECN has been signed!")
+            self.button_approve.setDisabled(True)
             self.checkComplete()
         except Exception as e:
             print(e)
@@ -254,6 +268,8 @@ class ECNWindow(QtWidgets.QWidget):
             self.dispMsg("ECN has been updated!")
             self.tab_ecn.line_status.setText("Rejected")
             self.addNotification(self.tab_ecn.line_id.text(), "Rejected")
+            self.button_reject.setDisabled(True)
+            self.button_approve.setDisabled(True)
         except Exception as e:
             print(e)
             self.dispMsg("Error occured during data update (reject)!")
@@ -384,9 +400,27 @@ class ECNWindow(QtWidgets.QWidget):
             self.parent.repopulateTable()
             self.dispMsg("ECN has been sent out for signing!")
             self.addNotification(self.tab_ecn.line_id.text(), "Released")
+            self.button_release.setDisabled(True)
         except Exception as e:
             print(e)
             self.dispMsg("Error occured during data update (release)!")
+    
+    def isUserSignable(self):
+        self.cursor.execute(f"SELECT SIGNED_DATE from SIGNATURE where ECN_ID='{self.tab_ecn.line_id.text()}' and USER_ID='{self.parent.user_info['user']}'")
+        result = self.cursor.fetchone()
+        if result is None:
+            return False
+        else:
+            return True
+            
+    def hasUserSigned(self):
+        self.cursor.execute(f"SELECT SIGNED_DATE from SIGNATURE where ECN_ID='{self.tab_ecn.line_id.text()}' and USER_ID='{self.parent.user_info['user']}'")
+        result = self.cursor.fetchone()
+        if result[0] is None:
+            print("found none returning false")
+            return False
+        else:
+            return True
             
     def getCurrentValues(self):
         #print('getting values')
@@ -437,6 +471,7 @@ class ECNWindow(QtWidgets.QWidget):
             self.insertData()
             self.AddSignatures()
             self.dispMsg("ECN has been saved!")
+            self.tabwidget.setTabVisible(2, True)
             self.parent.repopulateTable()
             self.button_release.setDisabled(False)
         else:

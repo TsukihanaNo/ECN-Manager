@@ -23,7 +23,7 @@ else:
 
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
 initfile = os.path.join(program_location, "setting.ini")
-lockfile = os.path.join(program_location, "ecn.lock")
+lockfile = os.path.join(r"C:\temp", "ecn.lock")
 
 databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT", "ECN_REASON TEXT","REQUESTOR TEXT" ,"AUTHOR TEXT", "STATUS TEXT", "COMP_DATE DATE", "ECN_SUMMARY TEXT", "LAST_CHANGE_DATE DATE"],
                         "COMMENT": ["ECN_ID TEXT", "USER TEXT", "COMM_DATE DATE", "COMMENT TEXT"],
@@ -38,6 +38,8 @@ class Manager(QtWidgets.QWidget):
         self.windowWidth = QtGui.QGuiApplication.primaryScreen().availableGeometry().width() *0.5
         self.windowHeight = self.windowWidth *.75
         self.ecn = ecn
+        self.firstInstance = True
+        self.checkLockFile()
         self.generateLockFile()
         self.startUpCheck()
         self.user_info = {}
@@ -58,6 +60,12 @@ class Manager(QtWidgets.QWidget):
         ),
     )
         
+    def checkLockFile(self):
+        if os.path.exists(lockfile):
+            self.dispMsg("Another Instance is already open.")
+            self.firstInstance = False
+            sys.exit()
+        
     def generateLockFile(self):
         f = open(lockfile,"w+")
         f.write("program started, lock trigger")
@@ -72,13 +80,16 @@ class Manager(QtWidgets.QWidget):
         self.center()
         self.show()
         self.loadInAnim()
-        
-        self.thread = QtCore.QThread()
-        self.worker = Hook()
-        self.worker.launch.connect(self.HookEcn)
-        self.worker.moveToThread(self.thread)
-        self.thread.started.connect(self.worker.run)
-        self.thread.start()
+        try:
+            self.thread = QtCore.QThread()
+            self.worker = Hook()
+            self.worker.launch.connect(self.HookEcn)
+            self.worker.moveToThread(self.thread)
+            self.thread.started.connect(self.worker.run)
+            self.thread.start()
+        except Exception as e:
+            print(e)
+            self.dispMsg("Port already in use.")
         
         if self.ecn is not None:
             self.HookEcn(self.ecn)
@@ -168,7 +179,7 @@ class Manager(QtWidgets.QWidget):
 
     def initAtt(self):
         self.setGeometry(100, 50, self.windowWidth, self.windowHeight)
-        title = "Manager - User: " + self.user_info["user"]
+        title = "ECN-Manager - User: " + self.user_info["user"]
         self.setWindowTitle(title)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
@@ -245,7 +256,8 @@ class Manager(QtWidgets.QWidget):
 
     def closeEvent(self, event):
         self.db.close()
-        self.removeLockFile()
+        if self.firstInstance:
+            self.removeLockFile()
         for w in QtWidgets.QApplication.allWidgets():
             w.close()
 

@@ -19,8 +19,8 @@ f = open(sys.argv[1],'r')
 ecn = f.readline().strip()
 print(ecn)
 
-lockfile = os.path.join(program_location,"ecn.lock")
-program = os.path.join(program_location,"Management.exe")
+lockfile = os.path.join(r"C:\temp","ecn.lock")
+program = os.path.join(program_location,"Manager.exe")
 if not os.path.exists(lockfile):
     print(f"launching: {program}")
     subprocess.Popen([program,ecn])
