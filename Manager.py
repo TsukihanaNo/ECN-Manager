@@ -24,6 +24,7 @@ else:
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
 initfile = os.path.join(program_location, "setting.ini")
 lockfile = os.path.join(r"C:\temp", "ecn.lock")
+icon = os.path.join(program_location,"ecn-icon.png")
 
 databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT", "ECN_REASON TEXT","REQUESTOR TEXT" ,"AUTHOR TEXT", "STATUS TEXT", "COMP_DATE DATE", "ECN_SUMMARY TEXT", "LAST_CHANGE_DATE DATE"],
                         "COMMENT": ["ECN_ID TEXT", "USER TEXT", "COMM_DATE DATE", "COMMENT TEXT"],
@@ -41,6 +42,7 @@ class Manager(QtWidgets.QWidget):
         self.firstInstance = True
         self.checkLockFile()
         self.generateLockFile()
+        self.ico = QtGui.QIcon(icon)
         self.startUpCheck()
         self.user_info = {}
         self.programLoc = program_location
@@ -180,6 +182,7 @@ class Manager(QtWidgets.QWidget):
     def initAtt(self):
         self.setGeometry(100, 50, self.windowWidth, self.windowHeight)
         title = "ECN-Manager - User: " + self.user_info["user"]
+        self.setWindowIcon(self.ico)
         self.setWindowTitle(title)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)

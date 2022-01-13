@@ -5,7 +5,7 @@ from cx_Freeze import setup, Executable
 build_exe_options = {
                     "packages": ["os","PySide6"],
                     "excludes": ["tkinter"],
-                    "optimize": True
+                    "optimize": True,
                     }
 
 # GUI applications require a different base on Windows (the default is for a
@@ -18,4 +18,4 @@ setup(  name = "ECN Manager",
         version = "1.0",
         description = "ECN Manager",
         options = {"build_exe": build_exe_options},
-        executables = [Executable("Management.py",base = base),Executable("Launcher.py",base = base),Executable("Notifier.py",base = base)])
+        executables = [Executable("Manager.py",base = base),Executable("Launcher.py",base = base),Executable("Notifier.py",base = base)])

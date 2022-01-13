@@ -55,6 +55,7 @@ class LoginWindow(QtWidgets.QWidget):
     def initAtt(self):
         self.setGeometry(100,50,self.windowWidth,self.windowHeight)
         self.setWindowTitle("Manager")
+        self.setWindowIcon(self.parent.ico)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
 
