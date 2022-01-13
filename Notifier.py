@@ -22,8 +22,8 @@ initfile = os.path.join(program_location, "setting.ini")
 class Notifier(QtWidgets.QWidget):
     def __init__(self):
         super(Notifier, self).__init__()
-        self.windowWidth = 1200
-        self.windowHeight = 900
+        self.windowWidth = 650
+        self.windowHeight = 450
         self.programLoc = program_location
         self.userList={}
         self.settings = {}

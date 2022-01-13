@@ -15,9 +15,17 @@
 
 - add remainder of data to change log check
 
-- search completed ECNS
+- search for ECNs
 
- - disable approve/reject button if the user has already signed (done)
- - disable reject button if the ecn is already in rejected status (done)
- - comments tabs should be disabled when its a new ecn. (done)
- - make it so that you host the package host and have a local location for the settings and cache files. (done)
+ - change the myECN table to allow for showing "myECN" or OpenECNs
+    - be able to see all my, all open, all canceled
+
+ - make it so that the ECN is saved when the release button is clicked so that the comments and stuff are saved.
+
+ - allow for html exports of open ECNS
+
+ - be allowed to cancel ECNS
+
+- universal search
+    - search criteria
+    - be able to filter by status and author

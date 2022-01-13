@@ -19,8 +19,8 @@ initfile = os.path.join(program_location, "setting.ini")
 class UsersWindow(QtWidgets.QWidget):
     def __init__(self,parent=None):
         super(UsersWindow,self).__init__()
-        self.windowWidth =  1170
-        self.windowHeight = 830
+        self.windowWidth =  800
+        self.windowHeight = 550
         if parent is None:
             print("geting stuff")
             f = open(initfile,'r')
@@ -82,10 +82,18 @@ class UsersWindow(QtWidgets.QWidget):
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.table.doubleClicked.connect(self.editUser)
+        self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
+        self.button_edit.setEnabled(False)
+        self.button_remove.setEnabled(False)
         main_layout.addWidget(self.table)
         main_layout.addLayout(button_layout)
         
         self.repopulateTable()
+        
+    def onRowSelect(self):
+        self.button_edit.setEnabled(bool(self.table.selectionModel().selectedRows()))
+        self.button_remove.setEnabled(bool(self.table.selectionModel().selectedRows()))
     
     def repopulateTable(self):
         self.table.clearContents()

@@ -16,8 +16,8 @@ initfile = os.path.join(program_location, "setting.ini")
 class UserPanel(QtWidgets.QWidget):
     def __init__(self,parent=None,user=None,func=None):
         super(UserPanel,self).__init__()
-        self.windowWidth =  410
-        self.windowHeight = 580
+        self.windowWidth =  400
+        self.windowHeight = 550
         self.user = user
         self.func = func
         self.parent = parent

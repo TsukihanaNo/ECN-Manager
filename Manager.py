@@ -210,7 +210,7 @@ class Manager(QtWidgets.QWidget):
         self.tabWidget.addTab(self.completedTab, "Completed")
 
         timer = QtCore.QTimer(self)
-        timer.timeout.connect(self.updateQueue)
+        timer.timeout.connect(self.repopulateTable)
         timer.start(15000)
 
     def createMenuActions(self):
@@ -244,6 +244,12 @@ class Manager(QtWidgets.QWidget):
     def HookEcn(self,ecn_id):
         print("info received",ecn_id)
         self.ecnWindow = ECNWindow(self,ecn_id)
+        
+    def repopulateTable(self):
+        if self.user_info["role"]!="Signer":
+            self.myECNTab.repopulateTable()
+        self.queueTab.repopulateTable()
+        self.completedTab.repopulateTable()
 
 
     def loadInAnim(self):
