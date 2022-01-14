@@ -26,3 +26,6 @@
 - universal search (prototype done)
     - search criteria
     - be able to filter by status and author
+
+- priority sign offs -> job-title specific
+- have signers and notifiers
