@@ -43,7 +43,7 @@ class ECNTab(QtWidgets.QWidget):
         self.combo_type = QtWidgets.QComboBox(self)
         self.combo_type.addItems(['New Part', 'BOM Update', 'Firmware Update', 'Configurator Update', 'Product EOL'])
         self.combo_dept = QtWidgets.QComboBox(self)
-        self.combo_dept.addItems(["Elec","FoamPro","Lighting"])
+        self.combo_dept.addItems(self.parent.settings["Dept"].split(","))
         self.line_status = QtWidgets.QLineEdit(self)
         self.line_status.setReadOnly(True)
         self.line_status.setDisabled(True)

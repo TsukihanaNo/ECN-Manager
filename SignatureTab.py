@@ -5,6 +5,8 @@ class SignatureTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(SignatureTab,self).__init__()
         self.parent = parent
+        self.job_titles =[]
+        self.findJobTitles()
         self.initAtt()
         self.initUI()
 
@@ -45,7 +47,8 @@ class SignatureTab(QtWidgets.QWidget):
     def addRow(self):
         self.table.insertRow(self.table.rowCount())
         box = QtWidgets.QComboBox()
-        box.addItems(["Engineer","Manager","Buyer","Planner"])
+        #print(self.job_titles)
+        box.addItems(self.job_titles)
         self.table.setCellWidget(self.table.rowCount()-1, 0, box)
         box.currentIndexChanged.connect(self.setNameList)
         box.currentIndexChanged.connect(self.setUser)
@@ -113,6 +116,12 @@ class SignatureTab(QtWidgets.QWidget):
     def removeRow(self):
         self.table.removeRow(self.table.currentRow())
         
+    def findJobTitles(self):
+        self.parent.cursor.execute("Select DISTINCT JOB_TITLE FROM USER")
+        results = self.parent.cursor.fetchall()
+        for result in results:
+            self.job_titles.append(result[0])
+        print(self.job_titles)
     
         
     def setNameList(self):

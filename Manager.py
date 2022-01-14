@@ -130,13 +130,13 @@ class Manager(QtWidgets.QWidget):
         else:
             #read settings
             f = open(initfile,'r')
-            settings = {}
+            self.settings = {}
             for line in f:
                 key,value = line.split(" : ")
-                settings[key]=value.strip()
-            print(settings)
+                self.settings[key]=value.strip()
+            print(self.settings)
             f.close()
-            self.db = sqlite3.connect(settings["DB_LOC"])
+            self.db = sqlite3.connect(self.settings["DB_LOC"])
             self.cursor = self.db.cursor()
             self.cursor.row_factory = sqlite3.Row
             self.loginWindow = LoginWindow(self)
@@ -257,7 +257,7 @@ class Manager(QtWidgets.QWidget):
         msgbox.setText(msg+"        ")
         msgbox.exec()
         
-    def HookEcn(self,ecn_id):
+    def HookEcn(self,ecn_id=None):
         print("info received",ecn_id)
         self.ecnWindow = ECNWindow(self,ecn_id)
         

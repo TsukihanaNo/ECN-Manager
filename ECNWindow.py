@@ -18,6 +18,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.parent = parent
         self.cursor = self.parent.cursor
         self.db = self.parent.db
+        self.settings = parent.settings
         self.user_info = self.parent.user_info
         self.windowWidth =  830
         self.windowHeight = 580
@@ -59,7 +60,7 @@ class ECNWindow(QtWidgets.QWidget):
         
         self.tabwidget = QtWidgets.QTabWidget(self)
         self.tab_ecn = ECNTab(self)
-        self.tab_ecn.line_author.setText(self.parent.parent.user_info['user'])
+        self.tab_ecn.line_author.setText(self.parent.user_info['user'])
         self.tab_ecn.line_status.setText("Draft")
         self.tab_parts = PartsTab(self)
         self.tab_attach = AttachmentTab(self)

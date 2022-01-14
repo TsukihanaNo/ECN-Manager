@@ -36,8 +36,8 @@ class CompletedTab(QtWidgets.QWidget):
 
     def openECN(self):
         row = self.table.currentRow()
-        print(self.table.item(row,0).text())
-        self.ecnWindow = ECNWindow(self,self.table.item(row,0).text())
+        ecn_id=self.table.item(row,0).text()
+        self.parent.HookEcn(ecn_id)
 
     def initiateTable(self):
         titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified Date']

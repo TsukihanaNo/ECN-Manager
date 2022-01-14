@@ -35,6 +35,7 @@ class UsersWindow(QtWidgets.QWidget):
             self.cursor.row_factory = sqlite3.Row
         else:
             self.parent = parent
+            self.settings = parent.settings
             self.db = self.parent.db
             self.cursor = self.parent.cursor
         self.initAtt()
