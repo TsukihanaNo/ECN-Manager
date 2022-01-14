@@ -19,8 +19,8 @@ initfile = os.path.join(program_location, "setting.ini")
 class UsersWindow(QtWidgets.QWidget):
     def __init__(self,parent=None):
         super(UsersWindow,self).__init__()
-        self.windowWidth =  800
-        self.windowHeight = 550
+        self.windowWidth =  int(830*0.9)
+        self.windowHeight = int(580*0.90)
         if parent is None:
             print("geting stuff")
             f = open(initfile,'r')

@@ -13,13 +13,14 @@ else:
 #program_location = r"C:\Users\ljiang\Documents\Programming Projects\ECN-Manager\build\exe.win-amd64-3.9"
     
 #check for lock file
+lock_loc = r"C:\ProgramData\ECN-Manager"
 
 print(sys.argv)
 f = open(sys.argv[1],'r')
 ecn = f.readline().strip()
 print(ecn)
 
-lockfile = os.path.join(r"C:\temp","ecn.lock")
+lockfile = os.path.join(lock_loc,"ecn.lock")
 program = os.path.join(program_location,"Manager.exe")
 if not os.path.exists(lockfile):
     print(f"launching: {program}")
@@ -29,6 +30,4 @@ else:
     conn = Client(address, authkey=b'secret password')
     conn.send(ecn)
     conn.send('close')
-    # can also send arbitrary objects:
-    # conn.send(['a', 2.5, None, int, sum])
     conn.close()

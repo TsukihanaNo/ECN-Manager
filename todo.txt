@@ -6,10 +6,9 @@
 
 - EVN export
 
-- add parts tab
+- add parts tab (prototyped)
 
 - add ecn handling in email (done)
-    - prototype done
 
 - check for required fields before allowing for release
 

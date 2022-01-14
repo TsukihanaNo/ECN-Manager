@@ -16,7 +16,7 @@ class Hook(QtCore.QObject):
             print('connection accepted from', self.listener.last_accepted)
             msg = conn.recv()
             # do something with msg
-            print(msg)
+            #print(msg)
             if msg !='close':
                 self.launch.emit(msg)
             if msg == 'close':

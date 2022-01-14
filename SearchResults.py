@@ -114,6 +114,11 @@ class SearchResults(QtWidgets.QWidget):
             for result in results:
                 if result[0] not in self.matches:
                     self.matches.append(result[0])
+            self.parent.cursor.execute(f"Select ECN_ID from PARTS where PART_ID like '%{search}%' OR DESC like '%{search}%'")
+            results = self.parent.cursor.fetchall()
+            for result in results:
+                if result[0] not in self.matches:
+                    self.matches.append(result[0])
             self.repopulateTable()
 
     def dispMsg(self,msg):

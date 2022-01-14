@@ -24,7 +24,8 @@ else:
 
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
 initfile = os.path.join(program_location, "setting.ini")
-lockfile = os.path.join(r"C:\temp", "ecn.lock")
+lock_loc = r"C:\ProgramData\ECN-Manager"
+lockfile = os.path.join(lock_loc, "ecn.lock")
 icon = os.path.join(program_location,"ecn-icon.png")
 
 databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT", "ECN_REASON TEXT","REQUESTOR TEXT" ,"AUTHOR TEXT", "STATUS TEXT", "COMP_DATE DATE", "ECN_SUMMARY TEXT", "LAST_CHANGE_DATE DATE"],
@@ -37,10 +38,11 @@ databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT"
 class Manager(QtWidgets.QWidget):
     def __init__(self,ecn = None):
         super(Manager, self).__init__()
-        self.windowWidth = QtGui.QGuiApplication.primaryScreen().availableGeometry().width() *0.5
-        self.windowHeight = self.windowWidth *.75
+        self.windowWidth = 850
+        self.windowHeight = 600
         self.ecn = ecn
         self.firstInstance = True
+        self.checkLockLoc()
         self.checkLockFile()
         self.generateLockFile()
         self.ico = QtGui.QIcon(icon)
@@ -62,6 +64,10 @@ class Manager(QtWidgets.QWidget):
             QtGui.QGuiApplication.primaryScreen().availableGeometry(),
         ),
     )
+    
+    def checkLockLoc(self):
+        if not os.path.exists(lock_loc):
+            os.makedirs(lock_loc)
         
     def checkLockFile(self):
         if os.path.exists(lockfile):
@@ -304,6 +310,11 @@ class Manager(QtWidgets.QWidget):
                 if result[0] not in matches:
                     matches.append(result[0])
             self.cursor.execute(f"Select ECN_ID from ATTACHMENTS where FILENAME like '%{search}%'")
+            results = self.cursor.fetchall()
+            for result in results:
+                if result[0] not in matches:
+                    matches.append(result[0])
+            self.cursor.execute(f"Select ECN_ID from PARTS where PART_ID like '%{search}%' OR DESC like '%{search}%'")
             results = self.cursor.fetchall()
             for result in results:
                 if result[0] not in matches:

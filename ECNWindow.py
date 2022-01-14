@@ -8,6 +8,7 @@ from ShopTab import *
 from PlannerTab import *
 from ChangeLogTab import *
 from SignatureTab import *
+from PartsTab import *
 from CommentTab import *
 from string import Template
 
@@ -18,8 +19,8 @@ class ECNWindow(QtWidgets.QWidget):
         self.cursor = self.parent.cursor
         self.db = self.parent.db
         self.user_info = self.parent.user_info
-        self.windowWidth =  QtGui.QGuiApplication.primaryScreen().availableGeometry().width() *0.55
-        self.windowHeight = self.windowWidth * 0.75
+        self.windowWidth =  830
+        self.windowHeight = 580
         self.load_id = load_id
         self.tablist = []
         self.typeindex = {'New Part':0, 'BOM Update':1, 'Firmware Update':2, 'Configurator Update' : 3,'Product EOL':4}
@@ -60,6 +61,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_ecn = ECNTab(self)
         self.tab_ecn.line_author.setText(self.parent.parent.user_info['user'])
         self.tab_ecn.line_status.setText("Draft")
+        self.tab_parts = PartsTab(self)
         self.tab_attach = AttachmentTab(self)
         self.tab_comments = CommentTab(self)
         self.tab_comments.enterText.setDisabled(True)
@@ -74,13 +76,14 @@ class ECNWindow(QtWidgets.QWidget):
         self.button_cancel.setDisabled(True)
         self.button_cancel.clicked.connect(self.cancel)
         self.tabwidget.addTab(self.tab_ecn, "ECN")
+        self.tabwidget.addTab(self.tab_parts,"Parts")
         self.tabwidget.addTab(self.tab_attach, "Attachment")
         self.tabwidget.addTab(self.tab_comments, "Comments")
         self.tabwidget.addTab(self.tab_signature, "Signatures")
         self.tabwidget.addTab(self.tab_changelog, "Change Log")
         
-        self.tabwidget.setTabVisible(2, False)
-        self.tabwidget.setTabVisible(4, False)
+        self.tabwidget.setTabVisible(3, False)
+        self.tabwidget.setTabVisible(5, False)
                 
         self.tab_purch = PurchaserTab(self)
         self.tab_planner = PlannerTab(self)
@@ -106,7 +109,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_ecn = ECNTab(self)
         self.tab_ecn.box_requestor.setDisabled(True)
         self.tab_ecn.combo_type.setDisabled(True)
-        #self.tab_eng = EngineerTab(self)
+        self.tab_parts = PartsTab(self)
         self.tab_attach = AttachmentTab(self)
         #self.tab_task = TasksTab(self)
         self.tab_comments = CommentTab(self)
@@ -117,7 +120,7 @@ class ECNWindow(QtWidgets.QWidget):
         #self.tab_shop = ShopTab(self)
         
         self.tabwidget.addTab(self.tab_ecn, "ECN")
-        #self.tabwidget.addTab(self.tab_eng, "Engineer")
+        self.tabwidget.addTab(self.tab_parts, "Parts")
         self.tabwidget.addTab(self.tab_attach, "Attachment")
         #self.tabwidget.addTab(self.tab_task, "Tasks")
         self.tabwidget.addTab(self.tab_comments, "Comments")
@@ -239,6 +242,9 @@ class ECNWindow(QtWidgets.QWidget):
             self.cursor.execute("INSERT INTO ECN(ECN_ID,ECN_TYPE,AUTHOR,REQUESTOR,STATUS,ECN_TITLE,ECN_REASON,ECN_SUMMARY,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?,?)",(data))
             self.db.commit()
             
+            if self.tab_parts.table.rowCount()>0:
+                self.addParts()
+            
             if self.tab_attach.table.rowCount()>0:
                 for x in range(self.tab_attach.table.rowCount()):
                     filename = self.tab_attach.table.item(x, 0).text()
@@ -310,6 +316,27 @@ class ECNWindow(QtWidgets.QWidget):
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data update (signature)!\n Error: {e}")
+            
+    def addParts(self):
+        try:
+            ecn_id = self.tab_ecn.line_id.text()
+            self.cursor.execute("DELETE FROM PARTS WHERE ECN_ID = '" + ecn_id + "'")
+            self.db.commit()
+            for x in range(self.tab_parts.table.rowCount()):
+                part = self.tab_parts.table.item(x, 0).text()
+                desc = self.tab_parts.table.item(x, 1).text()
+                if isinstance(self.tab_parts.table.item(x, 2),QtWidgets.QTableWidgetItem):
+                    disposition = self.tab_parts.table.item(x, 2).text()
+                else:
+                    disposition = self.tab_parts.table.cellWidget(x, 2).currentText()
+                rev = self.tab_parts.table.item(x,3).text()
+                data = (ecn_id, part, desc,disposition,rev)
+                self.cursor.execute("INSERT INTO PARTS(ECN_ID,PART_ID,DESC,DISPOSITION,REVISION) VALUES(?,?,?,?,?)",(data))
+            self.db.commit()
+            #print('data inserted')
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error occured during data update (parts)!\n Error: {e}")
 
     def updateData(self):
         try:
@@ -325,6 +352,9 @@ class ECNWindow(QtWidgets.QWidget):
             #data = (self.combo_type.currentText(),self.box_requestor.text(),self.date_request.date().toString("yyyy-MM-dd"),'Unassigned',self.line_ecntitle.text(),self.text_detail.toPlainText(),self.line_id.text())
             self.cursor.execute("UPDATE ECN SET ECN_TYPE = ?, REQUESTOR = ?, ECN_TITLE = ?, ECN_REASON = ?, ECN_SUMMARY = ?, LAST_MODIFIED = ? WHERE ECN_ID = ?",(data))
             self.db.commit()
+            
+            if self.tab_parts.table.rowCount()>0:
+                self.addParts()
             
             if self.tab_attach.table.rowCount()>0:
                 self.cursor.execute("DELETE FROM ATTACHMENTS WHERE ECN_ID = '" + ecn_id + "'")
@@ -367,6 +397,18 @@ class ECNWindow(QtWidgets.QWidget):
             self.tab_signature.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['NAME']))
             self.tab_signature.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['USER_ID']))
             self.tab_signature.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['SIGNED_DATE']))
+            rowcount+=1
+            
+        command = "Select * from PARTS where ECN_ID= '"+self.load_id +"'"
+        self.cursor.execute(command)
+        results = self.cursor.fetchall()
+        self.tab_parts.table.setRowCount(len(results))
+        rowcount=0
+        for result in results:
+            self.tab_parts.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['PART_ID']))
+            self.tab_parts.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['DESC']))
+            self.tab_parts.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['DISPOSITION']))
+            self.tab_parts.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['REVISION']))
             rowcount+=1
             
         command = "Select * from ATTACHMENTS where ECN_ID= '"+self.load_id +"'"
@@ -520,7 +562,7 @@ class ECNWindow(QtWidgets.QWidget):
             self.AddSignatures()
             if not msg:
                 self.dispMsg("ECN has been saved!")
-            self.tabwidget.setTabVisible(2, True)
+            self.tabwidget.setTabVisible(3, True)
             self.parent.repopulateTable()
             self.button_release.setDisabled(False)
             self.button_cancel.setDisabled(False)
@@ -552,8 +594,8 @@ class ECNWindow(QtWidgets.QWidget):
                 dept = self.tab_ecn.combo_dept.currentText()
                 requestor = self.tab_ecn.box_requestor.currentText()
                 #316 front html wrapper characters and 14 ending html wrapper from qt.tohtml
-                reason = self.tab_ecn.text_reason.toHtml()[316:-14]
-                summary = self.tab_ecn.text_summary.toHtml()[316:-14]
+                reason = self.tab_ecn.text_reason.toHtml()[330:-14]
+                summary = self.tab_ecn.text_summary.toHtml()[330:-14]
                 signature = "<tr>"
                 attachment ="<tr>"
 
