@@ -44,15 +44,16 @@ class ChangeLogTab(QtWidgets.QWidget):
         self.table.clearContents()
         command = "Select * from CHANGELOG where ECN_ID ='" + self.ecn_id + "'"
         self.cursor.execute(command)
-        test = self.cursor.fetchall()
-        rowcount=0
-        self.table.setRowCount(len(test))
-        for item in test:
-            self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
-            self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['CHANGEDATE']))
-            self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['NAME']))
-            self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['PREVDATA']))
-            self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['NEWDATA']))
-            rowcount+=1    
+        results = self.cursor.fetchall()
+        if results is not None:
+            rowcount=0
+            self.table.setRowCount(len(results))
+            for item in results:
+                self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
+                self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['CHANGEDATE']))
+                self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['NAME']))
+                self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['PREVDATA']))
+                self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['NEWDATA']))
+                rowcount+=1    
         #self.table.resizeColumnsToContents()
 

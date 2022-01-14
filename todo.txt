@@ -15,17 +15,15 @@
 
 - add remainder of data to change log check
 
-- search for ECNs
-
  - change the myECN table to allow for showing "myECN" or OpenECNs
     - be able to see all my, all open, all canceled
 
- - make it so that the ECN is saved when the release button is clicked so that the comments and stuff are saved.
+ - make it so that the ECN is saved when the release button is clicked so that the comments and stuff are saved.  (done)
 
- - allow for html exports of open ECNS
+ - allow for html exports of open ECNS (done)
 
- - be allowed to cancel ECNS
+ - be allowed to cancel ECNS (done)
 
-- universal search
+- universal search (prototype done)
     - search criteria
     - be able to filter by status and author

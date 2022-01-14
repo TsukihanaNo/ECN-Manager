@@ -63,7 +63,6 @@ class MyQueueTab(QtWidgets.QWidget):
         ecn_id = []
         for result in results:
             ecn_id.append(result[0])
-            
         #print(ecn_id)
         rowcount=0
         for ecn in ecn_id:

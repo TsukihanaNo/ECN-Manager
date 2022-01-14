@@ -12,6 +12,7 @@ from DataBaseUpdateWindow import *
 from NewDBWindow import *
 from UsersWindow import *
 from Hook import *
+from SearchResults import *
 
 
 if getattr(sys, 'frozen', False):
@@ -194,6 +195,15 @@ class Manager(QtWidgets.QWidget):
         mainLayout.setMenuBar(self.menubar)
 
         self.createMenuActions()
+        searchLayout = QtWidgets.QHBoxLayout()
+        self.line_search = QtWidgets.QLineEdit(self)
+        self.line_search.setPlaceholderText("Search here")
+        self.button_search = QtWidgets.QPushButton("Search")
+        self.line_search.returnPressed.connect(self.search)
+        self.button_search.clicked.connect(self.search)
+        searchLayout.addWidget(self.line_search)
+        searchLayout.addWidget(self.button_search)
+        mainLayout.addLayout(searchLayout)
 
         # mainLayout.setMenuBar(self.menubar)
         self.tabWidget = QtWidgets.QTabWidget(self)
@@ -283,7 +293,22 @@ class Manager(QtWidgets.QWidget):
         for result in results:
             self.nameList.append(result[0])
         #print(self.nameList)
-
+        
+    def search(self):
+        if self.line_search.text()!="":
+            search = self.line_search.text()
+            matches = []
+            self.cursor.execute(f"Select ECN_ID from ECN where ECN_TITLE like '%{search}%' OR ECN_REASON like '%{search}%' OR ECN_SUMMARY like '%{search}%'")
+            results = self.cursor.fetchall()
+            for result in results:
+                if result[0] not in matches:
+                    matches.append(result[0])
+            self.cursor.execute(f"Select ECN_ID from ATTACHMENTS where FILENAME like '%{search}%'")
+            results = self.cursor.fetchall()
+            for result in results:
+                if result[0] not in matches:
+                    matches.append(result[0])
+            self.searchResult = SearchResults(self,matches)
 
 # execute the program
 def main():
