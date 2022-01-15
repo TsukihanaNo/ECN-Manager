@@ -47,6 +47,7 @@ class Manager(QtWidgets.QWidget):
         self.generateLockFile()
         self.ico = QtGui.QIcon(icon)
         self.startUpCheck()
+        self.getStageDict()
         self.user_info = {}
         self.programLoc = program_location
         
@@ -291,6 +292,14 @@ class Manager(QtWidgets.QWidget):
         
     def launchUsers(self):
         self.userWindow = UsersWindow(self)
+        
+    def getStageDict(self):
+        self.stageDict = {}
+        stages = self.settings["Stage"].split(",")
+        for stage in stages:
+            key,value = stage.split("-")
+            self.stageDict[key.strip()] = value.strip()
+        print(self.stageDict)
         
     def getNameList(self):
         command = "Select NAME from USER where STATUS ='Active'"

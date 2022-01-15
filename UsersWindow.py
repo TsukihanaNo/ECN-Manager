@@ -38,6 +38,7 @@ class UsersWindow(QtWidgets.QWidget):
             self.settings = parent.settings
             self.db = self.parent.db
             self.cursor = self.parent.cursor
+        self.getStageDict()
         self.initAtt()
         self.initUI()
         self.show()
@@ -91,6 +92,14 @@ class UsersWindow(QtWidgets.QWidget):
         main_layout.addLayout(button_layout)
         
         self.repopulateTable()
+        
+    def getStageDict(self):
+        self.stageDict = {}
+        stages = self.settings["Stage"].split(",")
+        for stage in stages:
+            key,value = stage.split("-")
+            #self.stageDict[key] = value.strip()
+        print(self.stageDict)
         
     def onRowSelect(self):
         self.button_edit.setEnabled(bool(self.table.selectionModel().selectedRows()))

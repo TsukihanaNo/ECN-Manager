@@ -10,6 +10,8 @@ class MyQueueTab(QtWidgets.QWidget):
         self.db = self.parent.db
         self.cursor = self.parent.cursor
         self.user_info = self.parent.user_info
+        self.stage = self.parent.stageDict[self.user_info["title"]]
+        print(self.stage)
         self.initAtt()
         self.initUI()
 
@@ -57,8 +59,8 @@ class MyQueueTab(QtWidgets.QWidget):
     def repopulateTable(self):
         self.table.clearContents()
         self.table.setRowCount(0)
-        command = "Select ECN_ID from SIGNATURE where USER_ID ='" + self.user_info['user'] + "'"
-        self.cursor.execute(command)
+        #command = "Select ECN_ID from SIGNATURE where USER_ID ='" + self.user_info['user'] + "'"
+        self.cursor.execute(f"select ECN_ID from SIGNATURE where USER_ID='{self.user_info['user']}'")
         results = self.cursor.fetchall()
         ecn_id = []
         for result in results:
@@ -66,7 +68,7 @@ class MyQueueTab(QtWidgets.QWidget):
         #print(ecn_id)
         rowcount=0
         for ecn in ecn_id:
-            command = "Select * from ECN where ECN_ID ='" + ecn + "' and STATUS='Out For Approval'"
+            command = f"Select * from ECN where ECN_ID ='{ecn}' and STATUS='Out For Approval' and STAGE>={self.stage}"
             self.cursor.execute(command)
             test = self.cursor.fetchall()
             for item in test:

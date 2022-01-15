@@ -66,10 +66,17 @@ class UserPanel(QtWidgets.QWidget):
         self.combo_role.addItems(['Admin','Engineer','Manager','Signer',])
         label_title = QtWidgets.QLabel("Job Title:")
         self.combo_title = QtWidgets.QComboBox(self)
-        self.combo_title.addItems(self.parent.settings['Job_Titles'].split(","))
+        jobs = []
+        for job in self.parent.settings["Job_Titles"].split(","):
+            jobs.append(job.strip())
+        print(jobs)
+        self.combo_title.addItems(jobs)
         label_dept = QtWidgets.QLabel("Department:")
         self.combo_dept = QtWidgets.QComboBox(self)
-        self.combo_dept.addItems(self.parent.settings["Dept"].split(","))
+        depts = []
+        for dept in self.parent.settings["Dept"].split(","):
+            depts.append(dept.strip())
+        self.combo_dept.addItems(depts)
         label_status = QtWidgets.QLabel("Status:")
         self.combo_status = QtWidgets.QComboBox(self)
         self.combo_status.addItems(['Active','Inactive'])

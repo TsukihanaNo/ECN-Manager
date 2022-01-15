@@ -15,7 +15,7 @@ location_DB = os.path.join(dbfolder,"ECN_DB.db")
 database = sqlite3.connect(location_DB)
 cursor = database.cursor()
 
-results = cursor.execute(f"Select ECN_ID from ECN where ECN_TITLE like '%safelink%'")
+results = cursor.execute(f"Select * from ECN where STAGE>=2 ")
 for result in results:
     print(result)
 
