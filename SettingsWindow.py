@@ -1,3 +1,5 @@
+from tkinter import mainloop
+from wsgiref import headers
 from PySide6 import QtWidgets, QtCore, QtGui
 import os, sys
 from MyTableWidget import *
@@ -21,7 +23,6 @@ class SettingsWindow(QtWidgets.QWidget):
         self.windowWidth =  int(580*0.75)
         self.windowHeight = int(830*0.75)
         if parent is None:
-            print("geting stuff")
             f = open(initfile,'r')
             self.settings = {}
             for line in f:
@@ -39,6 +40,8 @@ class SettingsWindow(QtWidgets.QWidget):
             self.cursor = self.parent.cursor
         self.initAtt()
         self.initUI()
+        self.getStageDict()
+        self.loadSettings()
         self.show()
 
     def center(self):
@@ -65,6 +68,14 @@ class SettingsWindow(QtWidgets.QWidget):
 
     def initUI(self):
         main_layout = QtWidgets.QVBoxLayout(self)
+        self.label_db = QtWidgets.QLabel("DB Loc:")
+        self.line_db = QtWidgets.QLineEdit(self)
+        self.button_db = QtWidgets.QPushButton("Browse")
+        layout_db = QtWidgets.QHBoxLayout()
+        layout_db.addWidget(self.line_db)
+        layout_db.addWidget(self.button_db)
+        main_layout.addWidget(self.label_db)
+        main_layout.addLayout(layout_db)
         self.label_smpt = QtWidgets.QLabel("SMPT: IP/Port")
         self.line_smpt_address = QtWidgets.QLineEdit(self)
         self.line_smpt_address.setPlaceholderText("SMPT Address")
@@ -73,8 +84,89 @@ class SettingsWindow(QtWidgets.QWidget):
         main_layout.addWidget(self.label_smpt)
         main_layout.addWidget(self.line_smpt_address)
         main_layout.addWidget(self.line_smpt_port)
+        self.label_dept = QtWidgets.QLabel("Dept:")
+        self.line_dept = QtWidgets.QLineEdit(self)
+        self.line_dept.returnPressed.connect(self.addDept)
+        self.button_dept_add = QtWidgets.QPushButton("Add")
+        self.button_dept_add.clicked.connect(self.addDept)
+        self.list_dept = QtWidgets.QListWidget(self)
+        self.list_dept.doubleClicked.connect(self.removeDept)
+        self.button_dept_remove = QtWidgets.QPushButton("Remove")
+        self.button_dept_remove.clicked.connect(self.removeDept)
+        self.label_jobs = QtWidgets.QLabel("Job Titles:")
+        headers = ['Job Title','Stage']
+        self.table_jobs = QtWidgets.QTableWidget(0,len(headers),self)
+        self.table_jobs.setHorizontalHeaderLabels(headers)
+        self.table_jobs.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.button_jobs_add = QtWidgets.QPushButton("Add")
+        self.button_jobs_add.clicked.connect(self.addJob)
+        self.button_jobs_remove = QtWidgets.QPushButton("Remove")
+        self.button_jobs_remove.clicked.connect(self.removeJob)
+        self.button_save = QtWidgets.QPushButton("Save Settings")
+        layout_buttons_jobs = QtWidgets.QHBoxLayout()
+        layout_buttons_jobs.addWidget(self.button_jobs_add)
+        layout_buttons_jobs.addWidget(self.button_jobs_remove)
+        layout_dept = QtWidgets.QHBoxLayout()
+        layout_dept.addWidget(self.line_dept)
+        layout_dept.addWidget(self.button_dept_add)
+        main_layout.addWidget(self.label_dept)
+        main_layout.addLayout(layout_dept)
+        main_layout.addWidget(self.list_dept)
+        main_layout.addWidget(self.button_dept_remove)
+        main_layout.addWidget(self.label_jobs)
+        main_layout.addWidget(self.table_jobs)
+        main_layout.addLayout(layout_buttons_jobs)
+        main_layout.addWidget(self.button_save)
         #main_layout.addLayout(button_layout)
         self.setLayout(main_layout)
+
+    def getStageDict(self):
+        self.stageDict = {}
+        stages = self.settings["Stage"].split(",")
+        for stage in stages:
+            key,value = stage.split("-")
+            self.stageDict[key.strip()] = value.strip()
+        #print(self.stageDict)
+
+
+    def loadSettings(self):
+        self.line_db.setText(self.settings["DB_LOC"])
+        self.line_smpt_address.setText(self.settings["SMTP"])
+        self.line_smpt_port.setText(self.settings["port"])
+        dept = self.settings["Dept"].split(",")
+        temp = []
+        for item in dept:
+            temp.append(item.strip())
+        for item in temp:
+            self.list_dept.addItem(item)
+        jobs = self.settings["Job_Titles"].split(",")
+        temp = []
+        for job in jobs:
+            temp.append(job.strip())
+        self.table_jobs.setRowCount(len(temp))
+        row = 0
+        for item in temp:
+            self.table_jobs.setItem(row, 0, QtWidgets.QTableWidgetItem(item))
+            self.table_jobs.setItem(row,1,QtWidgets.QTableWidgetItem(self.stageDict[item]))
+            row+=1
+
+    def saveSettings(self):
+        pass
+
+    def addDept(self):
+        if self.line_dept.text()!="":
+            self.list_dept.addItem(self.line_dept.text())
+            self.line_dept.clear()
+
+    def removeDept(self):
+        for item in self.list_dept.selectedItems():
+            self.list_dept.takeItem(self.list_dept.row(item))
+
+    def addJob(self):
+        self.table_jobs.insertRow(self.table_jobs.rowCount())
+
+    def removeJob(self):
+        self.table_jobs.removeRow(self.table_jobs.currentRow())
 
 
     def dispMsg(self,msg):

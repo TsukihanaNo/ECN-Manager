@@ -13,6 +13,7 @@ from NewDBWindow import *
 from UsersWindow import *
 from Hook import *
 from SearchResults import *
+from SettingsWindow import *
 
 
 if getattr(sys, 'frozen', False):
@@ -239,6 +240,9 @@ class Manager(QtWidgets.QWidget):
                 "&Connect to existing Database", self)
             filemenu.addAction(newDBAction)
             filemenu.addAction(connectDBAction)
+            settingAction = QtGui.QAction("&Settings",self)
+            settingAction.triggered.connect(self.launchSettings)
+            filemenu.addAction(settingAction)
             userAction = QtGui.QAction("&Users Window",self)
             userAction.triggered.connect(self.launchUsers)
             filemenu.addAction(userAction)
@@ -289,6 +293,9 @@ class Manager(QtWidgets.QWidget):
 
     def newDB(self):
         self.newDBWindow = NewDBWindow(self)
+
+    def launchSettings(self):
+        self.settingsWindow = SettingsWindow(self)
         
     def launchUsers(self):
         self.userWindow = UsersWindow(self)
