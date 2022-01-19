@@ -583,7 +583,7 @@ class ECNWindow(QtWidgets.QWidget):
     def exportHTML(self):
         foldername = QtWidgets.QFileDialog().getExistingDirectory()
         if foldername:
-            with open(self.parent.parent.programLoc+'\\template.html') as f:
+            with open(self.parent.programLoc+'\\template.html') as f:
                 lines = f.read() 
                 #print(lines)
                 f.close()

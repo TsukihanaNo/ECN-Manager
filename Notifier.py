@@ -4,6 +4,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
+from datetime import datetime
 import sqlite3
 import os
 import sys
@@ -181,7 +182,6 @@ class Notifier(QtWidgets.QWidget):
             
     def sendEmail(self,ecn_id,receivers,message):
         with smtplib.SMTP(self.settings["SMTP"],self.settings["port"]) as server:
-            
             msg = MIMEMultipart()
             msg['From'] = self.settings["From_Address"]
             msg['To'] = ", ".join(receivers)
@@ -208,6 +208,41 @@ class Notifier(QtWidgets.QWidget):
     def removeECNX(eslf,ecn_id):
         ecnx = os.path.join(program_location,ecn_id+'.ecnx')
         os.remove(ecnx)
+
+    def setElapsedDays(self):
+        self.cursor.execute(f"Select ECN_ID, FIRST_RELEASE, LAST_STATUS from ECN where STATUS!='Completed'")
+        results = self.cursor.fetchall()
+        for result in results:
+            today  = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+            ecn = result[0]
+            first_release = datetime.strptime(result[1],'%Y/%m/%d-%H:%M:%S')
+            last_status = datetime.strptime(result[2],'%Y/%m/%d-%H:%M:%S')
+            release_elapse = today - first_release
+            status_elapse = today - last_status
+            self.cursor.execute(f"UPDATE ECN SET RELEASE_ELAPSE ='{release_elapse.day}', STATUS_ELAPSE='{status_elapse.day}' WHERE ECN_ID='{ecn}'")
+        self.db.commit()
+
+    def lateReminder(self,ecn_id):
+        self.cursor.execute(f"Select LAST_NOTIFIED, RELEASE_ELAPSE, STATUS_ELAPSE from ECN where ECN_ID={ecn_id}")
+        result = self.cursor.fetchone()
+        today = datetime.now().strptime('%Y/%m/%d-%H:%M:%S')
+        message = f"Reminder for {ecn_id}: it has been {result[1]} days since the ECN has been released and {result[2]} days since the last status change."
+        if result[0] is None:
+            pass #send notification set notification set
+        else:
+            last_notify = datetime.strptime(result[0],'%Y/%m/%d-%H:%M:%S')
+            elapsed = today - last_notify
+            if elapsed.day >2:
+                pass # send notification
+
+    def getReminderUsers(self):
+        self.cursor.execute(f"select USER_ID from SIGNATURE where SIGNED_DATE is NULL")
+        results = self.cursor.fetchall()
+        receivers = []
+        for result in results:
+            receivers.append(self.userList(result[0]))
+        return receivers
+
             
             
 def main():

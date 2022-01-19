@@ -2,7 +2,6 @@ from PySide6 import QtWidgets, QtCore, QtGui
 import os, sys
 from MyTableWidget import *
 from UserPanel import *
-from Hook import *
 import sqlite3  
 
 

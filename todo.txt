@@ -6,10 +6,6 @@
 
 - EVN export
 
-- add parts tab (prototyped)
-
-- add ecn handling in email (done)
-
 - check for required fields before allowing for release
 
 - add remainder of data to change log check
@@ -17,15 +13,16 @@
  - change the myECN table to allow for showing "myECN" or OpenECNs
     - be able to see all my, all open, all canceled
 
- - make it so that the ECN is saved when the release button is clicked so that the comments and stuff are saved.  (done)
-
- - allow for html exports of open ECNS (done)
-
- - be allowed to cancel ECNS (done)
 
 - universal search (prototype done)
     - search criteria
     - be able to filter by status and author
 
-- priority sign offs -> job-title specific
+- priority sign offs -> job-title specific (done)
 - have signers and notifiers
+- parts tab update:
+    - part id, desc, part type, disposition, 
+
+- test how attachments work with pdm parts
+
+- add elapse days of ecn.
