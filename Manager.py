@@ -27,6 +27,7 @@ else:
 initfile = os.path.join(program_location, "setting.ini")
 lock_loc = r"C:\ProgramData\ECN-Manager"
 lockfile = os.path.join(lock_loc, "ecn.lock")
+notifier_lockfile = os.path.join(program_location, "notifier.lock")
 icon = os.path.join(program_location,"ecn-icon.png")
 
 databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT", "ECN_REASON TEXT","REQUESTOR TEXT" ,"AUTHOR TEXT", "STATUS TEXT", "COMP_DATE DATE", "ECN_SUMMARY TEXT", "LAST_CHANGE_DATE DATE"],
@@ -46,12 +47,12 @@ class Manager(QtWidgets.QWidget):
         self.checkLockLoc()
         self.checkLockFile()
         self.generateLockFile()
+        self.checkNotifier()
         self.ico = QtGui.QIcon(icon)
         self.startUpCheck()
         self.getStageDict()
         self.user_info = {}
         self.programLoc = program_location
-        
         self.nameList = []
 
         # self.checkDBTables()
@@ -84,6 +85,10 @@ class Manager(QtWidgets.QWidget):
         
     def removeLockFile(self):
         os.remove(lockfile)
+        
+    def checkNotifier(self):
+        if not os.path.exists(notifier_lockfile):
+            self.dispMsg("The Notifier is currently not running. No notifications will be sent until it is launched.")
 
     def loginDone(self):
         self.initAtt()
@@ -116,34 +121,51 @@ class Manager(QtWidgets.QWidget):
             ret = msgbox.exec()
             if msgbox.clickedButton() == openbutton:
                 db_loc = QtWidgets.QFileDialog.getOpenFileName(self,self.tr("Open DB"),program_location,self.tr("DB Files (*.DB)"))[0]
+                #save setting
+                if db_loc!="":
+                    f = open(initfile,"w")
+                    data =f"DB_LOC : {db_loc}\nJob_Titles : Admin\nStage : Admin-99"
+                    f.write(data)
+                    f.close()
+                    self.loadSettings()
+                    self.checkSettings()
                 self.db = sqlite3.connect(db_loc)
                 self.cursor = self.db.cursor()
                 self.cursor.row_factory = sqlite3.Row
                 self.loginWindow = LoginWindow(self)
-                #save setting
-                if db_loc!="":
-                    f = open(initfile,"w+")
-                    f.write("DB_LOC : "+db_loc)
-                    f.close()
             elif msgbox.clickedButton() == addbutton:
                 self.newDB()
             else:
                 exit()
         else:
-            #read settings
-            f = open(initfile,'r')
-            self.settings = {}
-            for line in f:
-                key,value = line.split(" : ")
-                self.settings[key]=value.strip()
-            print(self.settings)
-            f.close()
+            self.loadSettings()
+            self.checkSettings()
             self.db = sqlite3.connect(self.settings["DB_LOC"])
             self.cursor = self.db.cursor()
             self.cursor.row_factory = sqlite3.Row
             self.loginWindow = LoginWindow(self)
-
-
+            
+    def loadSettings(self):
+        f = open(initfile,'r')
+        self.settings = {}
+        for line in f:
+            key,value = line.split(" : ")
+            self.settings[key]=value.strip()
+        print(self.settings)
+        f.close()
+        
+    def checkSettings(self):
+        missing_keys = ""
+        if "Dept" not in self.settings.keys():
+            missing_keys += "Dept "
+        if "SMTP" not in self.settings.keys():
+            missing_keys += "SMTP "
+        if "Port" not in self.settings.keys():
+            missing_keys += "Port "
+        if missing_keys !="":
+            self.dispMsg(f"The following settings are missing: {missing_keys}. Please set them up in the settings window and set up the rest of the settings.")
+        
+        
     def checkDBTables(self):
         addtable = {}
         addcolumns = {}

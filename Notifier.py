@@ -19,6 +19,7 @@ else:
 
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
 initfile = os.path.join(program_location, "setting.ini")
+lockfile = os.path.join(program_location, "notifier.lock")
 
 class Notifier(QtWidgets.QWidget):
     def __init__(self):
@@ -26,6 +27,9 @@ class Notifier(QtWidgets.QWidget):
         self.windowWidth = 650
         self.windowHeight = 450
         self.programLoc = program_location
+        self.firstInstance = True
+        self.checkLockFile()
+        self.generateLockFile()
         self.userList={}
         self.settings = {}
         self.startUpCheck()
@@ -105,6 +109,20 @@ class Notifier(QtWidgets.QWidget):
             self.cursor = self.db.cursor()
             self.cursor.row_factory = sqlite3.Row
             
+    def checkLockFile(self):
+        if os.path.exists(lockfile):
+            self.dispMsg("Another Instance is already open.")
+            self.firstInstance = False
+            sys.exit()
+        
+    def generateLockFile(self):
+        f = open(lockfile,"w+")
+        f.write("program started, lock trigger")
+        f.close()
+        
+    def removeLockFile(self):
+        os.remove(lockfile)
+            
     def getUserList(self):
         self.cursor.execute("select USER_ID, EMAIL from USER where STATUS='Active'")
         results = self.cursor.fetchall()
@@ -181,7 +199,7 @@ class Notifier(QtWidgets.QWidget):
         self.sendEmail(ecn_id,receivers, message)
             
     def sendEmail(self,ecn_id,receivers,message):
-        with smtplib.SMTP(self.settings["SMTP"],self.settings["port"]) as server:
+        with smtplib.SMTP(self.settings["SMTP"],self.settings["Port"]) as server:
             msg = MIMEMultipart()
             msg['From'] = self.settings["From_Address"]
             msg['To'] = ", ".join(receivers)
@@ -242,6 +260,11 @@ class Notifier(QtWidgets.QWidget):
         for result in results:
             receivers.append(self.userList(result[0]))
         return receivers
+    
+    def closeEvent(self, event):
+        self.db.close()
+        if self.firstInstance:
+            self.removeLockFile()
 
             
             

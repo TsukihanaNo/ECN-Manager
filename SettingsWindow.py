@@ -103,6 +103,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.button_jobs_remove = QtWidgets.QPushButton("Remove")
         self.button_jobs_remove.clicked.connect(self.removeJob)
         self.button_save = QtWidgets.QPushButton("Save Settings")
+        self.button_save.clicked.connect(self.saveSettings)
         layout_buttons_jobs = QtWidgets.QHBoxLayout()
         layout_buttons_jobs.addWidget(self.button_jobs_add)
         layout_buttons_jobs.addWidget(self.button_jobs_remove)
@@ -131,28 +132,67 @@ class SettingsWindow(QtWidgets.QWidget):
 
     def loadSettings(self):
         self.line_db.setText(self.settings["DB_LOC"])
-        self.line_smpt_address.setText(self.settings["SMTP"])
-        self.line_smpt_port.setText(self.settings["port"])
-        dept = self.settings["Dept"].split(",")
-        temp = []
-        for item in dept:
-            temp.append(item.strip())
-        for item in temp:
-            self.list_dept.addItem(item)
-        jobs = self.settings["Job_Titles"].split(",")
-        temp = []
-        for job in jobs:
-            temp.append(job.strip())
-        self.table_jobs.setRowCount(len(temp))
-        row = 0
-        for item in temp:
-            self.table_jobs.setItem(row, 0, QtWidgets.QTableWidgetItem(item))
-            self.table_jobs.setItem(row,1,QtWidgets.QTableWidgetItem(self.stageDict[item]))
-            row+=1
+        if "SMPT" in self.settings.keys():
+            self.line_smpt_address.setText(self.settings["SMTP"])
+        if "Port" in self.settings.keys():
+            self.line_smpt_port.setText(self.settings["Port"])
+        if "Dept" in self.settings.keys():
+            dept = self.settings["Dept"].split(",")
+            temp = []
+            for item in dept:
+                temp.append(item.strip())
+            for item in temp:
+                self.list_dept.addItem(item)
+        if "Job_Titles" in self.settings.keys():
+            jobs = self.settings["Job_Titles"].split(",")
+            temp = []
+            for job in jobs:
+                temp.append(job.strip())
+            self.table_jobs.setRowCount(len(temp))
+            row = 0
+            for item in temp:
+                self.table_jobs.setItem(row, 0, QtWidgets.QTableWidgetItem(item))
+                self.table_jobs.setItem(row,1,QtWidgets.QTableWidgetItem(self.stageDict[item]))
+                row+=1
 
     def saveSettings(self):
-        pass
-
+        data = ""
+        data += "DB_LOC : " + self.line_db.text()+"\n"
+        if self.line_smpt_address.text()!="":
+            if self.line_smpt_port.text()!="":
+                data += "SMTP : " + self.line_smpt_address.text() + "\n"
+                data += "Port : " + self.line_smpt_port.text() +"\n"
+            else:
+                self.dispMsg("Missing SMTP Port.")
+        data += "Dept : "
+        for x in range(self.list_dept.count()):
+            if x < self.list_dept.count()-1:
+                data += self.list_dept.item(x).text()+","
+            else:
+                data += self.list_dept.item(x).text()+"\n"
+        jobs = ""
+        stages = ""
+        for x in range(self.table_jobs.rowCount()):
+            #print(x,self.table_jobs.item(x, 0).text(),self.table_jobs.item(x, 1).text())
+            if x < self.table_jobs.rowCount()-1:
+                jobs += self.table_jobs.item(x, 0).text()+","
+                stages += self.table_jobs.item(x, 0).text() + "-" + self.table_jobs.item(x, 1).text() + ","
+            else:
+                jobs += self.table_jobs.item(x, 0).text()+"\n"
+                stages += self.table_jobs.item(x, 0).text() + "-" + self.table_jobs.item(x, 1).text() + "\n"
+        data += "Job_Titles : " + jobs
+        data += "Stage : " + stages
+        try:
+            f = open(initfile,'w')
+            f.write(data)
+            f.close()
+            if self.parent is not None:
+                self.parent.loadSettings()
+            self.dispMsg("Settings have been saved!")
+        except Exception as e:
+            self.dispMsg(f"Error occured trying to save settings. Error: {e}")
+        #print(data)
+        
     def addDept(self):
         if self.line_dept.text()!="":
             self.list_dept.addItem(self.line_dept.text())
@@ -167,7 +207,6 @@ class SettingsWindow(QtWidgets.QWidget):
 
     def removeJob(self):
         self.table_jobs.removeRow(self.table_jobs.currentRow())
-
 
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()

@@ -24,5 +24,10 @@
     - part id, desc, part type, disposition, 
 
 - test how attachments work with pdm parts
+    - seems to use the windows interface for opening files so it launches pdm files without any issues.
+    - need to test with another user who isn't the one adding the files.
 
 - add elapse days of ecn.
+
+- add PDM interface module
+- add Visual ERP interface module

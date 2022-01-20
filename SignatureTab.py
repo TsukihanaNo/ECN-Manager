@@ -121,6 +121,10 @@ class SignatureTab(QtWidgets.QWidget):
         results = self.parent.cursor.fetchall()
         for result in results:
             self.job_titles.append(result[0])
+        if "Admin" in self.job_titles:
+            self.job_titles.remove("Admin")
+        if len(self.job_titles)==0:
+            self.dispMsg("No Job Titles found, please add Jobs and Users.")
         print(self.job_titles)
     
         
