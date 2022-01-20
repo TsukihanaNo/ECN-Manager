@@ -32,7 +32,7 @@ class PartsTab(QtWidgets.QWidget):
 
         
     def initiateTable(self):
-        titles = ['Part ID','Desc','Disposition', 'Rev.']
+        titles = ['Part ID','Desc','Type','Disposition', 'Rev.']
         self.table = MyTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -41,9 +41,12 @@ class PartsTab(QtWidgets.QWidget):
         
     def addRow(self):
         self.table.insertRow(self.table.rowCount())
-        box = QtWidgets.QComboBox()
-        box.addItems([" ","Deplete","New","Scrap","Rework"])
-        self.table.setCellWidget(self.table.rowCount()-1, 2, box)
+        box_type = QtWidgets.QComboBox()
+        box_type.addItems([" ","Fabricated","Purchased","Outside Service"])
+        self.table.setCellWidget(self.table.rowCount()-1, 2, box_type)
+        box_dispo = QtWidgets.QComboBox()
+        box_dispo.addItems([" ","Deplete","New","Scrap","Rework"])
+        self.table.setCellWidget(self.table.rowCount()-1, 3, box_dispo)
     
         
     def removeRow(self):
@@ -63,6 +66,17 @@ class PartsTab(QtWidgets.QWidget):
             self.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['REVISION']))
 
             rowcount+=1
+
+    def addPart(self,part):
+        row = self.table.rowCount()
+        self.table.insertRow(row)
+        box_type = QtWidgets.QComboBox()
+        box_type.addItems([" ","Fabricated","Purchased","Outside Service"])
+        self.table.setCellWidget(row, 2, box_type)
+        box_dispo = QtWidgets.QComboBox()
+        box_dispo.addItems([" ","Deplete","New","Scrap","Rework"])
+        self.table.setCellWidget(row, 3, box_dispo)
+        self.table.setItem(row,0,QtWidgets.QTableWidgetItem(part))
             
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()

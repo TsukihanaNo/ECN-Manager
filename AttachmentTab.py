@@ -1,11 +1,13 @@
 from PySide6 import QtGui, QtCore, QtWidgets
 from MyTableWidget import *
+from pathlib import Path
 import os, sys
 
 class AttachmentTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(AttachmentTab,self).__init__()
         self.parent = parent
+        self.files = []
         self.initAtt()
         self.initUI()
 
@@ -28,10 +30,14 @@ class AttachmentTab(QtWidgets.QWidget):
         
         self.button_open = QtWidgets.QPushButton("Open")
         self.button_open.clicked.connect(self.openFile)
+
+        self.button_gen_parts = QtWidgets.QPushButton("Autogen Parts")
+        self.button_gen_parts.clicked.connect(self.autoGenParts)
         hlayout = QtWidgets.QHBoxLayout()
         hlayout.addWidget(self.button_add)
         hlayout.addWidget(self.button_remove)
         hlayout.addWidget(self.button_open)
+        hlayout.addWidget(self.button_gen_parts)
         
         mainlayout.addWidget(self.table)
         mainlayout.addLayout(hlayout)
@@ -51,11 +57,13 @@ class AttachmentTab(QtWidgets.QWidget):
         row=self.table.rowCount()
         for item in urlList:
             url = item.toLocalFile()
-            self.table.insertRow(row)
-            #listItem = QtWidgets.QListWidgetItem(url,self.list_attachment)
-            self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(url[url.rfind("/")+1:]))
-            self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(url))
-            row+=1
+            if url not in self.files:
+                self.files.append(url)
+                self.table.insertRow(row)
+                #listItem = QtWidgets.QListWidgetItem(url,self.list_attachment)
+                self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(url[url.rfind("/")+1:]))
+                self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(url))
+                row+=1
 
 
     def dragEnterEvent(self,e):
@@ -78,11 +86,34 @@ class AttachmentTab(QtWidgets.QWidget):
             fileNames = dialog.selectedFiles()
             row=self.table.rowCount()
             for url in fileNames:
-                self.table.insertRow(row)
-                self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(url[url.rfind("/")+1:]))
-                self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(url))
-                row+=1
+                if url not in self.files:
+                    self.files.append(url)
+                    self.table.insertRow(row)
+                    self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(url[url.rfind("/")+1:]))
+                    self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(url))
+                    # chkBox = QtWidgets.QCheckBox("Add as part")
+                    # chkBox.stateChanged.connect(self.addPart)
+                    # self.table.setCellWidget(row,2,chkBox)
+                    row+=1
                 
     def removeRow(self):
         self.table.removeRow(self.table.currentRow())
+
+    def autoGenParts(self):
+        parts = []
+        for x in range(self.table.rowCount()):
+            path = Path(self.table.item(x,1).text())
+            part = path.stem
+            if part not in parts:
+                self.parent.tab_parts.addPart(part)
+                parts.append(part)
+        self.dispMsg("Parts have been generated in the parts tab")
+
+    def addPart(self):
+        print(self.table.currentRow())
+
+    def dispMsg(self,msg):
+        msgbox = QtWidgets.QMessageBox()
+        msgbox.setText(msg+"        ")
+        msgbox.exec()
 
