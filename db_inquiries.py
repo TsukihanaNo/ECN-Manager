@@ -15,7 +15,7 @@ location_DB = os.path.join(dbfolder,"ECN_DB.db")
 database = sqlite3.connect(location_DB)
 cursor = database.cursor()
 
-results = cursor.execute(f"Select * from ECN where STAGE>=2 ")
+results = cursor.execute(f"Select * from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='test'")
 for result in results:
     print(result)
 

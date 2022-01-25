@@ -61,6 +61,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.tabwidget = QtWidgets.QTabWidget(self)
         self.tab_ecn = ECNTab(self)
         self.tab_ecn.line_author.setText(self.parent.user_info['user'])
+        self.tab_ecn.box_requestor.setCurrentText(self.parent.user_info['user'])
         self.tab_ecn.line_status.setText("Draft")
         self.tab_parts = PartsTab(self)
         self.tab_attach = AttachmentTab(self)
@@ -108,8 +109,6 @@ class ECNWindow(QtWidgets.QWidget):
         self.tabwidget = QtWidgets.QTabWidget(self)
         #self.tabwidget.currentChanged.connect(self.printIndex)
         self.tab_ecn = ECNTab(self)
-        self.tab_ecn.box_requestor.setDisabled(True)
-        self.tab_ecn.combo_type.setDisabled(True)
         self.tab_parts = PartsTab(self)
         self.tab_attach = AttachmentTab(self)
         #self.tab_task = TasksTab(self)
@@ -181,6 +180,8 @@ class ECNWindow(QtWidgets.QWidget):
                 self.tab_ecn.line_ecntitle.setReadOnly(True)
                 self.tab_ecn.text_summary.setReadOnly(True)
                 self.tab_ecn.text_reason.setReadOnly(True)
+                self.tab_ecn.box_requestor.setDisabled(True)
+                self.tab_ecn.combo_type.setDisabled(True)
                 if self.tab_ecn.line_status.text()=="Rejected":
                     self.button_reject.setDisabled(True)
                 if self.isUserSignable():
@@ -327,13 +328,17 @@ class ECNWindow(QtWidgets.QWidget):
             for x in range(self.tab_parts.table.rowCount()):
                 part = self.tab_parts.table.item(x, 0).text()
                 desc = self.tab_parts.table.item(x, 1).text()
+                print(x,part,desc,self.tab_parts.table.item(x,2))
                 if isinstance(self.tab_parts.table.item(x, 2),QtWidgets.QTableWidgetItem):
-                    disposition = self.tab_parts.table.item(x, 2).text()
+                    ptype = self.tab_parts.table.item(x, 2).text()
+                    disposition = self.tab_parts.table.item(x, 3).text()
                 else:
-                    disposition = self.tab_parts.table.cellWidget(x, 2).currentText()
-                rev = self.tab_parts.table.item(x,3).text()
-                data = (self.ecn_id, part, desc,disposition,rev)
-                self.cursor.execute("INSERT INTO PARTS(ECN_ID,PART_ID,DESC,DISPOSITION,REVISION) VALUES(?,?,?,?,?)",(data))
+                    ptype = self.tab_parts.table.cellWidget(x, 2).currentText()
+                    disposition = self.tab_parts.table.cellWidget(x, 3).currentText()
+                mfg = self.tab_parts.table.item(x,4).text()
+                mfg_part = self.tab_parts.table.item(x,5).text()
+                data = (self.ecn_id, part, desc,ptype,disposition,mfg,mfg_part)
+                self.cursor.execute("INSERT INTO PARTS(ECN_ID,PART_ID,DESC,TYPE,DISPOSITION,MFG,MFG_PART) VALUES(?,?,?,?,?,?,?)",(data))
             self.db.commit()
             #print('data inserted')
         except Exception as e:
@@ -408,8 +413,10 @@ class ECNWindow(QtWidgets.QWidget):
         for result in results:
             self.tab_parts.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['PART_ID']))
             self.tab_parts.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['DESC']))
-            self.tab_parts.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['DISPOSITION']))
-            self.tab_parts.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['REVISION']))
+            self.tab_parts.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['TYPE']))
+            self.tab_parts.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['DISPOSITION']))
+            self.tab_parts.table.setItem(rowcount, 4, QtWidgets.QTableWidgetItem(result['MFG']))
+            self.tab_parts.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(result['MFG_PART']))
             rowcount+=1
             
         command = "Select * from ATTACHMENTS where ECN_ID= '"+self.ecn_id +"'"

@@ -5,9 +5,10 @@ import time
 import sqlite3
 from PySide6 import QtGui, QtCore, QtWidgets
 from LoginWindow import *
-from CompletedTab import *
-from MyECNTab import *
-from MyQueueTab import *
+#from CompletedTab import *
+#from MyECNTab import *
+#from MyQueueTab import *
+from ECNWindow import *
 from DataBaseUpdateWindow import *
 from NewDBWindow import *
 from UsersWindow import *
@@ -218,6 +219,7 @@ class Manager(QtWidgets.QWidget):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         self.getNameList()
+        self.stage = self.stageDict[self.user_info["title"]]
 
     def initUI(self):
         self.menubar = QtWidgets.QMenuBar(self)
@@ -234,24 +236,113 @@ class Manager(QtWidgets.QWidget):
         searchLayout.addWidget(self.line_search)
         searchLayout.addWidget(self.button_search)
         mainLayout.addLayout(searchLayout)
-
-        # mainLayout.setMenuBar(self.menubar)
-        self.tabWidget = QtWidgets.QTabWidget(self)
-        mainLayout.addWidget(self.tabWidget)
         
-        if self.user_info["role"]!="Signer":
-            self.myECNTab = MyECNTab(self)
-            self.tabWidget.addTab(self.myECNTab, "My ECNs")
+        details_layout = QtWidgets.QHBoxLayout()
+        self.label_ecn_count = QtWidgets.QLabel("ECNs:")
+        self.label_open_ecns = QtWidgets.QLabel("Open:")
+        self.label_wait_ecns = QtWidgets.QLabel("Waiting:")
+        self.label_complete_ecns = QtWidgets.QLabel("Completed:")
+        self.dropdown_type = QtWidgets.QComboBox(self)
+        self.dropdown_type.currentIndexChanged.connect(self.repopulateTable)
+        if self.user_info["role"]=="Signer":
+            items = ["Queue","Open","Completed"]
+        else:
+            items = ["My ECNS","Queue","Open","Completed"]
+        self.dropdown_type.addItems(items)
+        details_layout.addWidget(self.label_ecn_count)
+        details_layout.addWidget(self.label_open_ecns)
+        details_layout.addWidget(self.label_wait_ecns)
+        details_layout.addWidget(self.label_complete_ecns)
+        details_layout.addWidget(self.dropdown_type)
+        
+        mainLayout.addLayout(details_layout)
+        
+        titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified']
+        self.table = MyTableWidget(1,len(titles),self)
+        self.table.setHorizontalHeaderLabels(titles)
+        self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.table.doubleClicked.connect(self.openECN)
+        mainLayout.addWidget(self.table)
+        
+        self.button_open = QtWidgets.QPushButton("Open ECN")
+        self.button_open.clicked.connect(self.openECN)
+        self.button_add = QtWidgets.QPushButton("New ECN")
+        self.button_add.clicked.connect(self.newECN)
+        if self.user_info['role']=="Signer":
+            self.button_add.setDisabled(True)
+        hlayout = QtWidgets.QHBoxLayout()
+        hlayout.addWidget(self.button_open)
+        hlayout.addWidget(self.button_add)
+        mainLayout.addLayout(hlayout)
 
-        self.queueTab = MyQueueTab(self)
-        self.tabWidget.addTab(self.queueTab, "My Queue")
+        mainLayout.setMenuBar(self.menubar)
+        
+        self.repopulateTable()
+        # self.tabWidget = QtWidgets.QTabWidget(self)
+        # mainLayout.addWidget(self.tabWidget)
+        
+        # if self.user_info["role"]!="Signer":
+        #     self.myECNTab = MyECNTab(self)
+        #     self.tabWidget.addTab(self.myECNTab, "My ECNs")
 
-        self.completedTab = CompletedTab(self)
-        self.tabWidget.addTab(self.completedTab, "Completed")
+        # self.queueTab = MyQueueTab(self)
+        # self.tabWidget.addTab(self.queueTab, "My Queue")
+
+        # self.completedTab = CompletedTab(self)
+        # self.tabWidget.addTab(self.completedTab, "Completed")
 
         timer = QtCore.QTimer(self)
         timer.timeout.connect(self.repopulateTable)
-        timer.start(15000)
+        timer.start(5000)
+        
+    def repopulateTable(self):
+        self.getECNQty()
+        self.table.clearContents()
+        self.table.setRowCount(0)
+        table_type = self.dropdown_type.currentText()
+        if table_type=="My ECNS":
+            command = "Select * from ECN where AUTHOR ='" + self.user_info['user'] + "' and STATUS !='Completed'"
+        elif table_type=="Queue":
+            command =f"Select * from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}'"
+        elif table_type=="Open":
+            command = "select * from ECN where STATUS!='Completed'"
+        else:
+            command = "select * from ECN where STATUS='Completed'"
+        self.cursor.execute(command)
+        test = self.cursor.fetchall()
+        rowcount=0
+        self.table.setRowCount(len(test))
+        for item in test:
+            self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
+            self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['ECN_TYPE']))
+            self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['ECN_TITLE']))
+            self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
+            self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
+            if item["STATUS"]=="Rejected":
+                self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,203,203))
+            if item["STATUS"]=="Out For Approval":
+                self.table.item(rowcount, 3).setBackground(QtGui.QColor(231,251,190))
+            rowcount+=1
+                
+    def getECNQty(self):
+        self.cursor.execute(f"SELECT COUNT(ECN_ID) from ECN where STATUS!='Completed'")
+        result = self.cursor.fetchone()
+        #print("open:",result[0])
+        self.label_open_ecns.setText(f"Open: {result[0]}")
+        self.cursor.execute(f"Select COUNT(ECN.ECN_ID) from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}'")
+        result = self.cursor.fetchone()
+        #print("queue:",result[0])
+        if result[0]>0:
+            self.label_wait_ecns.setStyleSheet("Color:red")
+        else:
+            self.label_wait_ecns.setStyleSheet("Color:green")
+        self.label_wait_ecns.setText(f"Waiting: {result[0]}")
+        self.cursor.execute(f"SELECT COUNT(ECN_ID) from ECN where STATUS='Completed'")
+        result = self.cursor.fetchone()
+        #print("complete:",result[0])
+        self.label_complete_ecns.setText(f"Completed: {result[0]}")
 
     def createMenuActions(self):
         filemenu = self.menubar.addMenu("&File")
@@ -288,20 +379,28 @@ class Manager(QtWidgets.QWidget):
         print("info received",ecn_id)
         self.ecnWindow = ECNWindow(self,ecn_id)
         
-    def repopulateTable(self):
-        if self.user_info["role"]!="Signer":
-            self.myECNTab.repopulateTable()
-        self.queueTab.repopulateTable()
-        self.completedTab.repopulateTable()
+    # def repopulateTable(self):
+    #     if self.user_info["role"]!="Signer":
+    #         self.myECNTab.repopulateTable()
+    #     self.queueTab.repopulateTable()
+    #     self.completedTab.repopulateTable()
+    
+    def newECN(self):
+        self.HookEcn()
+        
+    def openECN(self):
+        row = self.table.currentRow()
+        ecn_id=self.table.item(row,0).text()
+        self.HookEcn(ecn_id)
 
 
     def loadInAnim(self):
-        loc = self.tabWidget.pos()
-        self.animation = QtCore.QPropertyAnimation(self.tabWidget, b"pos")
+        loc = self.table.pos()
+        self.animation = QtCore.QPropertyAnimation(self.table, b"pos")
         self.animation.setDuration(1000)
         self.animation.setEasingCurve(QtCore.QEasingCurve.OutBack)
         self.animation.setStartValue(QtCore.QPoint(
-            self.tabWidget.pos().x(), -self.windowHeight))
+            self.table.pos().x(), -self.windowHeight))
         self.animation.setEndValue(QtCore.QPoint(loc))
 
         self.animation.start()

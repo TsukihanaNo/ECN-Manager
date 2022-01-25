@@ -32,7 +32,7 @@ class PartsTab(QtWidgets.QWidget):
 
         
     def initiateTable(self):
-        titles = ['Part ID','Desc','Type','Disposition', 'Rev.']
+        titles = ['Part ID','Desc','Type','Disposition','Mfg.','Mfg. #']
         self.table = MyTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -40,13 +40,16 @@ class PartsTab(QtWidgets.QWidget):
         self.repopulateTable()
         
     def addRow(self):
-        self.table.insertRow(self.table.rowCount())
+        row = self.table.rowCount()
+        self.table.insertRow(row)
         box_type = QtWidgets.QComboBox()
         box_type.addItems([" ","Fabricated","Purchased","Outside Service"])
-        self.table.setCellWidget(self.table.rowCount()-1, 2, box_type)
+        self.table.setCellWidget(row, 2, box_type)
         box_dispo = QtWidgets.QComboBox()
         box_dispo.addItems([" ","Deplete","New","Scrap","Rework"])
-        self.table.setCellWidget(self.table.rowCount()-1, 3, box_dispo)
+        self.table.setCellWidget(row, 3, box_dispo)
+        self.table.setItem(row, 4, QtWidgets.QTableWidgetItem(""))
+        self.table.setItem(row, 5, QtWidgets.QTableWidgetItem(""))
     
         
     def removeRow(self):
@@ -62,8 +65,10 @@ class PartsTab(QtWidgets.QWidget):
         for result in results:
             self.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['PART_ID']))
             self.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['DESC']))
-            self.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['DISPOSITION']))
-            self.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['REVISION']))
+            self.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['TYPE']))
+            self.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['DISPOSITION']))
+            self.table.setItem(rowcount, 4, QtWidgets.QTableWidgetItem(result['MFG']))
+            self.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(result['MFG_PART']))
 
             rowcount+=1
 
