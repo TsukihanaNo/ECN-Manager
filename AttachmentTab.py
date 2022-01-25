@@ -57,13 +57,17 @@ class AttachmentTab(QtWidgets.QWidget):
         row=self.table.rowCount()
         for item in urlList:
             url = item.toLocalFile()
-            if url not in self.files:
-                self.files.append(url)
-                self.table.insertRow(row)
-                #listItem = QtWidgets.QListWidgetItem(url,self.list_attachment)
-                self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(url[url.rfind("/")+1:]))
-                self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(url))
-                row+=1
+            if "C:" not in url:
+                if url not in self.files:
+                    self.files.append(url)
+                    self.table.insertRow(row)
+                    #listItem = QtWidgets.QListWidgetItem(url,self.list_attachment)
+                    self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(url[url.rfind("/")+1:]))
+                    self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(url))
+                    row+=1
+            else:
+                self.dispMsg("File not accepted.The current file resides on your local machine and is not accessible by other users.")
+                break
 
 
     def dragEnterEvent(self,e):

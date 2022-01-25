@@ -47,7 +47,7 @@ class Manager(QtWidgets.QWidget):
         self.checkLockLoc()
         self.checkLockFile()
         self.generateLockFile()
-        self.checkNotifier()
+        #self.checkNotifier()
         self.ico = QtGui.QIcon(icon)
         self.startUpCheck()
         self.getStageDict()

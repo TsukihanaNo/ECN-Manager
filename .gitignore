@@ -6,5 +6,6 @@ build/
 #ignore file
 setting.ini
 test.py
+Visual.py
 
 .vscode
