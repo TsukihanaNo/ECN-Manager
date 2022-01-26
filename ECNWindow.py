@@ -68,7 +68,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_comments = CommentTab(self)
         self.tab_comments.enterText.setDisabled(True)
         self.tab_signature = SignatureTab(self)
-        self.tab_changelog = ChangeLogTab(self,self.ecn_id)
+        #self.tab_changelog = ChangeLogTab(self,self.ecn_id)
         self.button_save = QtWidgets.QPushButton("Save",self)
         self.button_release = QtWidgets.QPushButton("Release")
         self.button_release.setDisabled(True)
@@ -82,7 +82,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.tabwidget.addTab(self.tab_attach, "Attachment")
         self.tabwidget.addTab(self.tab_comments, "Comments")
         self.tabwidget.addTab(self.tab_signature, "Signatures")
-        self.tabwidget.addTab(self.tab_changelog, "Change Log")
+        #self.tabwidget.addTab(self.tab_changelog, "Change Log")
         
         self.tabwidget.setTabVisible(3, False)
         self.tabwidget.setTabVisible(5, False)
@@ -114,7 +114,7 @@ class ECNWindow(QtWidgets.QWidget):
         #self.tab_task = TasksTab(self)
         self.tab_comments = CommentTab(self)
         self.tab_signature = SignatureTab(self)
-        self.tab_changelog = ChangeLogTab(self,self.ecn_id)
+        #self.tab_changelog = ChangeLogTab(self,self.ecn_id)
         #self.tab_purch = PurchaserTab(self)
         #self.tab_planner = PlannerTab(self)
         #self.tab_shop = ShopTab(self)
@@ -125,7 +125,7 @@ class ECNWindow(QtWidgets.QWidget):
         #self.tabwidget.addTab(self.tab_task, "Tasks")
         self.tabwidget.addTab(self.tab_comments, "Comments")
         self.tabwidget.addTab(self.tab_signature, "Signatures")
-        self.tabwidget.addTab(self.tab_changelog, "Change Log")
+        #self.tabwidget.addTab(self.tab_changelog, "Change Log")
                     
         self.loadData()
         
@@ -405,19 +405,20 @@ class ECNWindow(QtWidgets.QWidget):
             self.tab_signature.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['SIGNED_DATE']))
             rowcount+=1
             
-        command = "Select * from PARTS where ECN_ID= '"+self.ecn_id +"'"
-        self.cursor.execute(command)
-        results = self.cursor.fetchall()
-        self.tab_parts.table.setRowCount(len(results))
-        rowcount=0
-        for result in results:
-            self.tab_parts.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['PART_ID']))
-            self.tab_parts.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['DESC']))
-            self.tab_parts.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['TYPE']))
-            self.tab_parts.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['DISPOSITION']))
-            self.tab_parts.table.setItem(rowcount, 4, QtWidgets.QTableWidgetItem(result['MFG']))
-            self.tab_parts.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(result['MFG_PART']))
-            rowcount+=1
+        self.tab_parts.repopulateTable()
+        # command = "Select * from PARTS where ECN_ID= '"+self.ecn_id +"'"
+        # self.cursor.execute(command)
+        # results = self.cursor.fetchall()
+        # self.tab_parts.table.setRowCount(len(results))
+        # rowcount=0
+        # for result in results:
+        #     self.tab_parts.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['PART_ID']))
+        #     self.tab_parts.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['DESC']))
+        #     self.tab_parts.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['TYPE']))
+        #     self.tab_parts.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['DISPOSITION']))
+        #     self.tab_parts.table.setItem(rowcount, 4, QtWidgets.QTableWidgetItem(result['MFG']))
+        #     self.tab_parts.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(result['MFG_PART']))
+        #     rowcount+=1
             
         command = "Select * from ATTACHMENTS where ECN_ID= '"+self.ecn_id +"'"
         self.cursor.execute(command)
@@ -642,8 +643,8 @@ class ECNWindow(QtWidgets.QWidget):
             self.AddSignatures()
             if not msg:
                 self.dispMsg("ECN has been updated!")
-            self.getCurrentValues()
-            self.checkDiff()
+            #self.getCurrentValues()
+            #self.checkDiff()
             self.parent.repopulateTable()
 
     def saveAndClose(self):

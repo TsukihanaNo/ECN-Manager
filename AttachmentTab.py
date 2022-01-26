@@ -1,5 +1,4 @@
 from PySide6 import QtGui, QtCore, QtWidgets
-from MyTableWidget import *
 from pathlib import Path
 import os, sys
 
@@ -45,7 +44,7 @@ class AttachmentTab(QtWidgets.QWidget):
         
     def initiateTable(self):
         titles = ['File Name','File Path']
-        self.table = MyTableWidget(0,len(titles),self)
+        self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         #self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)

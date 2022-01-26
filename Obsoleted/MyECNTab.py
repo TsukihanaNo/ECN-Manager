@@ -1,6 +1,5 @@
 from PySide6 import QtGui, QtCore, QtWidgets
 from ECNWindow import *
-from MyTableWidget import *
 import sqlite3
 class MyECNTab(QtWidgets.QWidget):
     def __init__(self,parent=None):
@@ -51,7 +50,7 @@ class MyECNTab(QtWidgets.QWidget):
 
     def initiateTable(self):
         titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified']
-        self.table = MyTableWidget(1,len(titles),self)
+        self.table = QtWidgets.QTableWidget(1,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)

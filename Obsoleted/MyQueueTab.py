@@ -1,7 +1,6 @@
 from PySide6 import QtWidgets, QtCore
 from ECNWindow import *
 import sqlite3  
-from MyTableWidget import *
 
 class MyQueueTab(QtWidgets.QWidget):
     def __init__(self,parent=None):
@@ -45,7 +44,7 @@ class MyQueueTab(QtWidgets.QWidget):
 
     def initiateTable(self):
         titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified Date']
-        self.table = MyTableWidget(0,len(titles),self)
+        self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)

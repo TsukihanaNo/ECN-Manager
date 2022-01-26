@@ -1,6 +1,5 @@
 from PySide6 import QtWidgets, QtCore, QtGui
 import os, sys
-from MyTableWidget import *
 import sqlite3  
 
 class NewDBWindow(QtWidgets.QWidget):
@@ -45,7 +44,7 @@ class NewDBWindow(QtWidgets.QWidget):
         loc_layout.addWidget(self.loc_button)
 
         headers = ['user','password','name','role','job title']
-        self.table = MyTableWidget(1,len(headers),self)
+        self.table = QtWidgets.QTableWidget(1,len(headers),self)
         self.table.setHorizontalHeaderLabels(headers)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         combo=['Admin']

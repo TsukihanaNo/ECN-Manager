@@ -1,6 +1,5 @@
 from PySide6 import QtGui, QtCore, QtWidgets
 from ECNWindow import *
-from MyTableWidget import *
 class CompletedTab(QtWidgets.QWidget):
     def __init__(self,parent=None):
         super(CompletedTab,self).__init__()
@@ -41,7 +40,7 @@ class CompletedTab(QtWidgets.QWidget):
 
     def initiateTable(self):
         titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified Date']
-        self.table = MyTableWidget(0,len(titles),self)
+        self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)

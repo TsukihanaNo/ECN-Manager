@@ -22,6 +22,7 @@ class MyTableWidget(QtWidgets.QTableWidget):
             if self.currentRow() == self.rowCount()-1:
                 self.insertRow(self.rowCount())
                 self.setCurrentCell(self.currentRow()+1,self.currentColumn())
+                self.editItem(self.currentItem())
                 if len(self.combos)!=0:
                     self.generateRow()
             if self.currentRow() != self.rowCount()-1:

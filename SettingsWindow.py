@@ -2,7 +2,6 @@ from tkinter import mainloop
 from wsgiref import headers
 from PySide6 import QtWidgets, QtCore, QtGui
 import os, sys
-from MyTableWidget import *
 from UserPanel import *
 import sqlite3  
 

@@ -1,5 +1,4 @@
 from PySide6 import QtGui, QtCore, QtWidgets
-from MyTableWidget import *
 
 class SignatureTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
@@ -36,7 +35,7 @@ class SignatureTab(QtWidgets.QWidget):
         
     def initiateTable(self):
         titles = ['Title','Name','User', 'Approval']
-        self.table = MyTableWidget(0,len(titles),self)
+        self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)

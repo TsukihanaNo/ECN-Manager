@@ -55,7 +55,8 @@ class Manager(QtWidgets.QWidget):
         self.user_info = {}
         self.programLoc = program_location
         self.nameList = []
-
+        user,pw,db = self.settings['Visual'].split(',')
+        self.visual = Visual(self,user, pw , db)
         # self.checkDBTables()
 
     def center(self):
@@ -145,6 +146,7 @@ class Manager(QtWidgets.QWidget):
             self.cursor = self.db.cursor()
             self.cursor.row_factory = sqlite3.Row
             self.loginWindow = LoginWindow(self)
+            
             
     def loadSettings(self):
         f = open(initfile,'r')
@@ -243,7 +245,7 @@ class Manager(QtWidgets.QWidget):
         self.label_wait_ecns = QtWidgets.QLabel("Waiting:")
         self.label_complete_ecns = QtWidgets.QLabel("Completed:")
         self.dropdown_type = QtWidgets.QComboBox(self)
-        self.dropdown_type.currentIndexChanged.connect(self.repopulateTable)
+        
         if self.user_info["role"]=="Signer":
             items = ["Queue","Open","Completed"]
         else:
@@ -258,13 +260,15 @@ class Manager(QtWidgets.QWidget):
         mainLayout.addLayout(details_layout)
         
         titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified']
-        self.table = MyTableWidget(1,len(titles),self)
+        self.table = QtWidgets.QTableWidget(1,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.table.doubleClicked.connect(self.openECN)
         mainLayout.addWidget(self.table)
+        
+        self.dropdown_type.currentIndexChanged.connect(self.repopulateTable)
         
         self.button_open = QtWidgets.QPushButton("Open ECN")
         self.button_open.clicked.connect(self.openECN)
@@ -364,12 +368,6 @@ class Manager(QtWidgets.QWidget):
         exitAction.setShortcut("CTRL+Q")
         filemenu.addAction(exitAction)
 
-    def updateQueue(self):
-        if self.user_info["role"]!="Signer":
-            self.myECNTab.repopulateTable()
-        self.queueTab.repopulateTable()
-        self.completedTab.repopulateTable()
-
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()
         msgbox.setText(msg+"        ")
@@ -378,12 +376,6 @@ class Manager(QtWidgets.QWidget):
     def HookEcn(self,ecn_id=None):
         print("info received",ecn_id)
         self.ecnWindow = ECNWindow(self,ecn_id)
-        
-    # def repopulateTable(self):
-    #     if self.user_info["role"]!="Signer":
-    #         self.myECNTab.repopulateTable()
-    #     self.queueTab.repopulateTable()
-    #     self.completedTab.repopulateTable()
     
     def newECN(self):
         self.HookEcn()

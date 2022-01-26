@@ -1,5 +1,4 @@
 from PySide6 import QtGui, QtCore, QtWidgets
-from MyTableWidget import *
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -51,7 +50,7 @@ class Notifier(QtWidgets.QWidget):
         mainLayout = QtWidgets.QVBoxLayout(self)
         
         titles = ['ECN_ID','STATUS','TYPE']
-        self.table = MyTableWidget(0,len(titles),self)
+        self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
