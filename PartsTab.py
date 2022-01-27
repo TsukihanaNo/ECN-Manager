@@ -12,7 +12,6 @@ class PartsTab(QtWidgets.QWidget):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
     def initUI(self): 
-        self.initiateTable()
         mainlayout = QtWidgets.QVBoxLayout(self)
 
         self.label_parts = QtWidgets.QLabel("Parts",self)
@@ -21,6 +20,8 @@ class PartsTab(QtWidgets.QWidget):
         self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
         
         mainlayout.addWidget(self.label_parts)
         mainlayout.addWidget(self.table)
@@ -29,18 +30,17 @@ class PartsTab(QtWidgets.QWidget):
         self.button_add = QtWidgets.QPushButton("Add Part")
         self.button_add.clicked.connect(self.addRow)
         self.button_remove = QtWidgets.QPushButton("Remove Part")
+        self.button_remove.setDisabled(True)
         self.button_remove.clicked.connect(self.removeRow)
         hlayout.addWidget(self.button_add)
         hlayout.addWidget(self.button_remove)
         mainlayout.addLayout(hlayout)
-        
-        if self.parent.parent.user_info['user']!=self.parent.tab_ecn.line_author.text():
-            self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-            self.button_remove.setDisabled(True)
-            self.button_add.setDisabled(True)
-        
+                
         self.setLayout(mainlayout)              
         self.repopulateTable()
+        
+    def onRowSelect(self):
+        self.button_remove.setEnabled(bool(self.table.selectionModel().selectedRows()))
         
         
     def addRow(self):
@@ -62,7 +62,9 @@ class PartsTab(QtWidgets.QWidget):
     
         
     def removeRow(self):
-        self.table.removeRow(self.table.currentRow())
+        index = self.table.selectionModel().selectedRows()
+        for item in sorted(index,reverse=True):
+            self.table.removeRow(item.row())
         
         
     def repopulateTable(self):
@@ -74,10 +76,26 @@ class PartsTab(QtWidgets.QWidget):
         for result in results:
             self.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['PART_ID']))
             self.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['DESC']))
-            self.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['TYPE']))
-            self.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['DISPOSITION']))
+            if self.parent.parent.user_info['user']!=self.parent.tab_ecn.line_author.text():
+                self.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['TYPE']))
+                self.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['DISPOSITION']))
+                self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(result['INSPEC']))
+            else:
+                box_type = QtWidgets.QComboBox()
+                box_type.addItems(["","Fabricated","Purchased","Outside Service"])
+                box_type.setCurrentText(result['TYPE'])
+                self.table.setCellWidget(rowcount, 2, box_type)
+                box_dispo = QtWidgets.QComboBox()
+                box_dispo.addItems(["","Deplete","New","Scrap","Rework"])
+                box_dispo.setCurrentText(result['DISPOSITION'])
+                self.table.setCellWidget(rowcount, 3, box_dispo)
+                box_inspec = QtWidgets.QComboBox()
+                box_inspec.addItems(["","N","Y"])
+                box_inspec.setCurrentText(result['INSPEC'])
+                self.table.setCellWidget(rowcount, 7, box_inspec)
             self.table.setItem(rowcount, 4, QtWidgets.QTableWidgetItem(result['MFG']))
             self.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(result['MFG_PART']))
+            self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(result['REPLACING']))
             if self.parent.parent.visual.partExist(result['PART_ID']):
                 if self.parent.parent.visual.checkPartSetup(result['PART_ID'], result['TYPE']):
                     self.table.item(rowcount, 0).setBackground(QtGui.QColor(231,251,190))

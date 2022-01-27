@@ -13,46 +13,61 @@ class SignatureTab(QtWidgets.QWidget):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
     def initUI(self):
-        self.initiateTable()
         mainlayout = QtWidgets.QVBoxLayout(self)
 
         self.label_signatures = QtWidgets.QLabel("Signatures",self)
         mainlayout.addWidget(self.label_signatures)
-        mainlayout.addWidget(self.table)
-                
-        hlayout = QtWidgets.QHBoxLayout(self)
-        self.button_add = QtWidgets.QPushButton("Add Signature")
-        self.button_add.clicked.connect(self.addRow)
-        self.button_remove = QtWidgets.QPushButton("Remove Signature")
-        self.button_remove.clicked.connect(self.removeRow)
-        hlayout.addWidget(self.button_add)
-        hlayout.addWidget(self.button_remove)
-        mainlayout.addLayout(hlayout)
-
         
-        self.setLayout(mainlayout)       
-
-        
-    def initiateTable(self):
         titles = ['Title','Name','User', 'Approval']
         self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        
-        #self.repopulateTable()
+        self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
+        mainlayout.addWidget(self.table)
+                
+        hlayout = QtWidgets.QHBoxLayout(self)
+        self.button_add = QtWidgets.QPushButton("Add Signature")
+        self.button_add.clicked.connect(self.addRow)
+        self.button_remove = QtWidgets.QPushButton("Remove Signature")
+        self.button_remove.setEnabled(False)
+        self.button_remove.clicked.connect(self.removeRow)
+        hlayout.addWidget(self.button_add)
+        hlayout.addWidget(self.button_remove)
+        if self.parent.parent.user_info['role']=="Manager":
+            self.button_revoke = QtWidgets.QPushButton("Revoke")
+            self.button_revoke.setEnabled(False)
+            self.button_revoke.clicked.connect(self.revokeApproval)
+            hlayout.addWidget(self.button_revoke)
+        mainlayout.addLayout(hlayout)
+
+        self.setLayout(mainlayout)       
+
+    def onRowSelect(self):
+        if self.parent.parent.user_info['role']=="Manager":
+            self.button_revoke.setEnabled(bool(self.table.selectionModel().selectedRows()))
+        if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text():
+            self.button_remove.setEnabled(bool(self.table.selectionModel().selectedRows()))
         
     def addRow(self):
-        self.table.insertRow(self.table.rowCount())
+        row = self.table.rowCount()
+        self.table.insertRow(row)
+        self.setBoxJob(row)
+        self.setBoxName(row)
+        self.setBoxUser(row)
+    
+    def setBoxJob(self,row,text=None):
         box = QtWidgets.QComboBox()
-        #print(self.job_titles)
         box.addItems(self.job_titles)
-        self.table.setCellWidget(self.table.rowCount()-1, 0, box)
+        if text is not None:
+            box.setCurrentText(text)
         box.currentIndexChanged.connect(self.setNameList)
         box.currentIndexChanged.connect(self.setUser)
+        self.table.setCellWidget(row, 0, box)
         
-        command = "Select NAME from USER where JOB_TITLE = '" + self.table.cellWidget(self.table.rowCount()-1, 0).currentText() +"'"
+    def setBoxName(self,row,text=None):
+        command = "Select NAME from USER where JOB_TITLE = '" + self.table.cellWidget(row, 0).currentText() +"'"
         self.parent.cursor.execute(command)
         test = self.parent.cursor.fetchall()
         names = []
@@ -60,10 +75,13 @@ class SignatureTab(QtWidgets.QWidget):
             names.append(item[0])
         box = QtWidgets.QComboBox()
         box.addItems(names)
+        if text is not None:
+            box.setCurrentText(text)
         box.currentIndexChanged.connect(self.setUser)
-        self.table.setCellWidget(self.table.rowCount()-1, 1, box)
+        self.table.setCellWidget(row, 1, box)
         
-        command = "Select USER_ID from USER where NAME = '" + self.table.cellWidget(self.table.rowCount()-1, 1).currentText() +"'"
+    def setBoxUser(self,row, text=None):
+        command = "Select USER_ID from USER where NAME = '" + self.table.cellWidget(row, 1).currentText() +"'"
         self.parent.cursor.execute(command)
         test = self.parent.cursor.fetchall()
         names = []
@@ -71,7 +89,18 @@ class SignatureTab(QtWidgets.QWidget):
             names.append(item[0])
         box = QtWidgets.QComboBox()
         box.addItems(names)
-        self.table.setCellWidget(self.table.rowCount()-1, 2, box)
+        if text is not None:
+            box.setCurrentText(text)
+        self.table.setCellWidget(row, 2, box)
+        
+    def revokeApproval(self):
+        index = self.table.selectionModel().selectedRows()
+        for item in index:
+            row = item.row()
+            user = self.table.item(row, 2).text()
+            self.parent.cursor.execute(f"UPDATE SIGNATURE SET SIGNED_DATE = NULL where ECN_ID='{self.parent.ecn_id}' and USER_ID='{user}'")
+        self.parent.db.commit()
+        self.repopulateTable()
         
     def prepopulateTable(self):
         #department specific roles are: buyer, planner, supervisor
@@ -153,16 +182,21 @@ class SignatureTab(QtWidgets.QWidget):
         
     def repopulateTable(self):
         self.table.clearContents()
-        command = "Select * from SIGNATURE where ECN_ID= '"+self.parent.tab_ecn.line_id.text() +"'"
+        command = "Select * from SIGNATURE where ECN_ID= '"+self.parent.ecn_id +"'"
         self.parent.cursor.execute(command)
         results = self.parent.cursor.fetchall()
         self.table.setRowCount(len(results))
         rowcount=0
         for result in results:
             print(result['JOB_TITLE'])
-            self.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['JOB_TITLE']))
-            self.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['NAME']))
-            self.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['USER_ID']))
+            if self.parent.parent.user_info['user']!=self.parent.tab_ecn.line_author.text():
+                self.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['JOB_TITLE']))
+                self.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['NAME']))
+                self.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['USER_ID']))
+            else:
+                self.setBoxJob(rowcount,result['JOB_TITLE'])
+                self.setBoxName(rowcount,result['NAME'])
+                self.setBoxUser(rowcount,result['USER_ID'])
             self.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['SIGNED_DATE']))
 
             rowcount+=1

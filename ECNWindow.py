@@ -182,8 +182,14 @@ class ECNWindow(QtWidgets.QWidget):
                 self.tab_ecn.text_reason.setReadOnly(True)
                 self.tab_ecn.box_requestor.setDisabled(True)
                 self.tab_ecn.combo_type.setDisabled(True)
+                self.tab_parts.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+                self.tab_parts.button_remove.setDisabled(True)
+                self.tab_parts.button_add.setDisabled(True)
+                self.tab_signature.button_add.setDisabled(True)
+                self.tab_signature.button_remove.setDisabled(True)
                 if self.tab_ecn.line_status.text()=="Rejected":
                     self.button_reject.setDisabled(True)
+                    self.button_approve.setDisabled(True)
                 if self.isUserSignable():
                     if self.hasUserSigned():
                         self.button_approve.setDisabled(True)
@@ -332,14 +338,18 @@ class ECNWindow(QtWidgets.QWidget):
                 if isinstance(self.tab_parts.table.item(x, 2),QtWidgets.QTableWidgetItem):
                     ptype = self.tab_parts.table.item(x, 2).text()
                     disposition = self.tab_parts.table.item(x, 3).text()
+                    insp = self.tab_parts.table.item(x,7).text()
                 else:
                     ptype = self.tab_parts.table.cellWidget(x, 2).currentText()
                     disposition = self.tab_parts.table.cellWidget(x, 3).currentText()
+                    insp = self.tab_parts.table.cellWidget(x, 7).currentText()
                 mfg = self.tab_parts.table.item(x,4).text()
                 mfg_part = self.tab_parts.table.item(x,5).text()
-                data = (self.ecn_id, part, desc,ptype,disposition,mfg,mfg_part)
-                self.cursor.execute("INSERT INTO PARTS(ECN_ID,PART_ID,DESC,TYPE,DISPOSITION,MFG,MFG_PART) VALUES(?,?,?,?,?,?,?)",(data))
+                rep = self.tab_parts.table.item(x,6).text()
+                data = (self.ecn_id, part, desc,ptype,disposition,mfg,mfg_part,rep,insp)
+                self.cursor.execute("INSERT INTO PARTS(ECN_ID,PART_ID,DESC,TYPE,DISPOSITION,MFG,MFG_PART,REPLACING,INSPEC) VALUES(?,?,?,?,?,?,?,?,?)",(data))
             self.db.commit()
+            self.tab_parts.repopulateTable()
             #print('data inserted')
         except Exception as e:
             print(e)
@@ -373,7 +383,7 @@ class ECNWindow(QtWidgets.QWidget):
                     self.db.commit()
                     
             if self.tab_comments.enterText.toPlainText()!="":
-                self.addComment(ecn_id,self.tab_comments.enterText.toPlainText(),"Author")
+                self.addComment(self.ecn_id,self.tab_comments.enterText.toPlainText(),"Author")
                 
         except Exception as e:
             print(e)
@@ -392,18 +402,19 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_ecn.box_requestor.setEditText(results['REQUESTOR'])
         self.tab_ecn.line_status.setText(results['STATUS'])
         
-        command = "Select * from SIGNATURE where ECN_ID= '"+self.ecn_id +"'"
-        self.cursor.execute(command)
-        results = self.cursor.fetchall()
-        self.tab_signature.table.setRowCount(len(results))
-        rowcount=0
-        for result in results:
-            #print(result['JOB_TITLE'],result['SIGNED_DATE'])
-            self.tab_signature.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['JOB_TITLE']))
-            self.tab_signature.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['NAME']))
-            self.tab_signature.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['USER_ID']))
-            self.tab_signature.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['SIGNED_DATE']))
-            rowcount+=1
+        self.tab_signature.repopulateTable()
+        # command = "Select * from SIGNATURE where ECN_ID= '"+self.ecn_id +"'"
+        # self.cursor.execute(command)
+        # results = self.cursor.fetchall()
+        # self.tab_signature.table.setRowCount(len(results))
+        # rowcount=0
+        # for result in results:
+        #     #print(result['JOB_TITLE'],result['SIGNED_DATE'])
+        #     self.tab_signature.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['JOB_TITLE']))
+        #     self.tab_signature.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['NAME']))
+        #     self.tab_signature.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['USER_ID']))
+        #     self.tab_signature.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['SIGNED_DATE']))
+        #     rowcount+=1
             
         self.tab_parts.repopulateTable()
         # command = "Select * from PARTS where ECN_ID= '"+self.ecn_id +"'"
@@ -419,16 +430,17 @@ class ECNWindow(QtWidgets.QWidget):
         #     self.tab_parts.table.setItem(rowcount, 4, QtWidgets.QTableWidgetItem(result['MFG']))
         #     self.tab_parts.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(result['MFG_PART']))
         #     rowcount+=1
-            
-        command = "Select * from ATTACHMENTS where ECN_ID= '"+self.ecn_id +"'"
-        self.cursor.execute(command)
-        results = self.cursor.fetchall()
-        self.tab_attach.table.setRowCount(len(results))
-        rowcount=0
-        for result in results:
-            self.tab_attach.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['FILENAME']))
-            self.tab_attach.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['FILEPATH']))
-            rowcount+=1
+        
+        self.tab_attach.repopulateTable()
+        # command = "Select * from ATTACHMENTS where ECN_ID= '"+self.ecn_id +"'"
+        # self.cursor.execute(command)
+        # results = self.cursor.fetchall()
+        # self.tab_attach.table.setRowCount(len(results))
+        # rowcount=0
+        # for result in results:
+        #     self.tab_attach.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['FILENAME']))
+        #     self.tab_attach.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['FILEPATH']))
+        #     rowcount+=1
             
         self.loadComments()    
 
@@ -448,11 +460,14 @@ class ECNWindow(QtWidgets.QWidget):
             self.cursor.execute(command)
             results = self.cursor.fetchall()
             for result in results:
-                if self.tab_ecn.line_author.text() == result['USER']:
+                # if self.tab_ecn.line_author.text() == result['USER']:
+                #     self.tab_comments.mainText.setTextColor(QtGui.QColor(0,0,255))
+                # else:
+                if result['TYPE']=="Reject":
                     self.tab_comments.mainText.setTextColor(QtGui.QColor(255,0,0))
                 else:
-                    self.tab_comments.mainText.setTextColor(QtGui.QColor(0,0,0))
-                self.tab_comments.mainText.append(">>  " + result['COMMENT'] + "\r    :: " + result['USER']+ " - " + result['COMM_DATE'] +"\r\r")
+                    self.tab_comments.mainText.setTextColor(QtGui.QColor(0,0,255))
+                self.tab_comments.mainText.append(">>  " + result['TYPE'] + " : " + result['COMMENT'] + "\r    :: " + result['USER']+ " - " + result['COMM_DATE'] +"\r\r")
                 
     def cancel(self):
         if self.tab_ecn.line_status.text()=="Draft":

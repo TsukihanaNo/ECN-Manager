@@ -264,6 +264,7 @@ class Manager(QtWidgets.QWidget):
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.table.doubleClicked.connect(self.openECN)
         mainLayout.addWidget(self.table)
