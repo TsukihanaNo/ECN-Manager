@@ -98,8 +98,11 @@ class SignatureTab(QtWidgets.QWidget):
         for item in index:
             row = item.row()
             user = self.table.item(row, 2).text()
-            self.parent.cursor.execute(f"UPDATE SIGNATURE SET SIGNED_DATE = NULL where ECN_ID='{self.parent.ecn_id}' and USER_ID='{user}'")
-        self.parent.db.commit()
+            if self.getUserRole(user)=="Signer":
+                self.parent.cursor.execute(f"UPDATE SIGNATURE SET SIGNED_DATE = NULL where ECN_ID='{self.parent.ecn_id}' and USER_ID='{user}'")
+                self.parent.db.commit()
+            else:
+                self.dispMsg(f"Revoke failed: you do not have permission to revoke {user}'s approval")
         self.repopulateTable()
         
     def prepopulateTable(self):
@@ -108,7 +111,7 @@ class SignatureTab(QtWidgets.QWidget):
         self.table.clearContents()
         self.table.setRowCount(0)
         dept = self.parent.tab_ecn.combo_dept.currentText()
-        command = f"Select JOB_TITLE, NAME, USER_ID from USER where STATUS='Active' and (DEPT is NULL OR DEPT='{dept}')"
+        command = f"Select JOB_TITLE, NAME, USER_ID, from USER where STATUS='Active' and (DEPT is NULL OR DEPT='{dept}')"
         self.parent.cursor.execute(command)
         results = self.parent.cursor.fetchall()
         userList =[]
@@ -154,6 +157,15 @@ class SignatureTab(QtWidgets.QWidget):
         if len(self.job_titles)==0:
             self.dispMsg("No Job Titles found, please add Jobs and Users.")
         print(self.job_titles)
+        
+    def getUserRole(self,user):
+        self.parent.cursor.execute(f"select ROLE from USER where USER_ID='{user}'")
+        result = self.parent.cursor.fetchone()
+        if result is not None:
+            return result[0]
+        else:
+            self.dispMsg(f"Error: no role found for {user}")
+            return None
     
         
     def setNameList(self):

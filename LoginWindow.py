@@ -91,6 +91,7 @@ class LoginWindow(QtWidgets.QWidget):
                 self.parent.user_info['name'] = info['NAME']
                 self.parent.user_info['role'] = info['ROLE']
                 self.parent.user_info['title'] = info['JOB_TITLE']
+                self.parent.user_info['stage'] = self.parent.stageDict[info['JOB_TITLE']]
                 self.parent.loginDone()
                 self.logged = True
                 self.close()

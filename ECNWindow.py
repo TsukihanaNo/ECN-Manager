@@ -510,7 +510,7 @@ class ECNWindow(QtWidgets.QWidget):
             self.db.commit()
             currentStage = self.getECNStage()
             if currentStage==0:
-                self.setECNStage(1)
+                self.setECNStage(self.getNextStage()[0])
             self.tab_ecn.line_status.setText("Out For Approval")
             self.parent.repopulateTable()
             self.dispMsg("ECN has been saved and sent out for signing!")
@@ -572,12 +572,15 @@ class ECNWindow(QtWidgets.QWidget):
         results = self.cursor.fetchall()
         stage = []
         for result in results:
-            print(result[0])
+            #print(result[0])
             stage.append(self.parent.stageDict[result[0]])
+        stage = sorted(stage)
+        print(stage)
         return stage
     
     def setECNStage(self,stage):
         try:
+            print('setting ecn to ', stage)
             self.cursor.execute(f"UPDATE ECN SET STAGE ='{stage}', TEMPSTAGE = '{stage}' where ECN_ID='{self.ecn_id}'")
             self.db.commit()
         except Exception as e:

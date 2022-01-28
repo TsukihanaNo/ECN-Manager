@@ -310,7 +310,7 @@ class Manager(QtWidgets.QWidget):
         if table_type=="My ECNS":
             command = "Select * from ECN where AUTHOR ='" + self.user_info['user'] + "' and STATUS !='Completed'"
         elif table_type=="Queue":
-            command =f"Select * from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}'"
+            command =f"Select * from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and ECN.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL"
         elif table_type=="Open":
             command = "select * from ECN where STATUS!='Completed'"
         else:
@@ -336,13 +336,13 @@ class Manager(QtWidgets.QWidget):
         result = self.cursor.fetchone()
         #print("open:",result[0])
         self.label_open_ecns.setText(f"Open: {result[0]}")
-        self.cursor.execute(f"Select COUNT(ECN.ECN_ID) from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}'")
+        self.cursor.execute(f"Select COUNT(ECN.ECN_ID) from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and ECN.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL")
         result = self.cursor.fetchone()
         #print("queue:",result[0])
         if result[0]>0:
-            self.label_wait_ecns.setStyleSheet("Color:red")
+            self.label_wait_ecns.setStyleSheet("Color:red;font-weight:bold")
         else:
-            self.label_wait_ecns.setStyleSheet("Color:green")
+            self.label_wait_ecns.setStyleSheet("Color:green;font-weight:bold")
         self.label_wait_ecns.setText(f"Waiting: {result[0]}")
         self.cursor.execute(f"SELECT COUNT(ECN_ID) from ECN where STATUS='Completed'")
         result = self.cursor.fetchone()

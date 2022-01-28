@@ -54,6 +54,7 @@ class AttachmentTab(QtWidgets.QWidget):
         urlList = e.mimeData().urls()
         #self.table.setRowCount(len(urlList))
         row=self.table.rowCount()
+        cfiles=[]
         for item in urlList:
             url = item.toLocalFile()
             if "C:" not in url:
@@ -65,9 +66,9 @@ class AttachmentTab(QtWidgets.QWidget):
                     self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(url))
                     row+=1
             else:
-                self.dispMsg("File not accepted.The current file resides on your local machine and is not accessible by other users.")
-                break
-
+                cfiles.append(url)
+        if len(cfiles)>0:
+            self.dispMsg(f"The following files were not accepted as they reside on your local machine and is not accessible by other users:{cfiles}")
 
     def dragEnterEvent(self,e):
         if e.mimeData().hasUrls():
@@ -85,19 +86,23 @@ class AttachmentTab(QtWidgets.QWidget):
     def addFiles(self):
         dialog = QtWidgets.QFileDialog(self)
         dialog.setFileMode(QtWidgets.QFileDialog.ExistingFiles)
+        cfiles = []
         if dialog.exec():
             fileNames = dialog.selectedFiles()
             row=self.table.rowCount()
             for url in fileNames:
-                if url not in self.files:
-                    self.files.append(url)
-                    self.table.insertRow(row)
-                    self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(url[url.rfind("/")+1:]))
-                    self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(url))
-                    # chkBox = QtWidgets.QCheckBox("Add as part")
-                    # chkBox.stateChanged.connect(self.addPart)
-                    # self.table.setCellWidget(row,2,chkBox)
-                    row+=1
+                if "C:" not in url:
+                    if url not in self.files:
+                        self.files.append(url)
+                        self.table.insertRow(row)
+                        self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(url[url.rfind("/")+1:]))
+                        self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(url))
+                        row+=1
+                else:
+                    cfiles.append(url)
+            if len(cfiles)>0:
+                self.dispMsg(f"The following were files not accepted as they reside on your local machine and is not accessible by other users:{cfiles}")
+                
                 
     def removeRow(self):
         self.table.removeRow(self.table.currentRow())
@@ -111,9 +116,6 @@ class AttachmentTab(QtWidgets.QWidget):
                 self.parent.tab_parts.addPart(part)
                 parts.append(part)
         self.dispMsg("Parts have been generated in the parts tab")
-
-    def addPart(self):
-        print(self.table.currentRow())
         
     def repopulateTable(self):
         command = "Select * from ATTACHMENTS where ECN_ID= '"+self.parent.ecn_id +"'"
