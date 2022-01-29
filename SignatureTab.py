@@ -36,6 +36,7 @@ class SignatureTab(QtWidgets.QWidget):
         hlayout.addWidget(self.button_add)
         hlayout.addWidget(self.button_remove)
         if self.parent.parent.user_info['role']=="Manager":
+            self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
             self.button_revoke = QtWidgets.QPushButton("Revoke")
             self.button_revoke.setEnabled(False)
             self.button_revoke.clicked.connect(self.revokeApproval)
@@ -67,12 +68,13 @@ class SignatureTab(QtWidgets.QWidget):
         self.table.setCellWidget(row, 0, box)
         
     def setBoxName(self,row,text=None):
-        command = "Select NAME from USER where JOB_TITLE = '" + self.table.cellWidget(row, 0).currentText() +"'"
+        command = "Select NAME,USER_ID from USER where JOB_TITLE = '" + self.table.cellWidget(row, 0).currentText() +"'"
         self.parent.cursor.execute(command)
         test = self.parent.cursor.fetchall()
         names = []
         for item in test:
-            names.append(item[0])
+            if item[1]!=self.parent.user_info['user']:
+                names.append(item[0])
         box = QtWidgets.QComboBox()
         box.addItems(names)
         if text is not None:
@@ -99,8 +101,13 @@ class SignatureTab(QtWidgets.QWidget):
             row = item.row()
             user = self.table.item(row, 2).text()
             if self.getUserRole(user)=="Signer":
-                self.parent.cursor.execute(f"UPDATE SIGNATURE SET SIGNED_DATE = NULL where ECN_ID='{self.parent.ecn_id}' and USER_ID='{user}'")
-                self.parent.db.commit()
+                comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Revoke reason", "")
+                if ok and comment!="":
+                    self.parent.addComment(self.parent.ecn_id," For user: "+user + " - " + comment,"Revoke")
+                    self.parent.cursor.execute(f"UPDATE SIGNATURE SET SIGNED_DATE = NULL where ECN_ID='{self.parent.ecn_id}' and USER_ID='{user}'")
+                    self.parent.db.commit()
+                if ok and comment=="":
+                    self.dispMsg("Revoke failed: Comment field was left blank.")
             else:
                 self.dispMsg(f"Revoke failed: you do not have permission to revoke {user}'s approval")
         self.repopulateTable()
@@ -179,6 +186,15 @@ class SignatureTab(QtWidgets.QWidget):
         box.addItems(names)
         self.table.setCellWidget(self.table.currentRow(), 1, box)
         box.currentIndexChanged.connect(self.setUser)
+        
+    def checkDuplicate(self):
+        sigs = []
+        for row in range(self.table.rowCount()):
+            sigs.append(self.table.cellWidget(row, 2).currentText())
+        if len(sigs)==len(set(sigs)):
+            return False
+        else:
+            return True
 
     
     def setUser(self):

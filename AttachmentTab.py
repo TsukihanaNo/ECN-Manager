@@ -9,6 +9,7 @@ class AttachmentTab(QtWidgets.QWidget):
         self.files = []
         self.initAtt()
         self.initUI()
+        self.generateFileList()
 
     def initAtt(self):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -40,7 +41,7 @@ class AttachmentTab(QtWidgets.QWidget):
         self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        #self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.table.doubleClicked.connect(self.openFile)
 
@@ -105,7 +106,17 @@ class AttachmentTab(QtWidgets.QWidget):
                 
                 
     def removeRow(self):
-        self.table.removeRow(self.table.currentRow())
+        index = self.table.selectionModel().selectedRows()
+        index = sorted(index, reverse=True)
+        for item in index:
+            row = item.row()
+            self.files.remove(self.table.item(row, 1).text())
+            self.table.removeRow(row)
+        
+    def generateFileList(self):
+        if self.table.rowCount()>0:
+            for x in range(self.table.rowCount()):
+                self.files.append(self.table.item(x, 1).text())
 
     def autoGenParts(self):
         parts = []

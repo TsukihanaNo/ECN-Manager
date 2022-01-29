@@ -31,3 +31,9 @@
 
 - add PDM interface module
 - add Visual ERP interface module
+
+
+ideas:
+ - metric for managers
+  - show ecns assigned to signature user who has not yet approved.
+- be able to set due dates for ecns

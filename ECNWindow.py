@@ -63,6 +63,8 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_ecn.line_author.setText(self.parent.user_info['user'])
         self.tab_ecn.box_requestor.setCurrentText(self.parent.user_info['user'])
         self.tab_ecn.line_status.setText("Draft")
+        self.tab_ecn.edit_date.setDate(QtCore.QDate.currentDate())
+        self.tab_ecn.edit_date.setMinimumDate(QtCore.QDate.currentDate())
         self.tab_parts = PartsTab(self)
         self.tab_attach = AttachmentTab(self)
         self.tab_comments = CommentTab(self)
@@ -85,7 +87,7 @@ class ECNWindow(QtWidgets.QWidget):
         #self.tabwidget.addTab(self.tab_changelog, "Change Log")
         
         self.tabwidget.setTabVisible(3, False)
-        self.tabwidget.setTabVisible(5, False)
+        #self.tabwidget.setTabVisible(5, False)
                 
         self.tab_purch = PurchaserTab(self)
         self.tab_planner = PlannerTab(self)
@@ -97,7 +99,7 @@ class ECNWindow(QtWidgets.QWidget):
         mainlayout.addWidget(self.tabwidget)
         mainlayout.addLayout(buttonlayout)
         
-        self.tab_ecn.combo_dept.currentIndexChanged.connect(self.tab_signature.prepopulateTable)
+        #self.tab_ecn.combo_dept.currentIndexChanged.connect(self.tab_signature.prepopulateTable)
         
         #self.tab_signature.prepopulateTable()
 
@@ -165,6 +167,8 @@ class ECNWindow(QtWidgets.QWidget):
                 buttonlayout.addWidget(self.button_save)
                 buttonlayout.addWidget(self.button_cancel)
                 buttonlayout.addWidget(self.button_release)
+                if self.tab_signature.table.rowCount()==0:
+                    self.button_release.setDisabled(True)
                 self.tab_ecn.line_ecntitle.setReadOnly(False)
                 self.tab_ecn.text_reason.setReadOnly(False)
                 self.tab_ecn.text_summary.setReadOnly(False)
@@ -505,6 +509,11 @@ class ECNWindow(QtWidgets.QWidget):
         try:
             self.save(1)
             modifieddate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+            
+            self.cursor.execute(f"SELECT FIRST_RELEASE from ECN where ECN_ID='{self.ecn_id}'")
+            result = self.cursor.fetchone()
+            if result[0] is None:
+                self.cursor.execute(f"UPDATE ECN SET FIRST_RELEASE = '{modifieddate}' where ECN_ID='{self.ecn_id}'")
             data = (modifieddate, "Out For Approval",self.ecn_id)
             self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = ?, STATUS = ? WHERE ECN_ID = ?",(data))
             self.db.commit()
@@ -623,15 +632,31 @@ class ECNWindow(QtWidgets.QWidget):
                     completed = False
             if completed:
                 completeddate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
-                data = (completeddate, "Completed",self.ecn_id)
-                self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = ?, STATUS = ? WHERE ECN_ID = ?",(data))
+                self.cursor.execute(f"select FIRST_RELEASE from ECN where ECN_ID='{self.ecn_id}'")
+                result = self.cursor.fetchone()
+                first_release = datetime.strptime(result[0],'%Y/%m/%d-%H:%M:%S')
+                elapsed = self.getElapsedDays(first_release, completeddate)
+                data = (completeddate,completeddate,elapsed, "Completed",self.ecn_id)
+                self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = ?,COMP_DATE = ?, COMP_DAYS = ?, STATUS = ? WHERE ECN_ID = ?",(data))
                 self.db.commit()
                 self.parent.repopulateTable()
                 self.dispMsg("ECN is now completed")
                 self.addNotification(self.ecn_id, "Completed")
+            else:
+                self.parent.repopulateTable()
         except Exception as e:
             print(e)
             self.dispMsg(f"Error Occured during check Complete.\n Error: {e}")
+            
+    def getElapsedDays(self,day1,day2):
+        today  = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+        day1 = datetime.strptime(day1,'%Y/%m/%d-%H:%M:%S')
+        day2 = datetime.strptime(day2,'%Y/%m/%d-%H:%M:%S')
+        if day2>day1:
+            elapsed = day2 - day1
+        else:
+            elapsed = day1 - day2
+        return elapsed.day
             
 
     # def submitAndClose(self):
@@ -649,21 +674,30 @@ class ECNWindow(QtWidgets.QWidget):
     def save(self,msg = None):
         if not self.checkEcnID():
             self.insertData()
-            self.AddSignatures()
-            if not msg:
-                self.dispMsg("ECN has been saved!")
-            self.tabwidget.setTabVisible(3, True)
-            self.parent.repopulateTable()
-            self.button_release.setDisabled(False)
-            self.button_cancel.setDisabled(False)
+            if self.tab_signature.checkDuplicate():
+                self.dispMsg("Duplicate signature found, please remove duplicate.")
+            else:
+                self.AddSignatures()
+                if not msg:
+                    self.dispMsg("ECN has been saved!")
+                self.tabwidget.setTabVisible(3, True)
+                self.parent.repopulateTable()
+                if self.tab_signature.table.rowCount()>0:
+                    self.button_release.setDisabled(False)
+                self.button_cancel.setDisabled(False)
         else:
             self.updateData()
-            self.AddSignatures()
-            if not msg:
-                self.dispMsg("ECN has been updated!")
-            #self.getCurrentValues()
-            #self.checkDiff()
-            self.parent.repopulateTable()
+            if self.tab_signature.checkDuplicate():
+                self.dispMsg("Duplicate signature found, please remove duplicate.")
+            else:
+                self.AddSignatures()
+                if not msg:
+                    self.dispMsg("ECN has been updated!")
+                if self.tab_signature.table.rowCount()>0:
+                    self.button_release.setDisabled(False)
+                #self.getCurrentValues()
+                #self.checkDiff()
+                self.parent.repopulateTable()
 
     def saveAndClose(self):
         self.save()

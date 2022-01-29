@@ -18,7 +18,7 @@ cursor = database.cursor()
 #results = cursor.execute(f"Select * from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='test'")
 #results = cursor.execute("UPDATE SIGNATURE SET SIGNED_DATE = NULL where ECN_ID='ECN-220126-121943' and USER_ID='lily'")
 #database.commit()
-results = cursor.execute("select * from SIGNATURE")
+results = cursor.execute("select FIRST_RELEASE, LAST_MODIFIED from ECN")
 for result in results:
     print(result)
 
