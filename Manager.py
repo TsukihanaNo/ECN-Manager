@@ -459,7 +459,7 @@ def main():
         manager=Manager(sys.argv[1])
     else:
         manager = Manager()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == '__main__':

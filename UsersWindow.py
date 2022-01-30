@@ -175,7 +175,7 @@ class UsersWindow(QtWidgets.QWidget):
 def main():
     app = QtWidgets.QApplication(sys.argv)
     Users = UsersWindow()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == '__main__':

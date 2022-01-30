@@ -59,6 +59,7 @@ class UserPanel(QtWidgets.QWidget):
             self.line_user.setDisabled(True)
         label_pass = QtWidgets.QLabel("Password:")
         self.line_pass = QtWidgets.QLineEdit(self)
+        self.line_pass.setEchoMode(QtWidgets.QLineEdit.Password)
         label_name = QtWidgets.QLabel("Name:")
         self.line_name = QtWidgets.QLineEdit(self)
         label_role = QtWidgets.QLabel("Role:")
@@ -85,6 +86,11 @@ class UserPanel(QtWidgets.QWidget):
 
         self.button_save = QtWidgets.QPushButton("Save")
         self.button_save.clicked.connect(self.save)
+        self.button_clear = QtWidgets.QPushButton("Clear")
+        self.button_clear.clicked.connect(self.clearFields)
+        layout_buttons = QtWidgets.QHBoxLayout(self)
+        layout_buttons.addWidget(self.button_save)
+        layout_buttons.addWidget(self.button_clear)
         
         main_layout.addWidget(label_user)
         main_layout.addWidget(self.line_user)
@@ -102,7 +108,7 @@ class UserPanel(QtWidgets.QWidget):
         main_layout.addWidget(self.combo_status)
         main_layout.addWidget(label_email)
         main_layout.addWidget(self.line_email)
-        main_layout.addWidget(self.button_save)
+        main_layout.addLayout(layout_buttons)
         
     def loadInfo(self):
         self.cursor.execute(f"Select * from USER where USER_ID='{self.user}'")
@@ -165,6 +171,11 @@ class UserPanel(QtWidgets.QWidget):
         else:
             self.dispMsg("There are empty fields.")
 
+    def clearFields(self):
+        self.line_user.clear()
+        self.line_pass.clear()
+        self.line_name.clear()
+        self.line_email.clear()
 
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()

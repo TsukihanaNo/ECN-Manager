@@ -6,12 +6,9 @@
 
 - EVN export
 
+- docx export
+
 - check for required fields before allowing for release
-
-- add remainder of data to change log check
-
- - change the myECN table to allow for showing "myECN" or OpenECNs
-    - be able to see all my, all open, all canceled
 
 
 - universal search (prototype done)
@@ -20,18 +17,11 @@
 
 - priority sign offs -> job-title specific (done)
 - have signers and notifiers
-- parts tab update:
-    - part id, desc, part type, disposition, 
 
-- test how attachments work with pdm parts
-    - seems to use the windows interface for opening files so it launches pdm files without any issues.
-    - need to test with another user who isn't the one adding the files.
 
 - add elapse days of ecn.
 
 - add PDM interface module
-- add Visual ERP interface module
-
 
 ideas:
  - metric for managers

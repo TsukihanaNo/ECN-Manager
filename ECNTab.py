@@ -19,16 +19,6 @@ class ECNTab(QtWidgets.QWidget):
         headerMainLayout = QtWidgets.QVBoxLayout()
         headersubLayout = QtWidgets.QHBoxLayout()
         headersubLayout2 = QtWidgets.QHBoxLayout()
-        # layout_id = QtWidgets.QVBoxLayout()
-        # layout_type = QtWidgets.QVBoxLayout()
-        # layout_status = QtWidgets.QVBoxLayout()
-        # layout_author = QtWidgets.QVBoxLayout()
-        # layout_requestor = QtWidgets.QVBoxLayout()
-        layout_summary = QtWidgets.QVBoxLayout()
-        # layout_dept = QtWidgets.QVBoxLayout()
-        # layout_due_date = QtWidgets.QVBoxLayout()
-        #layout_department = QtWidgets.QVBoxLayout()
-        
 
         self.label_id = QtWidgets.QLabel("ECN ID:")
         self.label_type = QtWidgets.QLabel("ECN Type:")
@@ -67,8 +57,11 @@ class ECNTab(QtWidgets.QWidget):
         #self.cbpurch = QtWidgets.QCheckBox("purchasing",self)
         #self.cbplanner = QtWidgets.QCheckBox("planner",self)
         #self.cbshop = QtWidgets.QCheckBox("shop",self)
+        
+        layout_summary = QtWidgets.QVBoxLayout()
         self.label_summary = QtWidgets.QLabel("Summary of changes")
         self.text_summary = QtWidgets.QTextEdit(self)
+        self.text_summary.setAutoFormatting(QtWidgets.QTextEdit.AutoAll)
 
         #self.cbpurch.stateChanged.connect(self.parent.togglePurchTab)
         #self.cbplanner.stateChanged.connect(self.parent.togglePlannerTab)
@@ -76,34 +69,7 @@ class ECNTab(QtWidgets.QWidget):
         
         layout_summary.addWidget(self.label_summary)
         layout_summary.addWidget(self.text_summary)
-        #layout_summary.addWidget(self.label_departments)
-        #layout_summary.addWidget(self.cbpurch)
-        #layout_summary.addWidget(self.cbplanner)
-        #layout_summary.addWidget(self.cbshop)
 
-        # layout_id.addWidget(self.label_id)
-        # layout_id.addWidget(self.line_id)
-        # layout_type.addWidget(self.label_type)
-        # layout_type.addWidget(self.combo_type)
-        # layout_dept.addWidget(self.label_dept)
-        # layout_dept.addWidget(self.combo_dept)
-        # layout_status.addWidget(self.label_status)
-        # layout_status.addWidget(self.line_status)
-        # layout_author.addWidget(self.label_author)
-        # layout_author.addWidget(self.line_author)
-        # layout_requestor.addWidget(self.label_requestor)
-        # layout_requestor.addWidget(self.box_requestor)
-        # layout_due_date.addWidget(self.label_due_date)
-        # layout_due_date.addWidget(self.edit_date)
-
-        # headersubLayout.addLayout(layout_id)
-        # headersubLayout.addLayout(layout_type)
-        # headersubLayout.addLayout(layout_dept)
-        # headersubLayout.addLayout(layout_status)
-        
-        # headersubLayout2.addLayout(layout_author)
-        # headersubLayout2.addLayout(layout_requestor)
-        # headersubLayout2.addLayout(layout_due_date)
         
         headersubLayout.addWidget(self.label_id)
         headersubLayout.addWidget(self.line_id)
@@ -129,6 +95,7 @@ class ECNTab(QtWidgets.QWidget):
         layout_reason = QtWidgets.QVBoxLayout()
         self.label_reason = QtWidgets.QLabel("Enter reason for ECN below:")
         self.text_reason = QtWidgets.QTextEdit(self)
+        self.text_reason.setAutoFormatting(QtWidgets.QTextEdit.AutoAll)
 
         layout_reason.addWidget(self.label_reason)
         layout_reason.addWidget(self.text_reason)

@@ -75,14 +75,43 @@ class SettingsWindow(QtWidgets.QWidget):
         layout_db.addWidget(self.button_db)
         main_layout.addWidget(self.label_db)
         main_layout.addLayout(layout_db)
-        self.label_smpt = QtWidgets.QLabel("SMPT: IP/Port")
-        self.line_smpt_address = QtWidgets.QLineEdit(self)
-        self.line_smpt_address.setPlaceholderText("SMPT Address")
-        self.line_smpt_port = QtWidgets.QLineEdit(self)
-        self.line_smpt_port.setPlaceholderText("SMPT Port")
-        main_layout.addWidget(self.label_smpt)
-        main_layout.addWidget(self.line_smpt_address)
-        main_layout.addWidget(self.line_smpt_port)
+        self.label_visual = QtWidgets.QLabel("Visual")
+        self.label_user_v = QtWidgets.QLabel("User:")
+        self.line_user_v = QtWidgets.QLineEdit(self)
+        self.label_pass_v = QtWidgets.QLabel("Pass:")
+        self.line_pass_v = QtWidgets.QLineEdit(self)
+        self.line_pass_v.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.label_db_v = QtWidgets.QLabel("DB:  ")
+        self.line_db_v = QtWidgets.QLineEdit(self)
+        layout_user_v = QtWidgets.QHBoxLayout(self)
+        layout_user_v.addWidget(self.label_user_v)
+        layout_user_v.addWidget(self.line_user_v)
+        layout_pass_v = QtWidgets.QHBoxLayout(self)
+        layout_pass_v.addWidget(self.label_pass_v)
+        layout_pass_v.addWidget(self.line_pass_v)
+        layout_db_v = QtWidgets.QHBoxLayout(self)
+        layout_db_v.addWidget(self.label_db_v)
+        layout_db_v.addWidget(self.line_db_v)
+        main_layout.addWidget(self.label_visual)
+        main_layout.addLayout(layout_user_v)
+        main_layout.addLayout(layout_pass_v)
+        main_layout.addLayout(layout_db_v)
+        self.label_smtp = QtWidgets.QLabel("smtp:")
+        self.label_smtp_ip = QtWidgets.QLabel("IP:   ")
+        self.line_smtp_address = QtWidgets.QLineEdit(self)
+        self.line_smtp_address.setPlaceholderText("smtp Address")
+        self.label_smtp_port = QtWidgets.QLabel("Port:")
+        self.line_smtp_port = QtWidgets.QLineEdit(self)
+        self.line_smtp_port.setPlaceholderText("SMTP Port")
+        layout_smtp_ip = QtWidgets.QHBoxLayout(self)
+        layout_smtp_ip.addWidget(self.label_smtp_ip)
+        layout_smtp_ip.addWidget(self.line_smtp_address)
+        layout_smtp_port = QtWidgets.QHBoxLayout(self)
+        layout_smtp_port.addWidget(self.label_smtp_port)
+        layout_smtp_port.addWidget(self.line_smtp_port)
+        main_layout.addWidget(self.label_smtp)
+        main_layout.addLayout(layout_smtp_ip)
+        main_layout.addLayout(layout_smtp_port)
         self.label_dept = QtWidgets.QLabel("Dept:")
         self.line_dept = QtWidgets.QLineEdit(self)
         self.line_dept.returnPressed.connect(self.addDept)
@@ -131,10 +160,15 @@ class SettingsWindow(QtWidgets.QWidget):
 
     def loadSettings(self):
         self.line_db.setText(self.settings["DB_LOC"])
-        if "SMPT" in self.settings.keys():
-            self.line_smpt_address.setText(self.settings["SMTP"])
+        if "Visual" in self.settings.keys():
+            user,pw,db = self.settings["Visual"].split(",")
+            self.line_user_v.setText(user)
+            self.line_pass_v.setText(pw)
+            self.line_db_v.setText(db)
+        if "SMTP" in self.settings.keys():
+            self.line_smtp_address.setText(self.settings["SMTP"])
         if "Port" in self.settings.keys():
-            self.line_smpt_port.setText(self.settings["Port"])
+            self.line_smtp_port.setText(self.settings["Port"])
         if "Dept" in self.settings.keys():
             dept = self.settings["Dept"].split(",")
             temp = []
@@ -157,12 +191,15 @@ class SettingsWindow(QtWidgets.QWidget):
     def saveSettings(self):
         data = ""
         data += "DB_LOC : " + self.line_db.text()+"\n"
-        if self.line_smpt_address.text()!="":
-            if self.line_smpt_port.text()!="":
-                data += "SMTP : " + self.line_smpt_address.text() + "\n"
-                data += "Port : " + self.line_smpt_port.text() +"\n"
-            else:
-                self.dispMsg("Missing SMTP Port.")
+        if self.line_user_v.text()!="" and self.line_pass_v.text()!= "" and self.line_db_v.text()!="":
+            data+= f"Visual : {self.line_user_v.text()},{self.line_pass_v.text()},{self.line_db_v.text()}\n"
+        else:
+            self.dispMsg("One of the Visual fields are empty")
+        if self.line_smtp_address.text()!="" and self.line_smtp_port.text()!="":
+                data += "SMTP : " + self.line_smtp_address.text() + "\n"
+                data += "Port : " + self.line_smtp_port.text() +"\n"
+        else:
+            self.dispMsg("One of the SMTP fields are empty.")
         data += "Dept : "
         for x in range(self.list_dept.count()):
             if x < self.list_dept.count()-1:
@@ -216,7 +253,7 @@ class SettingsWindow(QtWidgets.QWidget):
 def main():
     app = QtWidgets.QApplication(sys.argv)
     settings = SettingsWindow()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == '__main__':

@@ -116,7 +116,7 @@ class NewDBWindow(QtWidgets.QWidget):
 def main():
     app = QtWidgets.QApplication(sys.argv)
     DB = NewDBWindow()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == '__main__':
