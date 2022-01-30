@@ -246,7 +246,7 @@ class Manager(QtWidgets.QWidget):
         self.label_complete_ecns = QtWidgets.QLabel("Completed:")
         self.dropdown_type = QtWidgets.QComboBox(self)
         
-        if self.user_info["role"]=="Signer":
+        if self.user_info["role"]!="Engineer" and self.user_info['role']!="Admin":
             items = ["Queue","Open","Completed"]
         else:
             items = ["My ECNS","Queue","Open","Completed"]

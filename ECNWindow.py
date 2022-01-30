@@ -249,7 +249,7 @@ class ECNWindow(QtWidgets.QWidget):
             title = self.tab_ecn.line_ecntitle.text()
             reason =self.tab_ecn.text_reason.toPlainText()
             summary = self.tab_ecn.text_summary.toPlainText()
-            modifieddate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+            modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
             data = (self.ecn_id,ecn_type,author,requestor,status,title,reason,summary,modifieddate)
             self.cursor.execute("INSERT INTO ECN(ECN_ID,ECN_TYPE,AUTHOR,REQUESTOR,STATUS,ECN_TITLE,ECN_REASON,ECN_SUMMARY,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?,?)",(data))
@@ -274,15 +274,15 @@ class ECNWindow(QtWidgets.QWidget):
         
     def approve(self):
         try:
-            approvedate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+            approvedate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             data = (approvedate,self.ecn_id,self.parent.user_info['user'])
             self.cursor.execute("UPDATE SIGNATURE SET SIGNED_DATE = ? WHERE ECN_ID = ? and USER_ID = ?",(data))
-            self.db.commit()
             self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = '" + approvedate +"'")
             self.tab_signature.repopulateTable()
             self.dispMsg("ECN has been signed!")
             self.button_approve.setDisabled(True)
             self.checkComplete()
+            self.db.commit()
             print("moving ecn stage check")
             self.moveECNStage()
         except Exception as e:
@@ -294,7 +294,7 @@ class ECNWindow(QtWidgets.QWidget):
         if ok and comment!="":
             self.addComment(self.ecn_id, comment,"Reject")
         try:
-            modifieddate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+            modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             data = (modifieddate, "Rejected",self.ecn_id)
             self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = ?, STATUS = ? WHERE ECN_ID = ?",(data))
             self.db.commit()
@@ -366,7 +366,7 @@ class ECNWindow(QtWidgets.QWidget):
             title = self.tab_ecn.line_ecntitle.text()
             reason =self.tab_ecn.text_reason.toPlainText()
             summary = self.tab_ecn.text_summary.toPlainText()
-            modifieddate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+            modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             data = (ecn_type,requestor,title,reason,summary,modifieddate,self.ecn_id)
 
             #data = (self.combo_type.currentText(),self.box_requestor.text(),self.date_request.date().toString("yyyy-MM-dd"),'Unassigned',self.line_ecntitle.text(),self.text_detail.toPlainText(),self.line_id.text())
@@ -450,7 +450,7 @@ class ECNWindow(QtWidgets.QWidget):
 
     def addComment(self,ecn_id,comment,commentType):
         #COMMENTS(ECN_ID TEXT, NAME TEXT, USER TEXT, COMM_DATE DATE, COMMENT TEXT
-        data = (ecn_id, self.parent.user_info['user'],datetime.now().strftime('%Y/%m/%d-%H:%M:%S'),comment,commentType)
+        data = (ecn_id, self.parent.user_info['user'],datetime.now().strftime('%Y-%m-%d %H:%M:%S'),comment,commentType)
         self.cursor.execute("INSERT INTO COMMENTS(ECN_ID, USER, COMM_DATE, COMMENT,TYPE) VALUES(?,?,?,?,?)",(data))
         self.db.commit()
         self.tab_comments.enterText.clear()
@@ -508,7 +508,7 @@ class ECNWindow(QtWidgets.QWidget):
     def release(self):
         try:
             self.save(1)
-            modifieddate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+            modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             
             self.cursor.execute(f"SELECT FIRST_RELEASE from ECN where ECN_ID='{self.ecn_id}'")
             result = self.cursor.fetchone()
@@ -631,14 +631,16 @@ class ECNWindow(QtWidgets.QWidget):
                 if result['SIGNED_DATE'] == None or result['SIGNED_DATE']== "":
                     completed = False
             if completed:
-                completeddate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+                completeddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 self.cursor.execute(f"select FIRST_RELEASE from ECN where ECN_ID='{self.ecn_id}'")
                 result = self.cursor.fetchone()
-                first_release = datetime.strptime(result[0],'%Y/%m/%d-%H:%M:%S')
-                elapsed = self.getElapsedDays(first_release, completeddate)
+                #print(result[0])
+                #first_release = datetime.strptime(str(result[0]),'%Y-%m-%d %H:%M:%S')
+                elapsed = self.getElapsedDays(result[0], completeddate)
+                #elapsed = self.getElapsedDays(first_release, completeddate)
                 data = (completeddate,completeddate,elapsed, "Completed",self.ecn_id)
                 self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = ?,COMP_DATE = ?, COMP_DAYS = ?, STATUS = ? WHERE ECN_ID = ?",(data))
-                self.db.commit()
+                #self.db.commit()
                 self.parent.repopulateTable()
                 self.dispMsg("ECN is now completed")
                 self.addNotification(self.ecn_id, "Completed")
@@ -649,14 +651,15 @@ class ECNWindow(QtWidgets.QWidget):
             self.dispMsg(f"Error Occured during check Complete.\n Error: {e}")
             
     def getElapsedDays(self,day1,day2):
-        today  = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
-        day1 = datetime.strptime(day1,'%Y/%m/%d-%H:%M:%S')
-        day2 = datetime.strptime(day2,'%Y/%m/%d-%H:%M:%S')
+        today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        day1 = datetime.strptime(day1,'%Y-%m-%d %H:%M:%S')
+        day2 = datetime.strptime(day2,'%Y-%m-%d %H:%M:%S')
         if day2>day1:
             elapsed = day2 - day1
         else:
             elapsed = day1 - day2
-        return elapsed.day
+        print(elapsed.days)
+        return elapsed.days
             
 
     # def submitAndClose(self):
@@ -777,7 +780,7 @@ class ECNWindow(QtWidgets.QWidget):
 
     def checkDiff(self):
         ecn_id = self.ecn_id
-        changedate = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+        changedate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         user = self.parent.user_info['user']
         prevdata = self.now_type
         newdata = self.tab_ecn.combo_type.currentText()

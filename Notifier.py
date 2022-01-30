@@ -230,10 +230,10 @@ class Notifier(QtWidgets.QWidget):
         self.cursor.execute(f"Select ECN_ID, FIRST_RELEASE, LAST_STATUS from ECN where STATUS!='Completed'")
         results = self.cursor.fetchall()
         for result in results:
-            today  = datetime.now().strftime('%Y/%m/%d-%H:%M:%S')
+            today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             ecn = result[0]
-            first_release = datetime.strptime(result[1],'%Y/%m/%d-%H:%M:%S')
-            last_status = datetime.strptime(result[2],'%Y/%m/%d-%H:%M:%S')
+            first_release = datetime.strptime(result[1],'%Y-%m-%d %H:%M:%S')
+            last_status = datetime.strptime(result[2],'%Y-%m-%d %H:%M:%S')
             release_elapse = today - first_release
             status_elapse = today - last_status
             self.cursor.execute(f"UPDATE ECN SET RELEASE_ELAPSE ='{release_elapse.day}', STATUS_ELAPSE='{status_elapse.day}' WHERE ECN_ID='{ecn}'")
@@ -242,12 +242,12 @@ class Notifier(QtWidgets.QWidget):
     def lateReminder(self,ecn_id):
         self.cursor.execute(f"Select LAST_NOTIFIED, RELEASE_ELAPSE, STATUS_ELAPSE from ECN where ECN_ID={ecn_id}")
         result = self.cursor.fetchone()
-        today = datetime.now().strptime('%Y/%m/%d-%H:%M:%S')
+        today = datetime.now().strptime('%Y-%m-%d %H:%M:%S')
         message = f"Reminder for {ecn_id}: it has been {result[1]} days since the ECN has been released and {result[2]} days since the last status change."
         if result[0] is None:
             pass #send notification set notification set
         else:
-            last_notify = datetime.strptime(result[0],'%Y/%m/%d-%H:%M:%S')
+            last_notify = datetime.strptime(result[0],'%Y-%m-%d %H:%M:%S')
             elapsed = today - last_notify
             if elapsed.day >2:
                 pass # send notification

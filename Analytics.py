@@ -1,6 +1,7 @@
 from PySide6 import QtWidgets, QtCore, QtGui, QtCharts
 import os, sys
-import sqlite3  
+import sqlite3
+import datetime
 
 if getattr(sys, 'frozen', False):
     # frozen
@@ -63,10 +64,10 @@ class AnalyticsWindow(QtWidgets.QWidget):
         
 
     def initUI(self):
-        main_layout = QtWidgets.QVBoxLayout(self)
-        data_layout = QtWidgets.QHBoxLayout()
+        main_layout = QtWidgets.QHBoxLayout(self)
+        table_layout = QtWidgets.QVBoxLayout()
         self.box = QtWidgets.QComboBox(self)
-        self.box.addItems(["ECN Distribution","ECN By Author","ECN By Stage"])
+        self.box.addItems(["ECN By Status","ECN By Author","ECN By Stage","ECN By Days","ECN By Months"])
         self.box.currentIndexChanged.connect(self.setChartType)
         
         titles = ['Label','Value']
@@ -80,32 +81,159 @@ class AnalyticsWindow(QtWidgets.QWidget):
         
         self.chartview = QtCharts.QChartView()
         self.chartview.setRenderHint(QtGui.QPainter.Antialiasing)
+       
+        table_layout.addWidget(self.box)
+        table_layout.addWidget(self.table)
+        main_layout.addLayout(table_layout)
+        main_layout.addWidget(self.chartview)
         
-        data_layout.addWidget(self.table)
-        data_layout.addWidget(self.chartview)
-        main_layout.addWidget(self.box)
-        main_layout.addLayout(data_layout)
-        
-        self.showECNDistribution()
+        self.showECNStatusDistribution()
         
     def setChartType(self):
-        if self.box.currentText()=="ECN Distribution":
-            self.showECNDistribution()
+        if self.box.currentText()=="ECN By Status":
+            self.showECNStatusDistribution()
         if self.box.currentText()=="ECN By Author":
             self.showECNAuthorDistribution()
         if self.box.currentText()=="ECN By Stage":
             self.showECNStageDistribution()
+        if self.box.currentText()=="ECN By Days":
+            self.showECNDayDistribution()
+        if self.box.currentText()=="ECN By Months":
+            self.showECNMonthDistribution()
+            
+    def showECNMonthDistribution(self):
+        months ={'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'}
+        today = datetime.date.today()
+        year = today.year
+        years = []
+        data_release = {}
+        data_complete = {}
+        duration = 5
+        for x in range(duration):
+            years.append(year-x)
+        for year in years:
+            for month in months.keys():
+                date = f"{year}-{month}"
+                # self.cursor.execute(f"select COUNT(ECN_ID) from ECN where STATUS!='Draft' and STATUS!='Completed' and FIRST_RELEASE like '{date}%'")
+                # result = self.cursor.fetchone()
+                # #print(date,result[0])
+                # if year in data_release.keys():
+                #     data_release[year].append((month,result[0]))
+                # else:
+                #     data_release[year]=[(month,result[0])]
+                self.cursor.execute(f"select COUNT(ECN_ID) from ECN where STATUS='Completed' and COMP_DATE like '{date}%'")
+                result = self.cursor.fetchone()
+                #print(date,result[0])
+                if year in data_complete.keys():
+                    data_complete[year].append((month,result[0]))
+                else:
+                    data_complete[year]=[(month,result[0])]
+        print(data_release,data_complete)
+        
+        categories = []
+        for key in months.keys():
+            categories.append(months[key])
+        axisX = QtCharts.QBarCategoryAxis()
+        axisX.append(categories)
+        
+        chart = QtCharts.QChart()
+        chart.setTitle("ECN By Month")
+        chart.addAxis(axisX, QtCore.Qt.AlignBottom)
+        chart.setAnimationOptions(QtCharts.QChart.SeriesAnimations)
+        
+        for year in years:
+            print("release")
+            # set0 =QtCharts.QBarSet('Release')
+            # for item in data_release[year]:
+            #     print(item)
+            #     set0.append(item[1])
+            print("completed")
+            set0 =QtCharts.QBarSet(str(year))
+            for item in data_complete[year]:
+                print(item)
+                set0.append(item[1])
+            series = QtCharts.QBarSeries()
+            series.append(set0)
+            #series.append(set1)
+            chart.addSeries(series)
+            
+        series.attachAxis(axisX)
+
+        self.chartview.setChart(chart)
+        
+            
+    def showECNDayDistribution(self):#strftime strptime
+        days = []
+        today = datetime.date.today()
+        duration = 7
+        release_counts = {}
+        complete_counts = {}
+        for x in range(duration):
+            days.append(datetime.datetime.strftime(today-datetime.timedelta(days=x),'%Y-%m-%d'))
+        days = sorted(days)
+        for day in days:
+            self.cursor.execute(f"select COUNT(ECN_ID) from ECN where date(FIRST_RELEASE) = '{day}'")
+            result = self.cursor.fetchone()
+            release_counts[day]=result[0]
+            self.cursor.execute(f"select COUNT(ECN_ID) from ECN where date(COMP_DATE)='{day}'")
+            result = self.cursor.fetchone()
+            complete_counts[day]=result[0]
+            
+        row = 0 
+        self.table.clearContents()
+        self.table.setRowCount(row)
+        self.table.setHorizontalHeaderLabels(['Date','Count'])
+        for key in release_counts.keys():
+            self.table.insertRow(row)
+            label = QtWidgets.QTableWidgetItem(key)
+            label.setTextAlignment(QtCore.Qt.AlignCenter)
+            val = QtWidgets.QTableWidgetItem("R - " + str(release_counts[key]) + " : C- "+str(complete_counts[key]))
+            val.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.table.setItem(row, 0, label)
+            self.table.setItem(row, 1, val)
+            row+=1
+            
+        set0 = QtCharts.QBarSet("Released")
+        for value in release_counts.values():
+            set0.append(value)
+        set1 = QtCharts.QBarSet("Completed")
+        for value in complete_counts.values():
+            set1.append(value)
+        
+        series = QtCharts.QBarSeries()
+        series.append(set0)
+        series.append(set1)
+        series.setLabelsVisible(True)
+        
+        categories = []
+        for key in release_counts.keys():
+            categories.append(str(key))
+        axisX = QtCharts.QBarCategoryAxis()
+        axisX.append(categories)
+        
+        chart = QtCharts.QChart()
+        chart.addSeries(series)
+        chart.setTitle("ECN By Day")
+        chart.addAxis(axisX, QtCore.Qt.AlignBottom)
+        series.attachAxis(axisX)
+        chart.setAnimationOptions(QtCharts.QChart.SeriesAnimations)
+        
+        self.chartview.setChart(chart)
+            
             
     def showECNStageDistribution(self):
         stages = []
         current_stages = {}
-        self.cursor.execute("select DISTINCT(STAGE) from ECN where STATUS!='Completed' and STATUS!='Draft'")
-        results = self.cursor.fetchall()
-        for result in results:
-            stages.append(result[0])
-        stages = sorted(stages)
+        # self.cursor.execute("select DISTINCT(STAGE) from ECN where STATUS!='Completed' and STATUS!='Draft'")
+        # results = self.cursor.fetchall()
+        # for result in results:
+        #     stages.append(result[0])
+        for value in self.stageDict.values():
+            stages.append(value)
+        stages = sorted(set(stages))
+        print(stages)
         for stage in stages:
-            self.cursor.execute(f"select COUNT(ECN_ID) from ECN where STAGE='{stage}' and STATUS!='Completed'")
+            self.cursor.execute(f"select COUNT(ECN_ID) from ECN where STAGE='{stage}' and STATUS!='Completed' and STATUS!='Draft' and STATUS!='Canceled'")
             result = self.cursor.fetchone()
             current_stages[stage]=result[0]
         set0 = QtCharts.QBarSet("stage")
@@ -116,26 +244,30 @@ class AnalyticsWindow(QtWidgets.QWidget):
         series.append(set0)
         series.setLabelsVisible(True)
         
+        # titles={}
+        # for key,value in self.stageDict.items():
+        #     titles[value]=key
+        
         categories = []
         for key in current_stages.keys():
             categories.append(str(key))
-        print(categories)
+        #print(categories)
         axisX = QtCharts.QBarCategoryAxis()
         axisX.append(categories)
         
         row = 0 
         self.table.clearContents()
         self.table.setRowCount(row)
+        self.table.setHorizontalHeaderLabels(['Job Title','Stage'])
         for key in self.stageDict.keys():
-            if key!="Admin":
-                self.table.insertRow(row)
-                label = QtWidgets.QTableWidgetItem(key)
-                label.setTextAlignment(QtCore.Qt.AlignCenter)
-                val = QtWidgets.QTableWidgetItem(str(self.stageDict[key]))
-                val.setTextAlignment(QtCore.Qt.AlignCenter)
-                self.table.setItem(row, 0, label)
-                self.table.setItem(row, 1, val)
-                row+=1
+            self.table.insertRow(row)
+            label = QtWidgets.QTableWidgetItem(key)
+            label.setTextAlignment(QtCore.Qt.AlignCenter)
+            val = QtWidgets.QTableWidgetItem(str(self.stageDict[key]))
+            val.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.table.setItem(row, 0, label)
+            self.table.setItem(row, 1, val)
+            row+=1
         
         chart = QtCharts.QChart()
         chart.addSeries(series)
@@ -160,6 +292,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
         row = 0 
         self.table.clearContents()
         self.table.setRowCount(row)
+        self.table.setHorizontalHeaderLabels(['Author','Count'])
         total = sum(counts.values())
         for key in counts.keys():
             self.table.insertRow(row)
@@ -176,21 +309,23 @@ class AnalyticsWindow(QtWidgets.QWidget):
 
         series = QtCharts.QPieSeries()
         for key in counts.keys():
-            series.append(key, counts[key])
+            series.append(key+"  :  "+str(round(((counts[key]/total)*100),2))+"%", counts[key])
         series.setLabelsVisible(True)
         
         chart = QtCharts.QChart()
         chart.addSeries(series)
         chart.setTitle("ECN By Author")
+        chart.legend().hide()
         chart.setAnimationOptions(QtCharts.QChart.SeriesAnimations)
         self.chartview.setChart(chart)
     
     
-    def showECNDistribution(self):
+    def showECNStatusDistribution(self):
         counts = self.ECNDistribution()
         row = 0
         self.table.clearContents()
         self.table.setRowCount(row)
+        self.table.setHorizontalHeaderLabels(['Status','Count'])
         total = sum(counts.values())
         for key in counts.keys():
             self.table.insertRow(row)
@@ -206,12 +341,14 @@ class AnalyticsWindow(QtWidgets.QWidget):
 
         series = QtCharts.QPieSeries()
         for key in counts.keys():
-            series.append(key, counts[key])
+            if counts[key]>0:
+                series.append(key+"  :  "+str(round(((counts[key]/total)*100),2))+"%", counts[key])
         series.setLabelsVisible(True)
         
         chart = QtCharts.QChart()
         chart.addSeries(series)
         chart.setTitle("ECN Distribution")
+        chart.legend().hide()
         chart.setAnimationOptions(QtCharts.QChart.SeriesAnimations)
         self.chartview.setChart(chart)
         
@@ -229,7 +366,10 @@ class AnalyticsWindow(QtWidgets.QWidget):
         self.cursor.execute("select COUNT(ECN_ID) from ECN where STATUS='Completed'")
         result = self.cursor.fetchone()
         count_C = result[0]
-        return {"Out For Approval":count_OFA,"Rejected":count_RJ,"Completed":count_C}
+        self.cursor.execute("select COUNT(ECN_ID) from ecn where STATUS='Canceled'")
+        result = self.cursor.fetchone()
+        count_cl = result[0]
+        return {"Out For Approval":count_OFA,"Rejected":count_RJ,"Completed":count_C,"Canceled":count_cl}
         
 
     def getStageDict(self):
@@ -237,7 +377,8 @@ class AnalyticsWindow(QtWidgets.QWidget):
         stages = self.settings["Stage"].split(",")
         for stage in stages:
             key,value = stage.split("-")
-            self.stageDict[key.strip()] = value.strip()
+            if key.strip()!="Admin":
+                self.stageDict[key.strip()] = value.strip()
 
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()

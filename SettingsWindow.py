@@ -21,7 +21,8 @@ class SettingsWindow(QtWidgets.QWidget):
         super(SettingsWindow,self).__init__()
         self.windowWidth =  int(580*0.75)
         self.windowHeight = int(830*0.75)
-        if parent is None:
+        self.parent = parent
+        if self.parent is None:
             f = open(initfile,'r')
             self.settings = {}
             for line in f:
@@ -33,7 +34,6 @@ class SettingsWindow(QtWidgets.QWidget):
             self.cursor = self.db.cursor()
             self.cursor.row_factory = sqlite3.Row
         else:
-            self.parent = parent
             self.settings = parent.settings
             self.db = self.parent.db
             self.cursor = self.parent.cursor
@@ -128,12 +128,15 @@ class SettingsWindow(QtWidgets.QWidget):
         self.table_jobs.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.button_jobs_add = QtWidgets.QPushButton("Add")
         self.button_jobs_add.clicked.connect(self.addJob)
+        self.button_jobs_insert = QtWidgets.QPushButton("Insert")
+        self.button_jobs_insert.clicked.connect(self.insertJob)
         self.button_jobs_remove = QtWidgets.QPushButton("Remove")
         self.button_jobs_remove.clicked.connect(self.removeJob)
         self.button_save = QtWidgets.QPushButton("Save Settings")
         self.button_save.clicked.connect(self.saveSettings)
         layout_buttons_jobs = QtWidgets.QHBoxLayout()
         layout_buttons_jobs.addWidget(self.button_jobs_add)
+        layout_buttons_jobs.addWidget(self.button_jobs_insert)
         layout_buttons_jobs.addWidget(self.button_jobs_remove)
         layout_dept = QtWidgets.QHBoxLayout()
         layout_dept.addWidget(self.line_dept)
@@ -222,6 +225,7 @@ class SettingsWindow(QtWidgets.QWidget):
             f = open(initfile,'w')
             f.write(data)
             f.close()
+            print(self.parent)
             if self.parent is not None:
                 self.parent.loadSettings()
             self.dispMsg("Settings have been saved!")
@@ -240,6 +244,9 @@ class SettingsWindow(QtWidgets.QWidget):
 
     def addJob(self):
         self.table_jobs.insertRow(self.table_jobs.rowCount())
+        
+    def insertJob(self):
+        self.table_jobs.insertRow(self.table_jobs.currentRow()+1)
 
     def removeJob(self):
         self.table_jobs.removeRow(self.table_jobs.currentRow())
