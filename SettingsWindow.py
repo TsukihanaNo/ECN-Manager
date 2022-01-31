@@ -1,5 +1,3 @@
-from tkinter import mainloop
-from wsgiref import headers
 from PySide6 import QtWidgets, QtCore, QtGui
 import os, sys
 from UserPanel import *
@@ -96,22 +94,29 @@ class SettingsWindow(QtWidgets.QWidget):
         main_layout.addLayout(layout_user_v)
         main_layout.addLayout(layout_pass_v)
         main_layout.addLayout(layout_db_v)
-        self.label_smtp = QtWidgets.QLabel("smtp:")
+        self.label_smtp = QtWidgets.QLabel("SMTP:")
         self.label_smtp_ip = QtWidgets.QLabel("IP:   ")
         self.line_smtp_address = QtWidgets.QLineEdit(self)
-        self.line_smtp_address.setPlaceholderText("smtp Address")
+        self.line_smtp_address.setPlaceholderText("SMTP Address")
         self.label_smtp_port = QtWidgets.QLabel("Port:")
         self.line_smtp_port = QtWidgets.QLineEdit(self)
         self.line_smtp_port.setPlaceholderText("SMTP Port")
+        self.label_smtp_email = QtWidgets.QLabel("Email:")
+        self.line_smtp_email = QtWidgets.QLineEdit(self)
+        self.line_smtp_email.setPlaceholderText("Enter sent from address")
         layout_smtp_ip = QtWidgets.QHBoxLayout(self)
         layout_smtp_ip.addWidget(self.label_smtp_ip)
         layout_smtp_ip.addWidget(self.line_smtp_address)
         layout_smtp_port = QtWidgets.QHBoxLayout(self)
         layout_smtp_port.addWidget(self.label_smtp_port)
         layout_smtp_port.addWidget(self.line_smtp_port)
+        layout_smtp_email = QtWidgets.QHBoxLayout(self)
+        layout_smtp_email.addWidget(self.label_smtp_email)
+        layout_smtp_email.addWidget(self.line_smtp_email)
         main_layout.addWidget(self.label_smtp)
         main_layout.addLayout(layout_smtp_ip)
         main_layout.addLayout(layout_smtp_port)
+        main_layout.addLayout(layout_smtp_email)
         self.label_dept = QtWidgets.QLabel("Dept:")
         self.line_dept = QtWidgets.QLineEdit(self)
         self.line_dept.returnPressed.connect(self.addDept)
@@ -172,6 +177,8 @@ class SettingsWindow(QtWidgets.QWidget):
             self.line_smtp_address.setText(self.settings["SMTP"])
         if "Port" in self.settings.keys():
             self.line_smtp_port.setText(self.settings["Port"])
+        if "From_Address" in self.settings.keys():
+            self.line_smtp_email.setText(self.settings["From_Address"])
         if "Dept" in self.settings.keys():
             dept = self.settings["Dept"].split(",")
             temp = []
@@ -198,9 +205,10 @@ class SettingsWindow(QtWidgets.QWidget):
             data+= f"Visual : {self.line_user_v.text()},{self.line_pass_v.text()},{self.line_db_v.text()}\n"
         else:
             self.dispMsg("One of the Visual fields are empty")
-        if self.line_smtp_address.text()!="" and self.line_smtp_port.text()!="":
+        if self.line_smtp_address.text()!="" and self.line_smtp_port.text()!="" and self.line_smtp_email.text()!="":
                 data += "SMTP : " + self.line_smtp_address.text() + "\n"
                 data += "Port : " + self.line_smtp_port.text() +"\n"
+                data += "From_Address : " + self.line_smtp_email.text() + "\n"
         else:
             self.dispMsg("One of the SMTP fields are empty.")
         data += "Dept : "

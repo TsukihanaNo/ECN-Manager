@@ -10,6 +10,7 @@ from ChangeLogTab import *
 from SignatureTab import *
 from PartsTab import *
 from CommentTab import *
+from NotificationTab import *
 from string import Template
 
 class ECNWindow(QtWidgets.QWidget):
@@ -70,6 +71,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_comments = CommentTab(self)
         self.tab_comments.enterText.setDisabled(True)
         self.tab_signature = SignatureTab(self)
+        self.tab_notification = NotificationTab(self)
         #self.tab_changelog = ChangeLogTab(self,self.ecn_id)
         self.button_save = QtWidgets.QPushButton("Save",self)
         self.button_release = QtWidgets.QPushButton("Release")
@@ -84,6 +86,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.tabwidget.addTab(self.tab_attach, "Attachment")
         self.tabwidget.addTab(self.tab_comments, "Comments")
         self.tabwidget.addTab(self.tab_signature, "Signatures")
+        self.tabwidget.addTab(self.tab_notification, "Notification")
         #self.tabwidget.addTab(self.tab_changelog, "Change Log")
         
         self.tabwidget.setTabVisible(3, False)
@@ -116,6 +119,7 @@ class ECNWindow(QtWidgets.QWidget):
         #self.tab_task = TasksTab(self)
         self.tab_comments = CommentTab(self)
         self.tab_signature = SignatureTab(self)
+        self.tab_notification = NotificationTab(self)
         #self.tab_changelog = ChangeLogTab(self,self.ecn_id)
         #self.tab_purch = PurchaserTab(self)
         #self.tab_planner = PlannerTab(self)
@@ -127,6 +131,7 @@ class ECNWindow(QtWidgets.QWidget):
         #self.tabwidget.addTab(self.tab_task, "Tasks")
         self.tabwidget.addTab(self.tab_comments, "Comments")
         self.tabwidget.addTab(self.tab_signature, "Signatures")
+        self.tabwidget.addTab(self.tab_notification, "Notification")
         #self.tabwidget.addTab(self.tab_changelog, "Change Log")
                     
         self.loadData()
@@ -323,8 +328,19 @@ class ECNWindow(QtWidgets.QWidget):
                     job_title = self.tab_signature.table.cellWidget(x, 0).currentText()
                     name = self.tab_signature.table.cellWidget(x,1).currentText()
                     user_id = self.tab_signature.table.cellWidget(x,2).currentText()
-                data = (self.ecn_id,job_title,name,user_id,)
-                self.cursor.execute("INSERT INTO SIGNATURE(ECN_ID,JOB_TITLE,NAME,USER_ID) VALUES(?,?,?,?)",(data))
+                data = (self.ecn_id,job_title,name,user_id,"Signing")
+                self.cursor.execute("INSERT INTO SIGNATURE(ECN_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(data))
+            for x in range(self.tab_notification.table.rowCount()):
+                if isinstance(self.tab_notification.table.item(x, 0),QtWidgets.QTableWidgetItem):
+                    job_title = self.tab_notification.table.item(x, 0).text()
+                    name = self.tab_notification.table.item(x,1).text()
+                    user_id = self.tab_notification.table.item(x,2).text()
+                else:
+                    job_title = self.tab_notification.table.cellWidget(x, 0).currentText()
+                    name = self.tab_notification.table.cellWidget(x,1).currentText()
+                    user_id = self.tab_notification.table.cellWidget(x,2).currentText()
+                data = (self.ecn_id,job_title,name,user_id,"Notify")
+                self.cursor.execute("INSERT INTO SIGNATURE(ECN_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(data))
             self.db.commit()
             #print('data inserted')
         except Exception as e:
@@ -407,6 +423,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_ecn.line_status.setText(results['STATUS'])
         
         self.tab_signature.repopulateTable()
+        self.tab_notification.repopulateTable()
         # command = "Select * from SIGNATURE where ECN_ID= '"+self.ecn_id +"'"
         # self.cursor.execute(command)
         # results = self.cursor.fetchall()
@@ -673,12 +690,24 @@ class ECNWindow(QtWidgets.QWidget):
     #         self.parent.repopulateTable()
     #     else:
     #         self.dispMsg("ECN ID already exists")
+    
+    def checkSigNotiDuplicate(self):
+        sigs = []
+        for row in range(self.tab_signature.table.rowCount()):
+            sigs.append(self.tab_signature.table.cellWidget(row, 2).currentText())
+        for row in range(self.tab_notification.table.rowCount()):
+            sigs.append(self.tab_notification.table.cellWidget(row, 2).currentText())
+        print(sigs)
+        if len(sigs)==len(set(sigs)):
+            return False
+        else:
+            return True
 
     def save(self,msg = None):
         if not self.checkEcnID():
             self.insertData()
-            if self.tab_signature.checkDuplicate():
-                self.dispMsg("Duplicate signature found, please remove duplicate.")
+            if self.checkSigNotiDuplicate():
+                self.dispMsg("Error: Duplicate user found in Signature and Notifications. Please remove the duplicate before trying again.")
             else:
                 self.AddSignatures()
                 if not msg:
@@ -690,8 +719,8 @@ class ECNWindow(QtWidgets.QWidget):
                 self.button_cancel.setDisabled(False)
         else:
             self.updateData()
-            if self.tab_signature.checkDuplicate():
-                self.dispMsg("Duplicate signature found, please remove duplicate.")
+            if self.checkSigNotiDuplicate():
+                self.dispMsg("Error: Duplicate user found in Signature and Notifications. Please remove the duplicate before trying again.")
             else:
                 self.AddSignatures()
                 if not msg:

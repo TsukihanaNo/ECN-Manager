@@ -98,9 +98,11 @@ class PartsTab(QtWidgets.QWidget):
             self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(result['REPLACING']))
             if self.parent.parent.visual.partExist(result['PART_ID']):
                 if self.parent.parent.visual.checkPartSetup(result['PART_ID'], result['TYPE']):
-                    self.table.item(rowcount, 0).setBackground(QtGui.QColor(231,251,190))
+                    self.table.item(rowcount, 0).setBackground(QtGui.QColor(186,255,180))
+                else:
+                    self.table.item(rowcount, 0).setBackground(QtGui.QColor(255,253,162))
             else:
-                self.table.item(rowcount, 0).setBackground(QtGui.QColor(255,203,203))
+                self.table.item(rowcount, 0).setBackground(QtGui.QColor(255,99,99))
             # if self.parent.parent.user_info['user']!=self.parent.tab_ecn.line_author.text():
             #     self.table.item(rowcount,2).
 

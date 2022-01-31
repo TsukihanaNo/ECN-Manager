@@ -18,4 +18,4 @@ setup(  name = "ECN Manager",
         version = "1.0",
         description = "ECN Manager",
         options = {"build_exe": build_exe_options},
-        executables = [Executable("Manager.py",base = base),Executable("Launcher.py",base = base),Executable("Notifier.py",base = base)])
+        executables = [Executable("Manager.py",base = base),Executable("Launcher.py",base = base),Executable("Notifier.py",base = base),Executable("Analytics.py",base = base)])

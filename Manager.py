@@ -41,7 +41,7 @@ databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT"
 class Manager(QtWidgets.QWidget):
     def __init__(self,ecn = None):
         super(Manager, self).__init__()
-        self.windowWidth = 850
+        self.windowWidth = 1000
         self.windowHeight = 600
         self.ecn = ecn
         self.firstInstance = True
@@ -52,6 +52,7 @@ class Manager(QtWidgets.QWidget):
         self.ico = QtGui.QIcon(icon)
         self.startUpCheck()
         self.getStageDict()
+        self.getTitleStageDict()
         self.user_info = {}
         self.programLoc = program_location
         self.nameList = []
@@ -259,13 +260,20 @@ class Manager(QtWidgets.QWidget):
         
         mainLayout.addLayout(details_layout)
         
-        titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified']
+        titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified', 'Stage','Waiting On', 'Elapsed Days', 'Due Date']
         self.table = QtWidgets.QTableWidget(1,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        #self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        header = self.table.horizontalHeader()
+        for x in range(self.table.columnCount()):
+            if x != 2 and x!=6:
+                header.setSectionResizeMode(x,QtWidgets.QHeaderView.ResizeToContents)
+            else:
+                header.setSectionResizeMode(x,QtWidgets.QHeaderView.Stretch)
+        #self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         self.table.doubleClicked.connect(self.openECN)
         mainLayout.addWidget(self.table)
         
@@ -325,11 +333,42 @@ class Manager(QtWidgets.QWidget):
             self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['ECN_TITLE']))
             self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
             self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
+            if item['STATUS']!='Draft':
+                self.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(str(item['STAGE'])))
+                users = self.getWaitingUser(item['ECN_ID'], self.titleStageDict[str(item['STAGE'])])
+                self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(users))
+                today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                elapsed = self.getElapsedDays(today, item['FIRST_RELEASE'])
+                self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(elapsed)))
             if item["STATUS"]=="Rejected":
-                self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,203,203))
+                self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,99,99))
             if item["STATUS"]=="Out For Approval":
-                self.table.item(rowcount, 3).setBackground(QtGui.QColor(231,251,190))
+                self.table.item(rowcount, 3).setBackground(QtGui.QColor(186,255,180))
             rowcount+=1
+            
+    def getTitleStageDict(self):
+        self.titleStageDict = {}
+        for key, value in self.stageDict.items():
+            if value not in self.titleStageDict.keys():
+                self.titleStageDict[value]=[key]
+            else:
+                self.titleStageDict[value].append(key)
+                
+    def getWaitingUser(self,ecn,titles):
+        users = []
+        usr_str = ""
+        for title in titles:
+            self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn}' and JOB_TITLE='{title}' and SIGNED_DATE is Null")
+            result = self.cursor.fetchone()
+            if result is not None:
+                users.append(result[0])
+        count = 0
+        for user in users:
+            usr_str += user
+            if count<len(users)-1:
+                usr_str+=","
+            count+=1
+        return usr_str
                 
     def getECNQty(self):
         self.cursor.execute(f"SELECT COUNT(ECN_ID) from ECN where STATUS!='Completed'")
@@ -429,6 +468,16 @@ class Manager(QtWidgets.QWidget):
         for result in results:
             self.nameList.append(result[0])
         #print(self.nameList)
+        
+    def getElapsedDays(self,day1,day2):
+        today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        day1 = datetime.strptime(day1,'%Y-%m-%d %H:%M:%S')
+        day2 = datetime.strptime(day2,'%Y-%m-%d %H:%M:%S')
+        if day2>day1:
+            elapsed = day2 - day1
+        else:
+            elapsed = day1 - day2
+        return elapsed.days
         
     def search(self):
         if self.line_search.text()!="":
