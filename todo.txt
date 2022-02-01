@@ -10,7 +10,6 @@
 
 - check for required fields before allowing for release
 
-
 - universal search (prototype done)
     - search criteria
     - be able to filter by status and author
@@ -31,7 +30,8 @@ to add :
  - add notifications tab for users who need to be notified if the ecn is complete (notification tab added and data is saved)
  - add columns to the table to show: current stage, elapsed days since release, current user associated with stage  (done)
  - kick back ecn stage if signature revoked- replaced by reset ecn stage 
- - add set current stage for kick back - and remove signatures for everyone > current stage gets their signature removed.
+ - add set current stage for kick back - and remove signatures for everyone > current stage gets their signature removed. (done)
  - add yellowing of the parts table (done)
- - if reject set stage to 0 - to start the whole process again and also wipe out all signatures as they need to re-approve (at that stage and higher)
+ - if reject set stage to 0 - to start the whole process again and also wipe out all signatures as they need to re-approve (at that stage and higher) (done)
+ - be able to see ecns by selected user
  - engineer 0, engineering manager 1, buyer 2, planner 2, manufacturing engineer 3, production supervisor 4, purchasing manager 4, planning manager 4, production manager 5 

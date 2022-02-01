@@ -182,7 +182,7 @@ class ECNWindow(QtWidgets.QWidget):
             else:
                 self.button_approve = QtWidgets.QPushButton("Approve")
                 self.button_approve.clicked.connect(self.approve)
-                self.button_reject = QtWidgets.QPushButton("Reject",self)
+                self.button_reject = QtWidgets.QPushButton("Reject to Author",self)
                 self.button_reject.clicked.connect(self.reject)
                 buttonlayout.addWidget(self.button_approve)
                 buttonlayout.addWidget(self.button_reject)
@@ -298,20 +298,25 @@ class ECNWindow(QtWidgets.QWidget):
         comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Comment", "")
         if ok and comment!="":
             self.addComment(self.ecn_id, comment,"Reject")
-        try:
-            modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            data = (modifieddate, "Rejected",self.ecn_id)
-            self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = ?, STATUS = ? WHERE ECN_ID = ?",(data))
-            self.db.commit()
-            self.parent.repopulateTable()
-            self.dispMsg("ECN has been updated!")
-            self.tab_ecn.line_status.setText("Rejected")
-            self.addNotification(self.ecn_id, "Rejected")
-            self.button_reject.setDisabled(True)
-            self.button_approve.setDisabled(True)
-        except Exception as e:
-            print(e)
-            self.dispMsg(f"Error occured during data update (reject)!\n Error: {e}")
+            try:
+                modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                data = (modifieddate, "Rejected",self.ecn_id)
+                self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = ?, STATUS = ? WHERE ECN_ID = ?",(data))
+                self.cursor.execute(f"UPDATE SIGNATURE SET SIGNED_DATE=Null where ECN_ID='{self.ecn_id}'")
+                self.db.commit()
+                self.setECNStage(0)
+                self.parent.repopulateTable()
+                self.dispMsg("Rejection successful. Setting ECN stage to 0 and all signatures have been removed.")
+                self.tab_ecn.line_status.setText("Rejected")
+                self.addNotification(self.ecn_id, "Rejected")
+                self.button_reject.setDisabled(True)
+                self.button_approve.setDisabled(True)
+            except Exception as e:
+                print(e)
+                self.dispMsg(f"Error occured during data update (reject)!\n Error: {e}")
+        if ok and comment=="":
+            self.dispMsg("Rejection failed: comment field was left blank.")
+                  
     
     def AddSignatures(self):
         #inserting to signature table
@@ -611,6 +616,14 @@ class ECNWindow(QtWidgets.QWidget):
             self.db.commit()
         except Exception as e:
             self.dispMsg(f"Error trying to set ECN stage. Error: {e}")
+            
+    def resetECNStage(self):
+        try:
+            print('resetting ecn stage')
+            self.cursor.execute(f"UPDATE ECN SET STAGE = Null, TEMPSTAGE = Null where ECN_ID='{self.ecn_id}'")
+            self.db.commit()
+        except Exception as e:
+            self.dispMsg(f"Error trying to reset ECN stage. Error: {e}")
     
     def isUserSignable(self):
         self.cursor.execute(f"SELECT SIGNED_DATE from SIGNATURE where ECN_ID='{self.ecn_id}' and USER_ID='{self.parent.user_info['user']}'")

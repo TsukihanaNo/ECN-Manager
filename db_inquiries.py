@@ -21,7 +21,7 @@ cursor = database.cursor()
 # results = cursor.execute("select FIRST_RELEASE,LAST_MODIFIED,COMP_DATE from ECN where FIRST_RELEASE like '2022-01%'")
 # for result in results:
 #     print(result[0],result[1],result[2])
-results = cursor.execute("select * from notification")
+results = cursor.execute("select STAGE from ECN")
 for result in results:
     print(result)
     

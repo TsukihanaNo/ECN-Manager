@@ -8,6 +8,7 @@ from LoginWindow import *
 #from CompletedTab import *
 #from MyECNTab import *
 #from MyQueueTab import *
+from datetime import datetime
 from ECNWindow import *
 from DataBaseUpdateWindow import *
 from NewDBWindow import *
@@ -15,6 +16,7 @@ from UsersWindow import *
 from Hook import *
 from SearchResults import *
 from SettingsWindow import *
+from Analytics import *
 
 
 if getattr(sys, 'frozen', False):
@@ -43,6 +45,7 @@ class Manager(QtWidgets.QWidget):
         super(Manager, self).__init__()
         self.windowWidth = 1000
         self.windowHeight = 600
+        self.sorting = (0,QtCore.Qt.DescendingOrder)
         self.ecn = ecn
         self.firstInstance = True
         self.checkLockLoc()
@@ -262,7 +265,11 @@ class Manager(QtWidgets.QWidget):
         
         titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified', 'Stage','Waiting On', 'Elapsed Days', 'Due Date']
         self.table = QtWidgets.QTableWidget(1,len(titles),self)
+        delegate = AlignDelegate(self.table)
+        self.table.setItemDelegate(delegate)
         self.table.setHorizontalHeaderLabels(titles)
+        self.table.horizontalHeader().setSortIndicatorShown(True)
+        self.table.horizontalHeader().sortIndicatorChanged.connect(self.setSort)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
@@ -293,6 +300,7 @@ class Manager(QtWidgets.QWidget):
         mainLayout.setMenuBar(self.menubar)
         
         self.repopulateTable()
+
         # self.tabWidget = QtWidgets.QTabWidget(self)
         # mainLayout.addWidget(self.tabWidget)
         
@@ -308,7 +316,7 @@ class Manager(QtWidgets.QWidget):
 
         timer = QtCore.QTimer(self)
         timer.timeout.connect(self.repopulateTable)
-        timer.start(5000)
+        timer.start(15000)
         
     def repopulateTable(self):
         self.getECNQty()
@@ -323,6 +331,10 @@ class Manager(QtWidgets.QWidget):
             command = "select * from ECN where STATUS!='Completed'"
         else:
             command = "select * from ECN where STATUS='Completed'"
+        if table_type=="Completed":
+            self.table.setHorizontalHeaderItem(7, QtWidgets.QTableWidgetItem("Days Taken"))
+        else:
+            self.table.setHorizontalHeaderItem(7, QtWidgets.QTableWidgetItem("Days Elapsed"))
         self.cursor.execute(command)
         test = self.cursor.fetchall()
         rowcount=0
@@ -335,16 +347,26 @@ class Manager(QtWidgets.QWidget):
             self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
             if item['STATUS']!='Draft':
                 self.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(str(item['STAGE'])))
-                users = self.getWaitingUser(item['ECN_ID'], self.titleStageDict[str(item['STAGE'])])
-                self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(users))
-                today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                elapsed = self.getElapsedDays(today, item['FIRST_RELEASE'])
-                self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(elapsed)))
+                if table_type!="Completed":
+                    today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    elapsed = self.getElapsedDays(today, item['FIRST_RELEASE'])
+                    self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(round(elapsed.seconds/86400,2))))
+                else:
+                    self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(item["COMP_DAYS"])))
+                if item['STAGE']!=0:
+                    users = self.getWaitingUser(item['ECN_ID'], self.titleStageDict[str(item['STAGE'])])
+                    self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(users))
             if item["STATUS"]=="Rejected":
                 self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,99,99))
             if item["STATUS"]=="Out For Approval":
                 self.table.item(rowcount, 3).setBackground(QtGui.QColor(186,255,180))
             rowcount+=1
+        self.table.sortItems(self.sorting[0],self.sorting[1])
+        
+    def setSort(self, index, order):
+        self.sorting = (index,order)
+        self.repopulateTable()
+        
             
     def getTitleStageDict(self):
         self.titleStageDict = {}
@@ -407,6 +429,11 @@ class Manager(QtWidgets.QWidget):
         exitAction.triggered.connect(self.close)
         exitAction.setShortcut("CTRL+Q")
         filemenu.addAction(exitAction)
+        setting_menu=self.menubar.addMenu("&Setting")
+        if self.user_info['role']=="Admin" or self.user_info['role']=='Manager':
+            analyticsAction = QtGui.QAction("&Analytics",self)
+            analyticsAction.triggered.connect(self.launchAnalytics)
+            setting_menu.addAction(analyticsAction)
 
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()
@@ -453,6 +480,9 @@ class Manager(QtWidgets.QWidget):
     def launchUsers(self):
         self.userWindow = UsersWindow(self)
         
+    def launchAnalytics(self):
+        self.analyticsWindow = AnalyticsWindow(self)
+        
     def getStageDict(self):
         self.stageDict = {}
         stages = self.settings["Stage"].split(",")
@@ -477,7 +507,8 @@ class Manager(QtWidgets.QWidget):
             elapsed = day2 - day1
         else:
             elapsed = day1 - day2
-        return elapsed.days
+        #return elapsed.days
+        return elapsed
         
     def search(self):
         if self.line_search.text()!="":
@@ -499,6 +530,11 @@ class Manager(QtWidgets.QWidget):
                 if result[0] not in matches:
                     matches.append(result[0])
             self.searchResult = SearchResults(self,matches)
+            
+class AlignDelegate(QtWidgets.QStyledItemDelegate):
+    def initStyleOption(self, option, index):
+        super(AlignDelegate, self).initStyleOption(option, index)
+        option.displayAlignment = QtCore.Qt.AlignCenter
 
 # execute the program
 def main():

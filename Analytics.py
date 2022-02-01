@@ -1,7 +1,7 @@
 from PySide6 import QtWidgets, QtCore, QtGui, QtCharts
 import os, sys
 import sqlite3
-import datetime
+from datetime import datetime, date, timedelta
 
 if getattr(sys, 'frozen', False):
     # frozen
@@ -16,8 +16,8 @@ initfile = os.path.join(program_location, "setting.ini")
 class AnalyticsWindow(QtWidgets.QWidget):
     def __init__(self,parent=None):
         super(AnalyticsWindow,self).__init__()
-        self.windowWidth = 1200
-        self.windowHeight = 700
+        self.windowWidth = 1000
+        self.windowHeight = 600
         if parent is None:
             print("geting stuff")
             f = open(initfile,'r')
@@ -103,7 +103,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
             
     def showECNMonthDistribution(self):
         months ={'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'}
-        today = datetime.date.today()
+        today = date.today()
         year = today.year
         years = []
         data_release = {}
@@ -113,22 +113,22 @@ class AnalyticsWindow(QtWidgets.QWidget):
             years.append(year-x)
         for year in years:
             for month in months.keys():
-                date = f"{year}-{month}"
-                # self.cursor.execute(f"select COUNT(ECN_ID) from ECN where STATUS!='Draft' and STATUS!='Completed' and FIRST_RELEASE like '{date}%'")
-                # result = self.cursor.fetchone()
-                # #print(date,result[0])
-                # if year in data_release.keys():
-                #     data_release[year].append((month,result[0]))
-                # else:
-                #     data_release[year]=[(month,result[0])]
-                self.cursor.execute(f"select COUNT(ECN_ID) from ECN where STATUS='Completed' and COMP_DATE like '{date}%'")
+                check_date = f"{year}-{month}"
+                self.cursor.execute(f"select COUNT(ECN_ID) from ECN where STATUS!='Draft' and STATUS!='Completed' and FIRST_RELEASE like '{check_date}%'")
+                result = self.cursor.fetchone()
+                #print(date,result[0])
+                if year in data_release.keys():
+                    data_release[year].append((month,result[0]))
+                else:
+                    data_release[year]=[(month,result[0])]
+                self.cursor.execute(f"select COUNT(ECN_ID) from ECN where STATUS='Completed' and COMP_DATE like '{check_date}%'")
                 result = self.cursor.fetchone()
                 #print(date,result[0])
                 if year in data_complete.keys():
                     data_complete[year].append((month,result[0]))
                 else:
                     data_complete[year]=[(month,result[0])]
-        print(data_release,data_complete)
+        #rint(data_release,data_complete)
         
         categories = []
         for key in months.keys():
@@ -141,20 +141,39 @@ class AnalyticsWindow(QtWidgets.QWidget):
         chart.addAxis(axisX, QtCore.Qt.AlignBottom)
         chart.setAnimationOptions(QtCharts.QChart.SeriesAnimations)
         
+        row = 0
+        
+        self.table.clearContents()
+        self.table.setRowCount(row)
+        self.table.setHorizontalHeaderLabels(['Year/Month','Count'])
+        for year in sorted(years):
+            month_count = 0
+            for item in data_release[year]:
+                self.table.insertRow(row)
+                label = QtWidgets.QTableWidgetItem(str(year)+"/"+str(item[0]))
+                label.setTextAlignment(QtCore.Qt.AlignCenter)
+                val = QtWidgets.QTableWidgetItem("R - " + str(data_release[year][month_count][1]) + " :  C - " + str(data_complete[year][month_count][1]))
+                val.setTextAlignment(QtCore.Qt.AlignCenter)
+                self.table.setItem(row, 0, label)
+                self.table.setItem(row, 1, val)
+                row+=1
+                month_count+=1
+            
+        
         for year in years:
-            print("release")
-            # set0 =QtCharts.QBarSet('Release')
-            # for item in data_release[year]:
-            #     print(item)
-            #     set0.append(item[1])
-            print("completed")
-            set0 =QtCharts.QBarSet(str(year))
-            for item in data_complete[year]:
-                print(item)
+            #print("release")
+            set0 =QtCharts.QBarSet('Release')
+            for item in data_release[year]:
+                #print(item)
                 set0.append(item[1])
+            #print("completed")
+            set1 =QtCharts.QBarSet(str(year))
+            for item in data_complete[year]:
+                #print(item)
+                set1.append(item[1])
             series = QtCharts.QBarSeries()
             series.append(set0)
-            #series.append(set1)
+            series.append(set1)
             chart.addSeries(series)
             
         series.attachAxis(axisX)
@@ -164,12 +183,12 @@ class AnalyticsWindow(QtWidgets.QWidget):
             
     def showECNDayDistribution(self):#strftime strptime
         days = []
-        today = datetime.date.today()
+        today = date.today()
         duration = 7
         release_counts = {}
         complete_counts = {}
         for x in range(duration):
-            days.append(datetime.datetime.strftime(today-datetime.timedelta(days=x),'%Y-%m-%d'))
+            days.append(datetime.strftime(today-timedelta(days=x),'%Y-%m-%d'))
         days = sorted(days)
         for day in days:
             self.cursor.execute(f"select COUNT(ECN_ID) from ECN where date(FIRST_RELEASE) = '{day}'")

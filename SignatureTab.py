@@ -37,9 +37,9 @@ class SignatureTab(QtWidgets.QWidget):
         hlayout.addWidget(self.button_remove)
         if self.parent.parent.user_info['role']=="Manager":
             self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-            self.button_revoke = QtWidgets.QPushButton("Revoke")
+            self.button_revoke = QtWidgets.QPushButton("Reject to selected")
             self.button_revoke.setEnabled(False)
-            self.button_revoke.clicked.connect(self.revokeApproval)
+            self.button_revoke.clicked.connect(self.rejectToSelected)
             hlayout.addWidget(self.button_revoke)
         mainlayout.addLayout(hlayout)
 
@@ -47,7 +47,8 @@ class SignatureTab(QtWidgets.QWidget):
 
     def onRowSelect(self):
         if self.parent.parent.user_info['role']=="Manager":
-            self.button_revoke.setEnabled(bool(self.table.selectionModel().selectedRows()))
+            row = self.table.currentRow()
+            self.button_revoke.setEnabled(bool(self.table.selectionModel().selectedRows()) and self.table.item(row, 3).text()!="")
         if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text():
             self.button_remove.setEnabled(bool(self.table.selectionModel().selectedRows()))
         
@@ -112,6 +113,43 @@ class SignatureTab(QtWidgets.QWidget):
             else:
                 self.dispMsg(f"Revoke failed: you do not have permission to revoke {user}'s approval")
         self.repopulateTable()
+        
+    def rejectToSelected(self):
+        row = self.table.currentRow()
+        user = self.table.item(row,2).text()
+        users = ""
+        if self.getUserRole(user)=="Signer":
+            comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Rejection reason", "")
+            if ok and comment!="":
+                table_dict = self.getTableDict()
+                count=0
+                for key in table_dict.keys():
+                    if table_dict[key]>=table_dict[user]:
+                        self.parent.cursor.execute(f"UPDATE SIGNATURE SET SIGNED_DATE = Null where ECN_ID='{self.parent.ecn_id}' and USER_ID='{key}'")
+                        users += key
+                        if count<len(table_dict.keys())-1:
+                            users+=","
+                    count+=1
+                comment = f'For user: {user} - additionally the approval for the following users have also been resetted: {users}\n  --Reason: ' + comment
+                self.parent.addComment(self.parent.ecn_id, comment, f"Rejection to signer")
+                self.parent.db.commit()
+                self.parent.setECNStage(table_dict[user])
+                self.dispMsg(f"Rejection successful. ECN stage has been set to {table_dict[user]}")
+            if ok and comment=="":
+                self.dispMsg("Rejection failed. Comment field was left blank.")
+        else:
+            self.dispMsg(f"Rejection failed: you do not have permissions to reject {user}'s approval")
+        self.repopulateTable()
+        
+    def getTableDict(self):
+        table_dict={}
+        for x in range(self.table.rowCount()):
+            user = self.table.item(x, 2).text()
+            job_title = self.table.item(x, 0).text()
+            stage =self.parent.parent.stageDict[job_title]
+            table_dict[user]=stage
+        print(table_dict)
+        return table_dict
         
     def prepopulateTable(self):
         #department specific roles are: buyer, planner, supervisor

@@ -7,5 +7,6 @@ build/
 setting.ini
 test.py
 Visual.py
+db_inquiries.py
 
 .vscode
