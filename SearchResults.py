@@ -1,6 +1,8 @@
 from PySide6 import QtWidgets, QtCore, QtGui
 import os, sys
-import sqlite3  
+import sqlite3
+from Delegates import *
+from datetime import *
 
 
 if getattr(sys, 'frozen', False):
@@ -16,8 +18,10 @@ initfile = os.path.join(program_location, "setting.ini")
 class SearchResults(QtWidgets.QWidget):
     def __init__(self,parent=None,matches = None):
         super(SearchResults,self).__init__()
-        self.windowWidth =  800
+        self.windowWidth =  1100
         self.windowHeight = 550
+        self.titleStageDict = parent.titleStageDict
+        self.sorting = (0,QtCore.Qt.DescendingOrder)
         self.parent = parent
         self.matches = matches
         self.initAtt()
@@ -61,18 +65,32 @@ class SearchResults(QtWidgets.QWidget):
         self.button_open.setDisabled(True)
 
         #USER(USER_ID TEXT, PASSWORD TEXT, NAME TEXT, ROLE TEXT, JOB_TITLE TEXT, DEPT TEXT, STATUS TEXT, EMAIL TEXT)
-        titles = ['ECN ID','ECN Title','Status','Author']
-        self.table = QtWidgets.QTableWidget(0,len(titles),self)
+        titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified', 'Stage','Waiting On', 'Elapsed Days', 'Due Date']
+        self.table = QtWidgets.QTableWidget(1,len(titles),self)
+        delegate = AlignDelegate(self.table)
+        self.table.setItemDelegate(delegate)
         self.table.setHorizontalHeaderLabels(titles)
+        self.table.horizontalHeader().setSortIndicatorShown(True)
+        self.table.horizontalHeader().sortIndicatorChanged.connect(self.setSort)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.table.doubleClicked.connect(self.openECN)
         self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
+        header = self.table.horizontalHeader()
+        for x in range(self.table.columnCount()):
+            if x != 2 and x!=6:
+                header.setSectionResizeMode(x,QtWidgets.QHeaderView.ResizeToContents)
+            else:
+                header.setSectionResizeMode(x,QtWidgets.QHeaderView.Stretch)
         main_layout.addLayout(searchLayout)
         main_layout.addWidget(self.table)
         main_layout.addWidget(self.button_open)
         
+        self.repopulateTable()
+        
+    def setSort(self, index, order):
+        self.sorting = (index,order)
         self.repopulateTable()
         
     def onRowSelect(self):
@@ -86,18 +104,70 @@ class SearchResults(QtWidgets.QWidget):
             self.parent.cursor.execute(f"Select * FROM ECN where ECN_ID ='{match}'")
             results = self.parent.cursor.fetchall()
             self.table.insertRow(rowcount)
-            for result in results: #['ECN ID','ECN Title','Status','Author']
-                self.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['ECN_ID']))
-                self.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['ECN_TITLE']))
-                self.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['STATUS']))
-                self.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['AUTHOR']))
+            for item in results: #['ECN ID','ECN Title','Status','Author']
+                self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
+                self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['ECN_TYPE']))
+                self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['ECN_TITLE']))
+                self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
+                self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
+                if item['STATUS']!='Draft':
+                    self.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(str(item['STAGE'])))
+                    if item['STATUS']!="Completed":
+                        today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                        elapsed = self.getElapsedDays(today, item['FIRST_RELEASE'])
+                        self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(round(elapsed.seconds/86400,2))))
+                    else:
+                        self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(item["COMP_DAYS"])))
+                    if item['STAGE']!=0:
+                        users = self.getWaitingUser(item['ECN_ID'], self.titleStageDict[str(item['STAGE'])])
+                        self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(users))
+                if item["STATUS"]=="Rejected":
+                    self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,99,99))
+                if item["STATUS"]=="Out For Approval":
+                    self.table.item(rowcount, 3).setBackground(QtGui.QColor(186,255,180))
+                rowcount+=1
+            self.table.sortItems(self.sorting[0],self.sorting[1])
 
-            rowcount+=1
             
     def openECN(self):
         row = self.table.currentRow()
         ecn_id =self.table.item(row,0).text()
         self.parent.HookEcn(ecn_id)
+        
+    def getElapsedDays(self,day1,day2):
+        today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        day1 = datetime.strptime(day1,'%Y-%m-%d %H:%M:%S')
+        day2 = datetime.strptime(day2,'%Y-%m-%d %H:%M:%S')
+        if day2>day1:
+            elapsed = day2 - day1
+        else:
+            elapsed = day1 - day2
+        #return elapsed.days
+        return elapsed
+    
+    def getTitleStageDict(self):
+        self.titleStageDict = {}
+        for key, value in self.stageDict.items():
+            if value not in self.titleStageDict.keys():
+                self.titleStageDict[value]=[key]
+            else:
+                self.titleStageDict[value].append(key)
+                
+    def getWaitingUser(self,ecn,titles):
+        users = []
+        usr_str = ""
+        for title in titles:
+            self.parent.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn}' and JOB_TITLE='{title}' and SIGNED_DATE is Null")
+            result = self.parent.cursor.fetchone()
+            if result is not None:
+                users.append(result[0])
+        count = 0
+        for user in users:
+            usr_str += user
+            if count<len(users)-1:
+                usr_str+=","
+            count+=1
+        return usr_str
         
     def search(self):
         if self.line_search.text()!="":

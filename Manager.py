@@ -17,6 +17,7 @@ from Hook import *
 from SearchResults import *
 from SettingsWindow import *
 from Analytics import *
+from Delegates import *
 
 
 if getattr(sys, 'frozen', False):

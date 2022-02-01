@@ -2,6 +2,7 @@ from PySide6 import QtWidgets, QtCore, QtGui, QtCharts
 import os, sys
 import sqlite3
 from datetime import datetime, date, timedelta
+from SearchResults import *
 
 if getattr(sys, 'frozen', False):
     # frozen
@@ -18,6 +19,9 @@ class AnalyticsWindow(QtWidgets.QWidget):
         super(AnalyticsWindow,self).__init__()
         self.windowWidth = 1000
         self.windowHeight = 600
+        self.titleStageDict = parent.titleStageDict
+        self.stageDict = parent.stageDict
+        print(self.titleStageDict)
         if parent is None:
             print("geting stuff")
             f = open(initfile,'r')
@@ -67,7 +71,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
         main_layout = QtWidgets.QHBoxLayout(self)
         table_layout = QtWidgets.QVBoxLayout()
         self.box = QtWidgets.QComboBox(self)
-        self.box.addItems(["ECN By Status","ECN By Author","ECN By Stage","ECN By Days","ECN By Months"])
+        self.box.addItems(["ECN By Status","ECN By Author","ECN By Stage","ECN By Days","ECN By Months","ECN Waiting On User"])
         self.box.currentIndexChanged.connect(self.setChartType)
         
         titles = ['Label','Value']
@@ -75,7 +79,9 @@ class AnalyticsWindow(QtWidgets.QWidget):
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)  
+        self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.table.doubleClicked.connect(self.launchSearch)
+
         self.table.setFixedWidth(300)        
         
         
@@ -100,6 +106,88 @@ class AnalyticsWindow(QtWidgets.QWidget):
             self.showECNDayDistribution()
         if self.box.currentText()=="ECN By Months":
             self.showECNMonthDistribution()
+        if self.box.currentText()=="ECN Waiting On User":
+            self.showECNWaitUserDistribution()
+            
+    def launchSearch(self):
+        if self.box.currentText()=="ECN Waiting On User":
+            row = self.table.currentRow()
+            user = self.table.item(row, 0).text()
+            matches = []
+            command = f"Select SIGNATURE.ECN_ID from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{user}' and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
+            #self.cursor.execute(f"select ECN_ID from SIGNATURE where USER_ID='{user}' and TYPE='Signing' and SIGNED_DATE is Null")
+            self.cursor.execute(command)
+            results = self.cursor.fetchall()
+            for result in results:
+                matches.append(result[0])
+            self.parent.searchResult = SearchResults(self.parent,matches)
+        
+    def showECNWaitUserDistribution(self):
+        users = {}
+        self.cursor.execute("Select DISTINCT(SIGNATURE.USER_ID) from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID where SIGNATURE.TYPE='Signing' and SIGNATURE.SIGNED_DATE is Null and ECN.STATUS='Out For Approval'")
+        results = self.cursor.fetchall()
+        for result in results:
+            users[result[0]]=0
+        remove_key = []
+        for key in users.keys():
+            self.cursor.execute(f"select JOB_TITLE from USER where USER_ID='{key}'")
+            result = self.cursor.fetchone()
+            title = result[0]
+            command = f"Select COUNT(SIGNATURE.ECN_ID) from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{key}' and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing' and ECN.STAGE='{self.stageDict[title]}'"
+            self.cursor.execute(command)
+            #self.cursor.execute(f"Select COUNT(ECN_ID) from SIGNATURE where TYPE='Signing' and SIGNED_DATE is Null and USER_ID='{key}'")
+            result = self.cursor.fetchone()
+            if result[0]==0:
+                remove_key.append(key)
+            else:
+                users[key]=result[0]
+        print(users)
+        
+        for item in remove_key:
+            del users[key]
+
+        
+        set0 = QtCharts.QBarSet("ECN Count")
+        for value in users.values():
+            set0.append(value)
+        
+        series = QtCharts.QBarSeries()
+        series.append(set0)
+        series.setLabelsVisible(True)
+        
+        # titles={}
+        # for key,value in self.stageDict.items():
+        #     titles[value]=key
+        
+        categories = []
+        for key in users.keys():
+            categories.append(key)
+        #print(categories)
+        axisX = QtCharts.QBarCategoryAxis()
+        axisX.append(categories)
+        
+        row = 0 
+        self.table.clearContents()
+        self.table.setRowCount(row)
+        self.table.setHorizontalHeaderLabels(['User','Count'])
+        for key in users.keys():
+            self.table.insertRow(row)
+            label = QtWidgets.QTableWidgetItem(key)
+            label.setTextAlignment(QtCore.Qt.AlignCenter)
+            val = QtWidgets.QTableWidgetItem(str(users[key]))
+            val.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.table.setItem(row, 0, label)
+            self.table.setItem(row, 1, val)
+            row+=1
+        
+        chart = QtCharts.QChart()
+        chart.addSeries(series)
+        chart.setTitle("ECNs Waiting On User")
+        chart.addAxis(axisX, QtCore.Qt.AlignBottom)
+        series.attachAxis(axisX)
+        chart.setAnimationOptions(QtCharts.QChart.SeriesAnimations)
+        
+        self.chartview.setChart(chart)
             
     def showECNMonthDistribution(self):
         months ={'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'}
