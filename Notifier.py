@@ -56,14 +56,20 @@ class Notifier(QtWidgets.QWidget):
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         
+        self.button_refresh = QtWidgets.QPushButton("Refresh")
+        self.button_refresh.clicked.connect(self.repopulateTable)
+        
         mainLayout.addWidget(self.table)
+        mainLayout.addWidget(self.button_refresh)
         # mainLayout.setMenuBar(self.menubar)
         self.setLayout(mainLayout)
         self.repopulateTable()
         
+        self.sendNotification()
+        
         timer = QtCore.QTimer(self)
         timer.timeout.connect(self.sendNotification)
-        timer.start(5000)
+        timer.start(15000)
     
     def center(self):
         window = self.window()
@@ -150,8 +156,10 @@ class Notifier(QtWidgets.QWidget):
         if len(results)>0:
             for result in results:
                 self.generateECNX(result[0])
-                if result['TYPE']=="Rejected":
+                if result['TYPE']=="Rejected To Author":
                     self.rejectNotification(result[0])
+                elif result['TYPE']=="Rejected To Signer":
+                    self.rejectSignerNotification(result[0],result['USERS'])
                 elif result['TYPE']=="Completed":
                     self.completionNotification(result[0])
                 else:
@@ -166,14 +174,26 @@ class Notifier(QtWidgets.QWidget):
         self.db.commit()
         
     def rejectNotification(self,ecn_id):
+        receivers = []
         self.cursor.execute(f"select Author from ECN where ECN_ID='{ecn_id}'")
         result = self.cursor.fetchone()
-        message = f"{ecn_id} has been rejected, please check comments and update accordingly and releasing again.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
-        receivers = [self.userList[result[0]]]
-        print(f"send email to these addresses: {receivers} for rejection")
-        self.sendEmail(ecn_id,receivers, message)
+        receivers.append(self.userList[result[0]])
+        self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}'")
+        results = self.cursor.fetchall()
+        for result in results:
+            receivers.append(self.userList[result[0]])
+        message = f"{ecn_id} has been rejected to the author! All Signatures have been removed and the ECN approval will start from the beginning once the ECN is released again.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
+        print(f"send email to these addresses: {receivers} notifying ecn completion")
+        self.sendEmail(ecn_id,receivers, message)  
         
+    
+    def rejectSignerNotification(self,ecn_id,users):
+        receivers = users.split(',')
+        message = f"{ecn_id} has been rejected to user: {receivers[0]}. Signatures for the following users has been removed: {users}.\n\n\nYou can open the attachment file to be directed to the ECN."
+        print(f"send email to these addresses: {receivers} notifying ecn completion")
+        self.sendEmail(ecn_id,receivers, message)    
         
+    
     def completionNotification(self,ecn_id):
         receivers = []
         self.cursor.execute(f"select Author from ECN where ECN_ID='{ecn_id}'")
@@ -181,7 +201,7 @@ class Notifier(QtWidgets.QWidget):
         receivers.append(self.userList[result[0]])
         self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}'")
         results = self.cursor.fetchall()
-        message = f"{ecn_id} has been completed! You can now view it in the completed tab.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
+        message = f"{ecn_id} has been completed! You can now view it in the completed section of your viewer.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
         for result in results:
             receivers.append(self.userList[result[0]])
         print(f"send email to these addresses: {receivers} notifying ecn completion")
@@ -191,7 +211,7 @@ class Notifier(QtWidgets.QWidget):
         self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}'")
         results = self.cursor.fetchall()
         receivers = []
-        message = f"{ecn_id} has been released! You can see it in the myQueueTab. Please review and approve.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
+        message = f"{ecn_id} has been released! You can see it in the queue section once it is your turn for approval. Otherwise you can view the ECN in the open section.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
         for result in results:
             receivers.append(self.userList[result[0]])
         print(f"send email these addresses: {receivers} notifying ecn release")

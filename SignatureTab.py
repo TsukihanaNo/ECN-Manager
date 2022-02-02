@@ -135,6 +135,8 @@ class SignatureTab(QtWidgets.QWidget):
                 self.parent.db.commit()
                 self.parent.setECNStage(table_dict[user])
                 self.dispMsg(f"Rejection successful. ECN stage has been set to {table_dict[user]}")
+                users = user+','+users
+                self.parent.sendNotification(self.parent.ecn_id,"Rejected To Signer",users)
             if ok and comment=="":
                 self.dispMsg("Rejection failed. Comment field was left blank.")
         else:

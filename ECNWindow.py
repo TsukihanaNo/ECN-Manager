@@ -308,7 +308,7 @@ class ECNWindow(QtWidgets.QWidget):
                 self.parent.repopulateTable()
                 self.dispMsg("Rejection successful. Setting ECN stage to 0 and all signatures have been removed.")
                 self.tab_ecn.line_status.setText("Rejected")
-                self.addNotification(self.ecn_id, "Rejected")
+                self.addNotification(self.ecn_id, "Rejected To Author")
                 self.button_reject.setDisabled(True)
                 self.button_approve.setDisabled(True)
             except Exception as e:
@@ -803,13 +803,32 @@ class ECNWindow(QtWidgets.QWidget):
                 
                 self.dispMsg("Export Completed!")
         
-    def addNotification(self,ecn_id,notificationType):
+    def addNotification(self,ecn_id,notificationType,userslist=None):
+        if userslist is not None:
+            if type(userslist)==type([]):
+                users = ""
+                count = 0
+                for user in userList:
+                    users +=","
+                    if count<len(userList)-1:
+                        users +=","
+                    count+=1
+            else:
+                users = userslist
         if self.existNotification(ecn_id):
-            data = (notificationType,ecn_id)
-            self.cursor.execute("UPDATE NOTIFICATION SET TYPE = ? WHERE ECN_ID = ?",(data))
+            if userlist is not None:
+                data = (notificationType,users,ecn_id)
+                self.cursor.execute("UPDATE NOTIFICATION SET TYPE = ? USERS = ? WHERE ECN_ID = ?",(data))
+            else:
+                data = (notificationType,ecn_id)
+                self.cursor.execute("UPDATE NOTIFICATION SET TYPE = ? WHERE ECN_ID = ?",(data))
         else:
-            data = (ecn_id,"Not Sent",notificationType)
-            self.cursor.execute("INSERT INTO NOTIFICATION(ECN_ID, STATUS, TYPE) VALUES(?,?,?)",(data))
+            if userlist is not None:
+                data = (ecn_id,"Not Sent",notificationType, users)
+                self.cursor.execute("INSERT INTO NOTIFICATION(ECN_ID, STATUS, TYPE, USERS) VALUES(?,?,?,?)",(data))
+            else:
+                data = (ecn_id,"Not Sent",notificationType)
+                self.cursor.execute("INSERT INTO NOTIFICATION(ECN_ID, STATUS, TYPE) VALUES(?,?,?)",(data))
         self.db.commit()
         
     def existNotification(self,ecn_id):
