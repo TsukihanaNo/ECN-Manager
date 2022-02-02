@@ -64,8 +64,8 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_ecn.line_author.setText(self.parent.user_info['user'])
         self.tab_ecn.box_requestor.setCurrentText(self.parent.user_info['user'])
         self.tab_ecn.line_status.setText("Draft")
-        self.tab_ecn.edit_date.setDate(QtCore.QDate.currentDate())
-        self.tab_ecn.edit_date.setMinimumDate(QtCore.QDate.currentDate())
+        #self.tab_ecn.edit_date.setDate(QtCore.QDate.currentDate())
+        #self.tab_ecn.edit_date.setMinimumDate(QtCore.QDate.currentDate())
         self.tab_parts = PartsTab(self)
         self.tab_attach = AttachmentTab(self)
         self.tab_comments = CommentTab(self)
@@ -667,6 +667,7 @@ class ECNWindow(QtWidgets.QWidget):
                 #print(result[0])
                 #first_release = datetime.strptime(str(result[0]),'%Y-%m-%d %H:%M:%S')
                 elapsed = self.getElapsedDays(result[0], completeddate)
+                print(elapsed)
                 #elapsed = self.getElapsedDays(first_release, completeddate)
                 data = (completeddate,completeddate,elapsed, "Completed",self.ecn_id)
                 self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = ?,COMP_DATE = ?, COMP_DAYS = ?, STATUS = ? WHERE ECN_ID = ?",(data))
@@ -681,15 +682,15 @@ class ECNWindow(QtWidgets.QWidget):
             self.dispMsg(f"Error Occured during check Complete.\n Error: {e}")
             
     def getElapsedDays(self,day1,day2):
-        today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        #today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         day1 = datetime.strptime(day1,'%Y-%m-%d %H:%M:%S')
         day2 = datetime.strptime(day2,'%Y-%m-%d %H:%M:%S')
         if day2>day1:
             elapsed = day2 - day1
         else:
             elapsed = day1 - day2
-        print(elapsed.days)
-        return elapsed.days
+        #print(elapsed.days)
+        return round(elapsed.seconds/86400,2)
             
 
     # def submitAndClose(self):

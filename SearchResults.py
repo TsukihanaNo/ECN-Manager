@@ -65,7 +65,7 @@ class SearchResults(QtWidgets.QWidget):
         self.button_open.setDisabled(True)
 
         #USER(USER_ID TEXT, PASSWORD TEXT, NAME TEXT, ROLE TEXT, JOB_TITLE TEXT, DEPT TEXT, STATUS TEXT, EMAIL TEXT)
-        titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified', 'Stage','Waiting On', 'Elapsed Days', 'Due Date']
+        titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified', 'Stage','Waiting On', 'Elapsed Days']
         self.table = QtWidgets.QTableWidget(1,len(titles),self)
         delegate = AlignDelegate(self.table)
         self.table.setItemDelegate(delegate)

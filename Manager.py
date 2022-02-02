@@ -264,7 +264,7 @@ class Manager(QtWidgets.QWidget):
         
         mainLayout.addLayout(details_layout)
         
-        titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified', 'Stage','Waiting On', 'Elapsed Days', 'Due Date']
+        titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified', 'Stage','Waiting On', 'Elapsed Days']
         self.table = QtWidgets.QTableWidget(1,len(titles),self)
         delegate = AlignDelegate(self.table)
         self.table.setItemDelegate(delegate)

@@ -114,7 +114,10 @@ class AnalyticsWindow(QtWidgets.QWidget):
             row = self.table.currentRow()
             user = self.table.item(row, 0).text()
             matches = []
-            command = f"Select SIGNATURE.ECN_ID from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{user}' and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
+            self.cursor.execute(f"select JOB_TITLE from USER where USER_ID='{user}'")
+            result = self.cursor.fetchone()
+            title = result[0]
+            command = f"Select SIGNATURE.ECN_ID from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{user}' and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing' and ECN.STAGE='{self.stageDict[title]}'"
             #self.cursor.execute(f"select ECN_ID from SIGNATURE where USER_ID='{user}' and TYPE='Signing' and SIGNED_DATE is Null")
             self.cursor.execute(command)
             results = self.cursor.fetchall()
@@ -141,10 +144,9 @@ class AnalyticsWindow(QtWidgets.QWidget):
                 remove_key.append(key)
             else:
                 users[key]=result[0]
-        print(users)
         
         for item in remove_key:
-            del users[key]
+            del users[item]
 
         
         set0 = QtCharts.QBarSet("ECN Count")

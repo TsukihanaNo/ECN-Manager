@@ -15,15 +15,15 @@
     - be able to filter by status and author
 
 - priority sign offs -> job-title specific (done)
-- have signers and notifiers
+- have signers and notifiers (done)
 
 
-- add elapse days of ecn.
+- add elapse days of ecn. (done)
 
 - add PDM interface module
 
 ideas:
-  - show ecns assigned to signature user who has not yet approved.
+  - show ecns assigned to signature user who has not yet approved. (done)
 - be able to set due dates for ecns
 
 to add :
