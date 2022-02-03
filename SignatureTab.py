@@ -131,7 +131,7 @@ class SignatureTab(QtWidgets.QWidget):
                             users+=","
                     count+=1
                 comment = f'For user: {user} - additionally the approval for the following users have also been resetted: {users}\n  --Reason: ' + comment
-                self.parent.addComment(self.parent.ecn_id, comment, f"Rejection to signer")
+                self.parent.addComment(self.parent.ecn_id, comment, f"Rejecting to signer")
                 self.parent.db.commit()
                 self.parent.setECNStage(table_dict[user])
                 self.dispMsg(f"Rejection successful. ECN stage has been set to {table_dict[user]}")

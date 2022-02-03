@@ -297,7 +297,7 @@ class ECNWindow(QtWidgets.QWidget):
     def reject(self):
         comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Comment", "")
         if ok and comment!="":
-            self.addComment(self.ecn_id, comment,"Reject")
+            self.addComment(self.ecn_id, comment,"Rejecting to author")
             try:
                 modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 data = (modifieddate, "Rejected",self.ecn_id)
@@ -808,22 +808,22 @@ class ECNWindow(QtWidgets.QWidget):
             if type(userslist)==type([]):
                 users = ""
                 count = 0
-                for user in userList:
+                for user in usersList:
                     users +=","
-                    if count<len(userList)-1:
+                    if count<len(usersList)-1:
                         users +=","
                     count+=1
             else:
                 users = userslist
         if self.existNotification(ecn_id):
-            if userlist is not None:
+            if userslist is not None:
                 data = (notificationType,users,ecn_id)
                 self.cursor.execute("UPDATE NOTIFICATION SET TYPE = ? USERS = ? WHERE ECN_ID = ?",(data))
             else:
                 data = (notificationType,ecn_id)
                 self.cursor.execute("UPDATE NOTIFICATION SET TYPE = ? WHERE ECN_ID = ?",(data))
         else:
-            if userlist is not None:
+            if userslist is not None:
                 data = (ecn_id,"Not Sent",notificationType, users)
                 self.cursor.execute("INSERT INTO NOTIFICATION(ECN_ID, STATUS, TYPE, USERS) VALUES(?,?,?,?)",(data))
             else:
