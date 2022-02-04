@@ -179,6 +179,8 @@ class ECNWindow(QtWidgets.QWidget):
                 self.tab_ecn.text_summary.setReadOnly(False)
                 if self.tab_ecn.line_status.text()=="Out For Approval":
                     self.button_release.setDisabled(True)
+                    self.tab_signature.button_add.setDisabled(True)
+                    self.tab_signature.button_remove.setDisabled(True)
             else:
                 self.button_approve = QtWidgets.QPushButton("Approve")
                 self.button_approve.clicked.connect(self.approve)

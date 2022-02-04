@@ -178,7 +178,7 @@ class Notifier(QtWidgets.QWidget):
         self.cursor.execute(f"select Author from ECN where ECN_ID='{ecn_id}'")
         result = self.cursor.fetchone()
         receivers.append(self.userList[result[0]])
-        self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}'")
+        self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing'")
         results = self.cursor.fetchall()
         for result in results:
             receivers.append(self.userList[result[0]])
@@ -208,7 +208,7 @@ class Notifier(QtWidgets.QWidget):
         self.sendEmail(ecn_id,receivers, message)
         
     def releaseNotification(self,ecn_id):
-        self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}'")
+        self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing")
         results = self.cursor.fetchall()
         receivers = []
         message = f"{ecn_id} has been released! You can see it in the queue section once it is your turn for approval. Otherwise you can view the ECN in the open section.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
