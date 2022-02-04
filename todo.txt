@@ -35,3 +35,4 @@ to add :
  - if reject set stage to 0 - to start the whole process again and also wipe out all signatures as they need to re-approve (at that stage and higher) (done)
  - be able to see ecns by selected user
  - engineer 0, engineering manager 1, buyer 2, planner 2, manufacturing engineer 3, production supervisor 4, purchasing manager 4, planning manager 4, production manager 5 
+
