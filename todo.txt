@@ -29,7 +29,6 @@ ideas:
 to add :
  - add notifications tab for users who need to be notified if the ecn is complete (notification tab added and data is saved)
  - add columns to the table to show: current stage, elapsed days since release, current user associated with stage  (done)
- - kick back ecn stage if signature revoked- replaced by reset ecn stage 
  - add set current stage for kick back - and remove signatures for everyone > current stage gets their signature removed. (done)
  - add yellowing of the parts table (done)
  - if reject set stage to 0 - to start the whole process again and also wipe out all signatures as they need to re-approve (at that stage and higher) (done)

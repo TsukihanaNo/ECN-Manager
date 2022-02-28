@@ -118,6 +118,18 @@ class PartsTab(QtWidgets.QWidget):
         box_dispo.addItems([" ","Deplete","New","Scrap","Rework"])
         self.table.setCellWidget(row, 3, box_dispo)
         self.table.setItem(row,0,QtWidgets.QTableWidgetItem(part))
+        
+    def checkFields(self):
+        for x in range(self.table.rowCount()):
+            print("checking row")
+            for y in range(self.table.columnCount()):
+                if isinstance(self.table.item(x, y),QtWidgets.QTableWidgetItem):
+                    if self.table.item(x, y).text() is None:
+                        return False
+                else:
+                    if self.table.cellWidget(x, y) is None:
+                        return False
+        return True
             
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()

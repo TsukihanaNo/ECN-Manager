@@ -718,34 +718,45 @@ class ECNWindow(QtWidgets.QWidget):
             return False
         else:
             return True
+        
+    def checkAllFields(self):
+        if not self.tab_parts.checkFields():
+            self.dispMsg("Error: Empty fields in parts tab. Please fill them in and try again.")
+            return False
+        if self.checkSigNotiDuplicate():
+            self.dispMsg("Error: Duplicate user found in Signature and Notifications. Please remove the duplicate before trying again.")
+            return False
+        return True
 
     def save(self,msg = None):
         if not self.checkEcnID():
-            self.insertData()
-            if self.checkSigNotiDuplicate():
-                self.dispMsg("Error: Duplicate user found in Signature and Notifications. Please remove the duplicate before trying again.")
-            else:
-                self.AddSignatures()
-                if not msg:
-                    self.dispMsg("ECN has been saved!")
-                self.tabwidget.setTabVisible(3, True)
-                self.parent.repopulateTable()
-                if self.tab_signature.table.rowCount()>0:
-                    self.button_release.setDisabled(False)
-                self.button_cancel.setDisabled(False)
+            if self.checkAllFields():
+                self.insertData()
+                if self.checkSigNotiDuplicate():
+                    self.dispMsg("Error: Duplicate user found in Signature and Notifications. Please remove the duplicate before trying again.")
+                else:
+                    self.AddSignatures()
+                    if not msg:
+                        self.dispMsg("ECN has been saved!")
+                    self.tabwidget.setTabVisible(3, True)
+                    self.parent.repopulateTable()
+                    if self.tab_signature.table.rowCount()>0:
+                        self.button_release.setDisabled(False)
+                    self.button_cancel.setDisabled(False)
         else:
-            self.updateData()
-            if self.checkSigNotiDuplicate():
-                self.dispMsg("Error: Duplicate user found in Signature and Notifications. Please remove the duplicate before trying again.")
-            else:
-                self.AddSignatures()
-                if not msg:
-                    self.dispMsg("ECN has been updated!")
-                if self.tab_signature.table.rowCount()>0:
-                    self.button_release.setDisabled(False)
-                #self.getCurrentValues()
-                #self.checkDiff()
-                self.parent.repopulateTable()
+            if self.checkAllFields():
+                self.updateData()
+                if self.checkSigNotiDuplicate():
+                    self.dispMsg("Error: Duplicate user found in Signature and Notifications. Please remove the duplicate before trying again.")
+                else:
+                    self.AddSignatures()
+                    if not msg:
+                        self.dispMsg("ECN has been updated!")
+                    if self.tab_signature.table.rowCount()>0:
+                        self.button_release.setDisabled(False)
+                    #self.getCurrentValues()
+                    #self.checkDiff()
+                    self.parent.repopulateTable()
 
     def saveAndClose(self):
         self.save()
