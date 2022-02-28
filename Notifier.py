@@ -191,7 +191,7 @@ class Notifier(QtWidgets.QWidget):
         receivers = users.split(',')
         message = f"{ecn_id} has been rejected to user: {receivers[0]}. Signatures for the following users has been removed: {users}.\n\n\nYou can open the attachment file to be directed to the ECN."
         print(f"send email to these addresses: {receivers} notifying ecn completion")
-        self.sendEmail(ecn_id,receivers, message)    
+        self.sendEmail(ecn_id,receivers, message)
         
     
     def completionNotification(self,ecn_id):

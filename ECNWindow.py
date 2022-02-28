@@ -770,6 +770,28 @@ class ECNWindow(QtWidgets.QWidget):
                 summary = self.tab_ecn.text_summary.toHtml()[330:-14]
                 signature = "<tr>"
                 attachment ="<tr>"
+                parts = ""
+                
+                #parts
+                
+                if self.tab_parts.table.rowCount()>0:
+                    for x in range(self.tab_parts.table.rowCount()):
+                        text = f"<p> {self.tab_parts.table.item(x,0).text()}</p>"
+                        text += "<ul>"
+                        text += f"<li>Desc: {self.tab_parts.table.item(x,1).text()}</li>"
+                        if isinstance(self.tab_parts.table.item(x, 2),QtWidgets.QTableWidgetItem):
+                            text += f"<li>Type: {self.tab_parts.table.item(x,2).text()}</li>"
+                            text += f"<li>Disposition: {self.tab_parts.table.item(x,3).text()}</li>"
+                            text += f"<li>Inspection Req.: {self.tab_parts.table.item(x,7).text()}</li>"
+                        else:
+                            text += f"<li>Type: {self.tab_parts.table.cellWidget(x,2).currentText()}</li>"
+                            text += f"<li>Disposition: {self.tab_parts.table.cellWidget(x,3).currentText()}</li>"
+                            text += f"<li>Inspection Req.: {self.tab_parts.table.cellWidget(x,7).currentText()}</li>"
+                        text += f"<li>Mfg.: {self.tab_parts.table.item(x,4).text()}</li>"
+                        text += f"<li>Mfg.#: {self.tab_parts.table.item(x,5).text()}</li>"
+                        text += f"<li>Replacing: {self.tab_parts.table.item(x,6).text()}</li>"
+                        text += "</ul>"
+                        parts += text
 
                 #attachments
                 if self.tab_attach.table.rowCount()>0:
@@ -781,13 +803,25 @@ class ECNWindow(QtWidgets.QWidget):
                 #signatures
                 if self.tab_signature.table.rowCount()>0:
                     for x in range(self.tab_signature.table.rowCount()):
-                        signature += "<td>"+self.tab_signature.table.item(x,0).text()+"</td>"
-                        signature += "<td>"+self.tab_signature.table.item(x,1).text()+"</td>"
-                        signature += "<td>"+self.tab_signature.table.item(x,3).text()+"</td></tr>"
+                        if isinstance(self.tab_signature.table.item(x, 0),QtWidgets.QTableWidgetItem):
+                            signature += "<td>"+self.tab_signature.table.item(x,0).text()+"</td>"
+                            signature += "<td>"+self.tab_signature.table.item(x,1).text()+"</td>"
+                            if self.tab_signature.table.item(x,3) is not None:
+                                signature += "<td>"+self.tab_signature.table.item(x,3).text()+"</td></tr>"
+                            else:
+                                signature += "<td></td></tr>"
+                        else:
+                            signature += "<td>"+self.tab_signature.table.cellWidget(x,0).currentText()+"</td>"
+                            signature += "<td>"+self.tab_signature.table.cellWidget(x,1).currentText()+"</td>"
+                            if self.tab_signature.table.cellWidget(x,3) is not None:
+                                signature += "<td>"+self.tab_signature.table.cellWidget(x,3).currentText()+"</td></tr>"
+                            else:
+                                signature += "<td></td></tr>"
                 else:
                     signature="<tr><td></td><td></td><td></td></tr>"
                 #print(id, title, author,reason,summary)
-                export = t.substitute(ECNID=id,ECNTitle=title,Requestor=requestor,Department=dept,Author=author, Reason=reason,Summary=summary,Attachment=attachment,Signature=signature)
+                
+                export = t.substitute(ECNID=id,ECNTitle=title,Requestor=requestor,Department=dept,Author=author, Reason=reason,Summary=summary,Parts=parts,Attachment=attachment,Signature=signature)
             
                 with open(foldername+'\\'+id+'.html', 'w') as f:
                     f.write(export)
