@@ -187,8 +187,11 @@ class ECNWindow(QtWidgets.QWidget):
                 self.button_approve.clicked.connect(self.approve)
                 self.button_reject = QtWidgets.QPushButton("Reject to Author",self)
                 self.button_reject.clicked.connect(self.reject)
+                self.button_save = QtWidgets.QPushButton("Save")
+                self.button_save.clicked.connect(self.notificationSave)
                 buttonlayout.addWidget(self.button_approve)
                 buttonlayout.addWidget(self.button_reject)
+                buttonlayout.addWidget(self.button_save)
                 self.tab_ecn.line_ecntitle.setReadOnly(True)
                 self.tab_ecn.text_summary.setReadOnly(True)
                 self.tab_ecn.text_reason.setReadOnly(True)
@@ -711,9 +714,15 @@ class ECNWindow(QtWidgets.QWidget):
     def checkSigNotiDuplicate(self):
         sigs = []
         for row in range(self.tab_signature.table.rowCount()):
-            sigs.append(self.tab_signature.table.cellWidget(row, 2).currentText())
+            if isinstance(self.tab_signature.table.item(row, 2),QtWidgets.QTableWidgetItem):
+                sigs.append(self.tab_signature.table.item(row, 2).text())
+            else:
+                sigs.append(self.tab_signature.table.cellWidget(row, 2).currentText())
         for row in range(self.tab_notification.table.rowCount()):
-            sigs.append(self.tab_notification.table.cellWidget(row, 2).currentText())
+            if isinstance(self.tab_notification.table.item(row, 2),QtWidgets.QTableWidgetItem):
+                sigs.append(self.tab_notification.table.item(row, 2).text())
+            else:
+                sigs.append(self.tab_notification.table.cellWidget(row, 2).currentText())
         print(sigs)
         if len(sigs)==len(set(sigs)):
             return False
@@ -728,6 +737,13 @@ class ECNWindow(QtWidgets.QWidget):
             self.dispMsg("Error: Duplicate user found in Signature and Notifications. Please remove the duplicate before trying again.")
             return False
         return True
+    
+    def notificationSave(self):
+        if self.checkSigNotiDuplicate():
+            self.dispMsg("Error: Duplicate user found in Signature and Notifications. Please remove the duplicate before trying again.")
+        else:
+            self.AddSignatures()
+            self.dispMsg("ECN has been updated!")
 
     def save(self,msg = None):
         if not self.checkEcnID():

@@ -20,6 +20,3 @@
 - add option for  the user to change their password
 - optimize table refresh
 - add instant client and ecn type settings to the settings window
-
-
-
