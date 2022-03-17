@@ -10,8 +10,8 @@ dbfolder = os.path.join(program_location, 'DB')
 if not os.path.isdir(dbfolder):
     os.mkdir(dbfolder)
 
-location_DB = os.path.join(dbfolder,"ECN_DB.db")
-#location_DB = r'T:/ecn-manager/DB/ECN_DB.db'
+#location_DB = os.path.join(dbfolder,"ECN_DB.db")
+location_DB = r'T:\ecn-manager\DB\ECN_DB.db'
 database = sqlite3.connect(location_DB)
 cursor = database.cursor()
 
@@ -21,11 +21,12 @@ cursor = database.cursor()
 # results = cursor.execute("select FIRST_RELEASE,LAST_MODIFIED,COMP_DATE from ECN where FIRST_RELEASE like '2022-01%'")
 # for result in results:
 #     print(result[0],result[1],result[2])
-results = cursor.execute("select COMP_DAYS from ECN")
+#results = cursor.execute("UPDATE ECN set STATUS='Draft' where ECN_ID='ECN-220315-124522'")
+results = cursor.execute("select * from ECN")
 for result in results:
     print(result)
     
 
 # cursor.execute("update NOTIFICATION set STATUS='Not Sent'")
-# database.commit()
+#database.commit()
 database.close()

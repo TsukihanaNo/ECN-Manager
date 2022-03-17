@@ -1,22 +1,19 @@
 import cx_Oracle
 import os, sys
 
-instantclient_dir = r"T:\ecn-manager\instantclient_19_13"
-
 if getattr(sys, 'frozen', False):
     # frozen
     program_location = os.path.dirname(sys.executable)
-    os.environ['PATH'] = instantclient_dir + os.path.pathsep + os.environ['PATH']
 else:
     # unfrozen
     program_location = os.path.dirname(os.path.realpath(__file__))
 
-
 class Visual():
-    def __init__(self,parent,user,pw,db):
+    def __init__(self,parent,user,pw,db,instantclient_dir):
         super(Visual, self).__init__()
         try:
             self.parent = parent
+            os.environ['PATH'] = instantclient_dir + os.path.pathsep + os.environ['PATH']
             cx_Oracle.init_oracle_client(instantclient_dir)
             self.con = cx_Oracle.connect(user,pw,db)
             self.cur = self.con.cursor()
@@ -64,6 +61,5 @@ class Visual():
             return True
         else:
             return False
-
 
     

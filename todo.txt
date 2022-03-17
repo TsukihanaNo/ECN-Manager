@@ -1,8 +1,5 @@
 - notification server
-    - email for past due ecn
-
-- new parts list for ecn
-    - check for visual set up
+    - email for ecns past a certain elapsed days
 
 - EVN export
 
@@ -14,24 +11,15 @@
     - search criteria
     - be able to filter by status and author
 
-- priority sign offs -> job-title specific (done)
-- have signers and notifiers (done)
-
-
-- add elapse days of ecn. (done)
 
 - add PDM interface module
 
-ideas:
-  - show ecns assigned to signature user who has not yet approved. (done)
-- be able to set due dates for ecns
+- allow for non-authors to add people to the notification listing.
+- change email notification to send to next waiting set of users instead of the whole group
+- add some additional details to the notifier for ease of debugging
+- add option for  the user to change their password
+- optimize table refresh
+- add instant client and ecn type settings to the settings window
 
-to add :
- - add notifications tab for users who need to be notified if the ecn is complete (notification tab added and data is saved)
- - add columns to the table to show: current stage, elapsed days since release, current user associated with stage  (done)
- - add set current stage for kick back - and remove signatures for everyone > current stage gets their signature removed. (done)
- - add yellowing of the parts table (done)
- - if reject set stage to 0 - to start the whole process again and also wipe out all signatures as they need to re-approve (at that stage and higher) (done)
- - be able to see ecns by selected user
- - engineer 0, engineering manager 1, buyer 2, planner 2, manufacturing engineer 3, production supervisor 4, purchasing manager 4, planning manager 4, production manager 5 
+
 

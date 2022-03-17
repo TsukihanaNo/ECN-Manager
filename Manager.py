@@ -18,6 +18,7 @@ from SearchResults import *
 from SettingsWindow import *
 from Analytics import *
 from Delegates import *
+from Visual import *
 
 
 if getattr(sys, 'frozen', False):
@@ -32,7 +33,7 @@ initfile = os.path.join(program_location, "setting.ini")
 lock_loc = r"C:\ProgramData\ECN-Manager"
 lockfile = os.path.join(lock_loc, "ecn.lock")
 notifier_lockfile = os.path.join(program_location, "notifier.lock")
-icon = os.path.join(program_location,"ecn-icon.png")
+icon = os.path.join(program_location,"icons","manager.ico")
 
 databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT", "ECN_REASON TEXT","REQUESTOR TEXT" ,"AUTHOR TEXT", "STATUS TEXT", "COMP_DATE DATE", "ECN_SUMMARY TEXT", "LAST_CHANGE_DATE DATE"],
                         "COMMENT": ["ECN_ID TEXT", "USER TEXT", "COMM_DATE DATE", "COMMENT TEXT"],
@@ -61,7 +62,8 @@ class Manager(QtWidgets.QWidget):
         self.programLoc = program_location
         self.nameList = []
         user,pw,db = self.settings['Visual'].split(',')
-        self.visual = Visual(self,user, pw , db)
+        instant_Client = self.settings['Instant_Client']
+        self.visual = Visual(self,user, pw , db,instant_Client)
         # self.checkDBTables()
 
     def center(self):

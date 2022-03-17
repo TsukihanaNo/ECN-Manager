@@ -38,6 +38,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.show()
 
     def initAtt(self):
+        self.setWindowIcon(self.parent.ico)
         self.setGeometry(100,50,self.windowWidth,self.windowHeight)
         self.setWindowTitle(f"ECN-Viewer - user: {self.parent.user_info['user']}")
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)

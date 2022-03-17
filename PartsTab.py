@@ -1,5 +1,4 @@
 from PySide6 import QtGui, QtCore, QtWidgets
-from Visual import *
 
 class PartsTab(QtWidgets.QWidget):
     def __init__(self, parent = None):

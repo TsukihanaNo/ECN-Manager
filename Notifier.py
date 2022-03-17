@@ -20,6 +20,8 @@ else:
 initfile = os.path.join(program_location, "setting.ini")
 lockfile = os.path.join(program_location, "notifier.lock")
 
+icon = os.path.join(program_location,"icons","notifier.ico")
+
 class Notifier(QtWidgets.QWidget):
     def __init__(self):
         super(Notifier, self).__init__()
@@ -27,8 +29,9 @@ class Notifier(QtWidgets.QWidget):
         self.windowHeight = 450
         self.programLoc = program_location
         self.firstInstance = True
-        self.checkLockFile()
-        self.generateLockFile()
+        self.ico = QtGui.QIcon(icon)
+        #self.checkLockFile()
+        #self.generateLockFile()
         self.userList={}
         self.settings = {}
         self.startUpCheck()
@@ -41,6 +44,7 @@ class Notifier(QtWidgets.QWidget):
         # self.checkDBTables()
         
     def initAtt(self):
+        self.setWindowIcon(self.ico)
         self.setGeometry(100, 50, self.windowWidth, self.windowHeight)
         self.setWindowTitle("Notifier")
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -56,10 +60,13 @@ class Notifier(QtWidgets.QWidget):
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         
+        self.log_text = QtWidgets.QTextEdit()
+        
         self.button_refresh = QtWidgets.QPushButton("Refresh")
         self.button_refresh.clicked.connect(self.repopulateTable)
         
         mainLayout.addWidget(self.table)
+        mainLayout.addWidget(self.log_text)
         mainLayout.addWidget(self.button_refresh)
         # mainLayout.setMenuBar(self.menubar)
         self.setLayout(mainLayout)
@@ -150,6 +157,9 @@ class Notifier(QtWidgets.QWidget):
             rowcount+=1
             
     def sendNotification(self):
+        self.log_text.clear()
+        now  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.log_text.append(f"{now}: initializiing sending notification")
         self.cursor.execute("Select * from NOTIFICATION where STATUS='Not Sent'")
         results = self.cursor.fetchall()
         
@@ -166,12 +176,16 @@ class Notifier(QtWidgets.QWidget):
                     self.releaseNotification(result[0])
                 self.updateStatus(result[0])
                 self.removeECNX(result[0])
+        else:
+            self.log_text.append("-No notifications found to be sent")
         self.repopulateTable()
                 
     def updateStatus(self,ecn_id):
+        self.log_text.append("-updating status")
         data = ("Sent",ecn_id)
         self.cursor.execute("UPDATE NOTIFICATION SET STATUS = ? WHERE ECN_ID = ?",(data))
         self.db.commit()
+        self.log_text.append("-status updated")
         
     def rejectNotification(self,ecn_id):
         receivers = []
@@ -184,7 +198,7 @@ class Notifier(QtWidgets.QWidget):
             receivers.append(self.userList[result[0]])
         message = f"{ecn_id} has been rejected to the author! All Signatures have been removed and the ECN approval will start from the beginning once the ECN is released again.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
         print(f"send email to these addresses: {receivers} notifying ecn completion")
-        self.sendEmail(ecn_id,receivers, message)  
+        self.sendEmail(ecn_id,receivers, message)
         
     
     def rejectSignerNotification(self,ecn_id,users):
@@ -208,7 +222,7 @@ class Notifier(QtWidgets.QWidget):
         self.sendEmail(ecn_id,receivers, message)
         
     def releaseNotification(self,ecn_id):
-        self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing")
+        self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing'")
         results = self.cursor.fetchall()
         receivers = []
         message = f"{ecn_id} has been released! You can see it in the queue section once it is your turn for approval. Otherwise you can view the ECN in the open section.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
@@ -237,14 +251,18 @@ class Notifier(QtWidgets.QWidget):
             print(f"Successfully sent email to {receivers}")
             
     def generateECNX(self,ecn_id):
+        self.log_text.append("-generating ecnx file")
         ecnx = os.path.join(program_location,ecn_id+'.ecnx')
         f = open(ecnx,"w+")
         f.write(f"{ecn_id}")
         f.close()
+        self.log_text.append("-ecnx file generated")
         
     def removeECNX(eslf,ecn_id):
+        self.log_text.append("-removing ecnx file")
         ecnx = os.path.join(program_location,ecn_id+'.ecnx')
         os.remove(ecnx)
+        self.log_text.append("-ecnx file removed")
 
     def setElapsedDays(self):
         self.cursor.execute(f"Select ECN_ID, FIRST_RELEASE, LAST_STATUS from ECN where STATUS!='Completed'")
@@ -282,8 +300,8 @@ class Notifier(QtWidgets.QWidget):
     
     def closeEvent(self, event):
         self.db.close()
-        if self.firstInstance:
-            self.removeLockFile()
+        # if self.firstInstance:
+        #     self.removeLockFile()
 
             
             
