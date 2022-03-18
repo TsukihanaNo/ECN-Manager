@@ -382,11 +382,13 @@ class Manager(QtWidgets.QWidget):
     def getWaitingUser(self,ecn,titles):
         users = []
         usr_str = ""
+        print(titles)
         for title in titles:
             self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn}' and JOB_TITLE='{title}' and SIGNED_DATE is Null")
-            result = self.cursor.fetchone()
-            if result is not None:
-                users.append(result[0])
+            results = self.cursor.fetchall()
+            for result in results:
+                if result is not None:
+                    users.append(result[0])
         count = 0
         for user in users:
             usr_str += user

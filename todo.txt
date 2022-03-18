@@ -14,7 +14,7 @@
 
 - add PDM interface module
 
-- allow for non-authors to add people to the notification listing.
+- allow for non-authors to add people to the notification listing. (done)
 - change email notification to send to next waiting set of users instead of the whole group
 - add some additional details to the notifier for ease of debugging
 - add option for  the user to change their password

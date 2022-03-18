@@ -36,6 +36,8 @@ class Notifier(QtWidgets.QWidget):
         self.settings = {}
         self.startUpCheck()
         self.getUserList()
+        self.getStageDict()
+        self.getTitleStageDict()
         self.initAtt()
         self.initUI()
         self.center()
@@ -76,7 +78,7 @@ class Notifier(QtWidgets.QWidget):
         
         timer = QtCore.QTimer(self)
         timer.timeout.connect(self.sendNotification)
-        timer.start(15000)
+        timer.start(30000)
     
     def center(self):
         window = self.window()
@@ -156,6 +158,32 @@ class Notifier(QtWidgets.QWidget):
 
             rowcount+=1
             
+    def getWaitingUser(self,ecn,titles):
+        users = []
+        usr_str = ""
+        for title in titles:
+            self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn}' and JOB_TITLE='{title}' and SIGNED_DATE is Null and TYPE='Signing'")
+            results = self.cursor.fetchall()
+            for result in results:
+                if result is not None:
+                    users.append(result[0])
+        return users
+    
+    def getTitleStageDict(self):
+        self.titleStageDict = {}
+        for key, value in self.stageDict.items():
+            if value not in self.titleStageDict.keys():
+                self.titleStageDict[value]=[key]
+            else:
+                self.titleStageDict[value].append(key)
+                
+    def getStageDict(self):
+        self.stageDict = {}
+        stages = self.settings["Stage"].split(",")
+        for stage in stages:
+            key,value = stage.split("-")
+            self.stageDict[key.strip()] = value.strip()
+            
     def sendNotification(self):
         self.log_text.clear()
         now  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -172,10 +200,12 @@ class Notifier(QtWidgets.QWidget):
                     self.rejectSignerNotification(result[0],result['USERS'])
                 elif result['TYPE']=="Completed":
                     self.completionNotification(result[0])
+                elif result['TYPE']=="Stage Moved":
+                    self.stageReleaseNotification(result[0])
                 else:
                     self.releaseNotification(result[0])
-                self.updateStatus(result[0])
                 self.removeECNX(result[0])
+                self.updateStatus(result[0])
         else:
             self.log_text.append("-No notifications found to be sent")
         self.repopulateTable()
@@ -197,8 +227,9 @@ class Notifier(QtWidgets.QWidget):
         for result in results:
             receivers.append(self.userList[result[0]])
         message = f"{ecn_id} has been rejected to the author! All Signatures have been removed and the ECN approval will start from the beginning once the ECN is released again.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
-        print(f"send email to these addresses: {receivers} notifying ecn completion")
+        print(f"send email to these addresses: {receivers} notifying ecn rejection")
         self.sendEmail(ecn_id,receivers, message)
+        self.log_text.append(f"-Rejection Email sent for {ecn_id} to {receivers}")
         
     
     def rejectSignerNotification(self,ecn_id,users):
@@ -206,6 +237,7 @@ class Notifier(QtWidgets.QWidget):
         message = f"{ecn_id} has been rejected to user: {receivers[0]}. Signatures for the following users has been removed: {users}.\n\n\nYou can open the attachment file to be directed to the ECN."
         print(f"send email to these addresses: {receivers} notifying ecn completion")
         self.sendEmail(ecn_id,receivers, message)
+        self.log_text.append(f"-Rejection to Signer Email sent for {ecn_id} to {receivers}")
         
     
     def completionNotification(self,ecn_id):
@@ -215,11 +247,12 @@ class Notifier(QtWidgets.QWidget):
         receivers.append(self.userList[result[0]])
         self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}'")
         results = self.cursor.fetchall()
-        message = f"{ecn_id} has been completed! You can now view it in the completed section of your viewer.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
+        message = f"{ecn_id} has been completed!\n\n\n You can now view it in the completed section of your viewer.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
         for result in results:
             receivers.append(self.userList[result[0]])
         print(f"send email to these addresses: {receivers} notifying ecn completion")
         self.sendEmail(ecn_id,receivers, message)
+        self.log_text.append(f"-Completion Email sent for {ecn_id} to {receivers}")
         
     def releaseNotification(self,ecn_id):
         self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing'")
@@ -230,6 +263,21 @@ class Notifier(QtWidgets.QWidget):
             receivers.append(self.userList[result[0]])
         print(f"send email these addresses: {receivers} notifying ecn release")
         self.sendEmail(ecn_id,receivers, message)
+        self.log_text.append(f"-Release Email sent for {ecn_id} to {receivers}")
+        
+    def stageReleaseNotification(self,ecn_id):
+        #get stage
+        self.cursor.execute(f"Select Stage from ECN where ECN_ID='{ecn_id}'")
+        result = self.cursor.fetchone()
+        stage = result[0]
+        users = self.getWaitingUser(ecn_id, self.titleStageDict[str(stage)])
+        receivers = []
+        for user in users:
+            receivers.append(self.userList[user])
+        message = f"{ecn_id} has been released and is now awaiting for your approval!\n\n\n. You can view the ECN your queue in the ECN Manager application.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
+        print(f"send email these addresses: {receivers} notifying ecn release stage move")
+        self.sendEmail(ecn_id,receivers, message)
+        self.log_text.append(f"-Stage Release Email sent for {ecn_id} to {receivers}")
             
     def sendEmail(self,ecn_id,receivers,message):
         with smtplib.SMTP(self.settings["SMTP"],self.settings["Port"]) as server:
@@ -248,7 +296,7 @@ class Notifier(QtWidgets.QWidget):
             payload.add_header('Content-Disposition','attachment',filename = filename)
             msg.attach(payload)
             server.sendmail(self.settings["From_Address"], receivers, msg.as_string())
-            print(f"Successfully sent email to {receivers}")
+            #print(f"Successfully sent email to {receivers}")
             
     def generateECNX(self,ecn_id):
         self.log_text.append("-generating ecnx file")
@@ -258,7 +306,7 @@ class Notifier(QtWidgets.QWidget):
         f.close()
         self.log_text.append("-ecnx file generated")
         
-    def removeECNX(eslf,ecn_id):
+    def removeECNX(self,ecn_id):
         self.log_text.append("-removing ecnx file")
         ecnx = os.path.join(program_location,ecn_id+'.ecnx')
         os.remove(ecnx)

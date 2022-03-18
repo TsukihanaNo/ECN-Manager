@@ -42,7 +42,7 @@ class NotificationTab(QtWidgets.QWidget):
         self.setLayout(mainlayout)       
 
     def onRowSelect(self):
-        if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text():
+        if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() or self.parent.parent.user_info["role"]=="Manager" or not isinstance(self.table.currentRow(), QtWidgets.QTableWidgetItem):
             self.button_remove.setEnabled(bool(self.table.selectionModel().selectedRows()))
         
     def addRow(self):

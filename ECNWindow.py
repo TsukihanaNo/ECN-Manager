@@ -548,10 +548,11 @@ class ECNWindow(QtWidgets.QWidget):
             currentStage = self.getECNStage()
             if currentStage==0:
                 self.setECNStage(self.getNextStage()[0])
+                self.addNotification(self.ecn_id, "Stage Moved")
             self.tab_ecn.line_status.setText("Out For Approval")
             self.parent.repopulateTable()
             self.dispMsg("ECN has been saved and sent out for signing!")
-            self.addNotification(self.ecn_id, "Released")
+            #self.addNotification(self.ecn_id, "Released")
             self.button_release.setDisabled(True)
             self.button_cancel.setText("Cancel")
             self.button_cancel.setDisabled(True)
@@ -601,6 +602,7 @@ class ECNWindow(QtWidgets.QWidget):
             if len(nextStages)>0:
                 print("moving to stage:", nextStages[0])
                 self.setECNStage(nextStages[0])
+                self.addNotification(self.ecn_id, "Stage Moved")
             else:
                 print("this is the last stage")
             
