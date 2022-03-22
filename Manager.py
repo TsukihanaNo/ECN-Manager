@@ -353,7 +353,8 @@ class Manager(QtWidgets.QWidget):
                 if table_type!="Completed":
                     today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     elapsed = self.getElapsedDays(today, item['FIRST_RELEASE'])
-                    self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(round(elapsed.seconds/86400,2))))
+                    #print(elapsed.days,elapsed.seconds)
+                    self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(elapsed.days + round(elapsed.seconds/86400,2))))
                 else:
                     self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(item["COMP_DAYS"])))
                 if item['STAGE']!=0:
@@ -508,11 +509,13 @@ class Manager(QtWidgets.QWidget):
         today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         day1 = datetime.strptime(day1,'%Y-%m-%d %H:%M:%S')
         day2 = datetime.strptime(day2,'%Y-%m-%d %H:%M:%S')
+        #print(day1, day2)
         if day2>day1:
             elapsed = day2 - day1
         else:
             elapsed = day1 - day2
         #return elapsed.days
+        #print(elapsed)
         return elapsed
         
     def search(self):

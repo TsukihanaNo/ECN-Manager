@@ -22,7 +22,7 @@ cursor = database.cursor()
 # for result in results:
 #     print(result[0],result[1],result[2])
 #results = cursor.execute("UPDATE ECN set STATUS='Draft' where ECN_ID='ECN-220315-124522'")
-results = cursor.execute("select * from ECN")
+results = cursor.execute("select FIRST_RELEASE, ECN_ID from ECN")
 for result in results:
     print(result)
     

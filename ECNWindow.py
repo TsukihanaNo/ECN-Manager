@@ -25,7 +25,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.windowHeight = 580
         self.ecn_id = ecn_id
         self.tablist = []
-        self.typeindex = {'New Part':0, 'BOM Update':1, 'Firmware Update':2, 'Configurator Update' : 3,'Product EOL':4}
+        #self.typeindex = {'New Part':0, 'BOM Update':1, 'Firmware Update':2, 'Configurator Update' : 3,'Product EOL':4}
         self.initAtt()
         if self.ecn_id == None:
             self.initReqUI()
@@ -288,7 +288,7 @@ class ECNWindow(QtWidgets.QWidget):
             approvedate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             data = (approvedate,self.ecn_id,self.parent.user_info['user'])
             self.cursor.execute("UPDATE SIGNATURE SET SIGNED_DATE = ? WHERE ECN_ID = ? and USER_ID = ?",(data))
-            self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = '" + approvedate +"'")
+            self.cursor.execute(f"UPDATE ECN SET LAST_MODIFIED = '{approvedate}' where ECN_ID='{self.ecn_id}'")
             self.tab_signature.repopulateTable()
             self.dispMsg("ECN has been signed!")
             self.button_approve.setDisabled(True)
@@ -425,7 +425,8 @@ class ECNWindow(QtWidgets.QWidget):
         self.cursor.execute(command)
         results = self.cursor.fetchone()
         self.tab_ecn.line_id.setText(results['ECN_ID'])
-        self.tab_ecn.combo_type.setCurrentIndex(self.typeindex[results['ECN_TYPE']])
+        #self.tab_ecn.combo_type.setCurrentIndex(self.typeindex[results['ECN_TYPE']])
+        self.tab_ecn.combo_type.setCurrentText(results['ECN_TYPE'])
         self.tab_ecn.line_ecntitle.setText(results['ECN_TITLE'])
         self.tab_ecn.text_reason.setText(results['ECN_REASON'])
         self.tab_ecn.text_summary.setText(results['ECN_SUMMARY'])
@@ -698,7 +699,7 @@ class ECNWindow(QtWidgets.QWidget):
         else:
             elapsed = day1 - day2
         #print(elapsed.days)
-        return round(elapsed.seconds/86400,2)
+        return elapsed.days + round(elapsed.seconds/86400,2)
             
 
     # def submitAndClose(self):
