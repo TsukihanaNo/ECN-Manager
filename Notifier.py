@@ -73,12 +73,11 @@ class Notifier(QtWidgets.QWidget):
         # mainLayout.setMenuBar(self.menubar)
         self.setLayout(mainLayout)
         self.repopulateTable()
-        
-        self.sendNotification()
+        self.recurringTask()
         
         timer = QtCore.QTimer(self)
-        timer.timeout.connect(self.sendNotification)
-        timer.start(30000)
+        timer.timeout.connect(self.recurringTask)
+        timer.start(60000)
     
     def center(self):
         window = self.window()
@@ -90,6 +89,14 @@ class Notifier(QtWidgets.QWidget):
             QtGui.QGuiApplication.primaryScreen().availableGeometry(),
         ),
     )
+        
+    def recurringTask(self):
+        if len(self.log_text.toPlainText())>10000:
+            self.log_text.clear()
+        now  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.log_text.append(f"{now}: checking for standard and lateness notifications")
+        self.checkForReminder()
+        self.sendNotification()
         
     def startUpCheck(self):
         if not os.path.exists(initfile):
@@ -185,9 +192,6 @@ class Notifier(QtWidgets.QWidget):
             self.stageDict[key.strip()] = value.strip()
             
     def sendNotification(self):
-        self.log_text.clear()
-        now  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.log_text.append(f"{now}: initializiing sending notification")
         self.cursor.execute("Select * from NOTIFICATION where STATUS='Not Sent'")
         results = self.cursor.fetchall()
         
@@ -214,6 +218,10 @@ class Notifier(QtWidgets.QWidget):
         self.log_text.append("-updating status")
         data = ("Sent",ecn_id)
         self.cursor.execute("UPDATE NOTIFICATION SET STATUS = ? WHERE ECN_ID = ?",(data))
+        self.db.commit()
+        now  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        data = (now,ecn_id)
+        self.cursor.execute("UPDATE ECN SET LAST_NOTIFIED = ? WHERE ECN_ID = ?",(data))
         self.db.commit()
         self.log_text.append("-status updated")
         
@@ -311,6 +319,47 @@ class Notifier(QtWidgets.QWidget):
         ecnx = os.path.join(program_location,ecn_id+'.ecnx')
         os.remove(ecnx)
         self.log_text.append("-ecnx file removed")
+        
+    def getElapsedDays(self,day1,day2):
+        today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        day1 = datetime.strptime(day1,'%Y-%m-%d %H:%M:%S')
+        day2 = datetime.strptime(day2,'%Y-%m-%d %H:%M:%S')
+        #print(day1, day2)
+        if day2>day1:
+            elapsed = day2 - day1
+        else:
+            elapsed = day1 - day2
+        #return elapsed.days
+        #print(elapsed)
+        return elapsed
+    
+    def checkForReminder(self):
+        self.cursor.execute("SELECT ECN_ID, LAST_NOTIFIED, FIRST_RELEASE, LAST_MODIFIED FROM ECN WHERE STATUS !='Completed' and STATUS!='Draft'")
+        results = self.cursor.fetchall()
+        today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        for result in results:
+            if result['LAST_NOTIFIED'] is not None:
+                elapsed = self.getElapsedDays(today, result["LAST_NOTIFIED"])
+                #print(elapsed.days)
+            else:
+                elapsed = self.getElapsedDays(today, result["FIRST_RELEASE"])
+                #print(elapsed.days)
+            if elapsed.days >= int(self.settings['Reminder_Days']):
+                ecn_id = result["ECN_ID"]
+                first_release = result["FIRST_RELEASE"]
+                receivers = []
+                self.cursor.execute(f"Select Stage from ECN where ECN_ID='{ecn_id}'")
+                result = self.cursor.fetchone()
+                stage = result[0]
+                users = self.getWaitingUser(ecn_id, self.titleStageDict[str(stage)])
+                for user in users:
+                    receivers.append(self.userList[user])
+                users = self.getWaitingUser(ecn_id, self.titleStageDict[str(self.settings['Reminder_Stages'])])
+                for user in users:
+                    receivers.append(self.userList[user])
+                total_days = self.getElapsedDays(today, first_release)
+                self.lateReminder(ecn_id, receivers, total_days)
+
 
     def setElapsedDays(self):
         self.cursor.execute(f"Select ECN_ID, FIRST_RELEASE, LAST_STATUS from ECN where STATUS!='Completed'")
@@ -325,18 +374,20 @@ class Notifier(QtWidgets.QWidget):
             self.cursor.execute(f"UPDATE ECN SET RELEASE_ELAPSE ='{release_elapse.day}', STATUS_ELAPSE='{status_elapse.day}' WHERE ECN_ID='{ecn}'")
         self.db.commit()
 
-    def lateReminder(self,ecn_id):
-        self.cursor.execute(f"Select LAST_NOTIFIED, RELEASE_ELAPSE, STATUS_ELAPSE from ECN where ECN_ID={ecn_id}")
-        result = self.cursor.fetchone()
-        today = datetime.now().strptime('%Y-%m-%d %H:%M:%S')
-        message = f"Reminder for {ecn_id}: it has been {result[1]} days since the ECN has been released and {result[2]} days since the last status change."
-        if result[0] is None:
-            pass #send notification set notification set
-        else:
-            last_notify = datetime.strptime(result[0],'%Y-%m-%d %H:%M:%S')
-            elapsed = today - last_notify
-            if elapsed.day >2:
-                pass # send notification
+    def lateReminder(self,ecn_id,receivers,total_days):
+        today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        reminder_days = self.settings['Reminder_Days']
+        message = f"{ecn_id} has been out for {total_days} and has not moved for {reminder_days} days or more since the last notification has been sent. Please work on it at your earlier availability!\n\n\n. You can view the ECN your queue in the ECN Manager application.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
+        #print(message)
+        #print(f"send email these addresses: {receivers} notifying ecn lateness")
+        self.generateECNX(ecn_id)
+        self.sendEmail(ecn_id,receivers, message)
+        data = (ecn_id,"Sent","Reminder")
+        self.cursor.execute("INSERT INTO NOTIFICATION(ECN_ID, STATUS, TYPE) VALUES(?,?,?)",(data))
+        self.cursor.execute(f"UPDATE ECN SET LAST_NOTIFIED='{today}' WHERE ECN_ID='{ecn_id}'")
+        self.db.commit()
+        self.log_text.append(f"-lateness Email sent for {ecn_id} to {receivers}")
+        self.removeECNX(ecn_id)
 
     def getReminderUsers(self):
         self.cursor.execute(f"select USER_ID from SIGNATURE where SIGNED_DATE is NULL")

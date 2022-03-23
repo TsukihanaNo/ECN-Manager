@@ -385,7 +385,7 @@ class Manager(QtWidgets.QWidget):
         usr_str = ""
         print(titles)
         for title in titles:
-            self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn}' and JOB_TITLE='{title}' and SIGNED_DATE is Null")
+            self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn}' and JOB_TITLE='{title}' and SIGNED_DATE is Null and TYPE='Signing'")
             results = self.cursor.fetchall()
             for result in results:
                 if result is not None:

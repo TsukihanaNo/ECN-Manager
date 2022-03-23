@@ -17,8 +17,8 @@ initfile = os.path.join(program_location, "setting.ini")
 class SettingsWindow(QtWidgets.QWidget):
     def __init__(self,parent=None):
         super(SettingsWindow,self).__init__()
-        self.windowWidth =  int(580*0.75)
-        self.windowHeight = int(830*0.75)
+        self.windowWidth =  int(830*1.1)
+        self.windowHeight = int(580*1.1)
         self.parent = parent
         if self.parent is None:
             f = open(initfile,'r')
@@ -64,16 +64,18 @@ class SettingsWindow(QtWidgets.QWidget):
         
 
     def initUI(self):
-        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout = QtWidgets.QHBoxLayout(self)
+        layout_left = QtWidgets.QVBoxLayout()
+        layout_right = QtWidgets.QVBoxLayout()
         self.label_db = QtWidgets.QLabel("DB Loc:")
         self.line_db = QtWidgets.QLineEdit(self)
         self.button_db = QtWidgets.QPushButton("Browse")
         layout_db = QtWidgets.QHBoxLayout()
         layout_db.addWidget(self.line_db)
         layout_db.addWidget(self.button_db)
-        main_layout.addWidget(self.label_db)
-        main_layout.addLayout(layout_db)
-        self.label_visual = QtWidgets.QLabel("Visual")
+        layout_left.addWidget(self.label_db)
+        layout_left.addLayout(layout_db)
+        self.label_visual = QtWidgets.QLabel("Visual:")
         self.label_user_v = QtWidgets.QLabel("User:")
         self.line_user_v = QtWidgets.QLineEdit(self)
         self.label_pass_v = QtWidgets.QLabel("Pass:")
@@ -90,10 +92,10 @@ class SettingsWindow(QtWidgets.QWidget):
         layout_db_v = QtWidgets.QHBoxLayout(self)
         layout_db_v.addWidget(self.label_db_v)
         layout_db_v.addWidget(self.line_db_v)
-        main_layout.addWidget(self.label_visual)
-        main_layout.addLayout(layout_user_v)
-        main_layout.addLayout(layout_pass_v)
-        main_layout.addLayout(layout_db_v)
+        layout_left.addWidget(self.label_visual)
+        layout_left.addLayout(layout_user_v)
+        layout_left.addLayout(layout_pass_v)
+        layout_left.addLayout(layout_db_v)
         self.label_smtp = QtWidgets.QLabel("SMTP:")
         self.label_smtp_ip = QtWidgets.QLabel("IP:   ")
         self.line_smtp_address = QtWidgets.QLineEdit(self)
@@ -113,11 +115,56 @@ class SettingsWindow(QtWidgets.QWidget):
         layout_smtp_email = QtWidgets.QHBoxLayout(self)
         layout_smtp_email.addWidget(self.label_smtp_email)
         layout_smtp_email.addWidget(self.line_smtp_email)
-        main_layout.addWidget(self.label_smtp)
-        main_layout.addLayout(layout_smtp_ip)
-        main_layout.addLayout(layout_smtp_port)
-        main_layout.addLayout(layout_smtp_email)
-        self.label_dept = QtWidgets.QLabel("Dept:")
+        layout_left.addWidget(self.label_smtp)
+        layout_left.addLayout(layout_smtp_ip)
+        layout_left.addLayout(layout_smtp_port)
+        layout_left.addLayout(layout_smtp_email)
+        
+        self.label_instant_client = QtWidgets.QLabel("Oracle Instant Client:")
+        self.line_instant_client = QtWidgets.QLineEdit(self)
+        self.line_instant_client.setPlaceholderText("Enter Location of Instant Client")
+        self.button_instant_client = QtWidgets.QPushButton("Browse")
+        layout_ic = QtWidgets.QHBoxLayout()
+        layout_ic.addWidget(self.line_instant_client)
+        layout_ic.addWidget(self.button_instant_client)
+        layout_left.addWidget(self.label_instant_client)
+        layout_left.addLayout(layout_ic)
+        
+        self.label_reminders = QtWidgets.QLabel("Reminders:")
+        self.label_reminder_days = QtWidgets.QLabel("Reminder Days:")
+        self.line_reminder_days = QtWidgets.QLineEdit(self)
+        layout_rd = QtWidgets.QHBoxLayout()
+        layout_rd.addWidget(self.label_reminder_days)
+        layout_rd.addWidget(self.line_reminder_days)
+        self.label_reminder_stages = QtWidgets.QLabel("Reminder Stages:")
+        self.line_reminder_stages = QtWidgets.QLineEdit(self)
+        layout_rs = QtWidgets.QHBoxLayout()
+        layout_rs.addWidget(self.label_reminder_stages)
+        layout_rs.addWidget(self.line_reminder_stages)
+        layout_left.addWidget(self.label_reminders)
+        layout_left.addLayout(layout_rd)
+        layout_left.addLayout(layout_rs)
+        
+        layout_left.addStretch()
+                        
+        self.label_ecn_type = QtWidgets.QLabel("ECN Types:")
+        self.line_ecn_type = QtWidgets.QLineEdit(self)
+        self.button_ecn_type_add = QtWidgets.QPushButton("Add")
+        self.button_ecn_type_add.clicked.connect(self.addType)
+        self.line_ecn_type.returnPressed.connect(self.addType)
+        layout_et = QtWidgets.QHBoxLayout()
+        layout_et.addWidget(self.line_ecn_type)
+        layout_et.addWidget(self.button_ecn_type_add)
+        self.list_ecn_type = QtWidgets.QListWidget(self)
+        self.list_ecn_type.doubleClicked.connect(self.removeType)
+        self.button_ecn_type_remove = QtWidgets.QPushButton("Remove")
+        self.button_ecn_type_remove.clicked.connect(self.removeType)
+        layout_right.addWidget(self.label_ecn_type)
+        layout_right.addLayout(layout_et)
+        layout_right.addWidget(self.list_ecn_type)
+        layout_right.addWidget(self.button_ecn_type_remove)
+        
+        self.label_dept = QtWidgets.QLabel("Departments:")
         self.line_dept = QtWidgets.QLineEdit(self)
         self.line_dept.returnPressed.connect(self.addDept)
         self.button_dept_add = QtWidgets.QPushButton("Add")
@@ -126,7 +173,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.list_dept.doubleClicked.connect(self.removeDept)
         self.button_dept_remove = QtWidgets.QPushButton("Remove")
         self.button_dept_remove.clicked.connect(self.removeDept)
-        self.label_jobs = QtWidgets.QLabel("Job Titles:")
+        self.label_jobs = QtWidgets.QLabel("Job Titles and stages:")
         headers = ['Job Title','Stage']
         self.table_jobs = QtWidgets.QTableWidget(0,len(headers),self)
         self.table_jobs.setHorizontalHeaderLabels(headers)
@@ -146,15 +193,18 @@ class SettingsWindow(QtWidgets.QWidget):
         layout_dept = QtWidgets.QHBoxLayout()
         layout_dept.addWidget(self.line_dept)
         layout_dept.addWidget(self.button_dept_add)
-        main_layout.addWidget(self.label_dept)
-        main_layout.addLayout(layout_dept)
-        main_layout.addWidget(self.list_dept)
-        main_layout.addWidget(self.button_dept_remove)
-        main_layout.addWidget(self.label_jobs)
-        main_layout.addWidget(self.table_jobs)
-        main_layout.addLayout(layout_buttons_jobs)
-        main_layout.addWidget(self.button_save)
+        layout_right.addWidget(self.label_dept)
+        layout_right.addLayout(layout_dept)
+        layout_right.addWidget(self.list_dept)
+        layout_right.addWidget(self.button_dept_remove)
+        layout_right.addWidget(self.label_jobs)
+        layout_right.addWidget(self.table_jobs)
+        layout_right.addLayout(layout_buttons_jobs)
+        layout_right.addWidget(self.button_save)
         #main_layout.addLayout(button_layout)
+        main_layout.addLayout(layout_left)
+        main_layout.addLayout(layout_right)
+        
         self.setLayout(main_layout)
 
     def getStageDict(self):
@@ -179,6 +229,19 @@ class SettingsWindow(QtWidgets.QWidget):
             self.line_smtp_port.setText(self.settings["Port"])
         if "From_Address" in self.settings.keys():
             self.line_smtp_email.setText(self.settings["From_Address"])
+        if "Instant_Client" in self.settings.keys():
+            self.line_instant_client.setText(self.settings["Instant_Client"])
+        if "Reminder_Days" in self.settings.keys():
+            self.line_reminder_days.setText(self.settings["Reminder_Days"])
+        if "Reminder_Stages" in self.settings.keys():
+            self.line_reminder_stages.setText(self.settings["Reminder_Stages"])
+        if "ECN_Types" in self.settings.keys():
+            types = self.settings["ECN_Types"].split(",")
+            temp = []
+            for item in types:
+                temp.append(item.strip())
+            for item in temp:
+                self.list_ecn_type.addItem(item)
         if "Dept" in self.settings.keys():
             dept = self.settings["Dept"].split(",")
             temp = []
@@ -211,6 +274,18 @@ class SettingsWindow(QtWidgets.QWidget):
                 data += "From_Address : " + self.line_smtp_email.text() + "\n"
         else:
             self.dispMsg("One of the SMTP fields are empty.")
+        data += "Instant_Client : " + self.line_instant_client.text()+"\n"
+        if self.line_reminder_days.text!="":
+            data+= f"Reminder_Days : {self.line_reminder_days.text()}\n"
+        else:
+            self.dispMsg("Reminder Days field is empty")
+        data += f"Reminder_Stages : {self.line_reminder_stages.text()}\n"
+        data += "ECN_Types : "
+        for x in range(self.list_ecn_type.count()):
+            if x < self.list_ecn_type.count()-1:
+                data += self.list_ecn_type.item(x).text()+","
+            else:
+                data += self.list_ecn_type.item(x).text()+"\n"
         data += "Dept : "
         for x in range(self.list_dept.count()):
             if x < self.list_dept.count()-1:
@@ -249,6 +324,15 @@ class SettingsWindow(QtWidgets.QWidget):
     def removeDept(self):
         for item in self.list_dept.selectedItems():
             self.list_dept.takeItem(self.list_dept.row(item))
+            
+    def addType(self):
+        if self.line_ecn_type.text()!="":
+            self.list_ecn_type.addItem(self.line_ecn_type.text())
+            self.line_ecn_type.clear()
+            
+    def removeType(self):
+        for item in self.list_ecn_type.selectedItems():
+            self.list_ecn_type.takeItem(self.list_ecn_type.row(item))
 
     def addJob(self):
         self.table_jobs.insertRow(self.table_jobs.rowCount())

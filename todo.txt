@@ -19,5 +19,6 @@
 - add some additional details to the notifier for ease of debugging
 - add option for  the user to change their password
 - optimize table refresh
-- add instant client and ecn type settings to the settings window 
+- add instant client and ecn type settings to the settings window (done)
 - add full reset to all open ecns for when the ecn flow is changed (job title staging)
+- add notification reminder for ecns after a certain elased days (done)
