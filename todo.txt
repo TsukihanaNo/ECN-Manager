@@ -23,3 +23,5 @@
 - add full reset to all open ecns for when the ecn flow is changed (job title staging)
 - add notification reminder for ecns after a certain elased days (done)
 - optimize signature, notifications and parts tab saving.
+- send an exported html of the completed ecn with the completion notification
+- make the subject of the notification emails detail what kind of email it is.

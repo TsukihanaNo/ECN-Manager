@@ -28,6 +28,9 @@ class AttachmentTab(QtWidgets.QWidget):
         
         self.button_open = QtWidgets.QPushButton("Open")
         self.button_open.clicked.connect(self.openFile)
+        
+        self.button_open_loc = QtWidgets.QPushButton("Open File Location")
+        self.button_open_loc.clicked.connect(self.openFileLoc)
 
         #self.button_gen_parts = QtWidgets.QPushButton("Autogen Parts")
         #self.button_gen_parts.clicked.connect(self.autoGenParts)
@@ -35,6 +38,7 @@ class AttachmentTab(QtWidgets.QWidget):
         hlayout.addWidget(self.button_add)
         hlayout.addWidget(self.button_remove)
         hlayout.addWidget(self.button_open)
+        hlayout.addWidget(self.button_open_loc)
         #hlayout.addWidget(self.button_gen_parts)
         
         titles = ['File Name','File Path']
@@ -81,6 +85,14 @@ class AttachmentTab(QtWidgets.QWidget):
         row = self.table.currentRow()
         try:
             os.startfile(self.table.item(row,1).text())
+        except Exception as e:
+            print(e)
+            
+    def openFileLoc(self):
+        row = self.table.currentRow()
+        try:
+            path = Path(self.table.item(row,1).text())
+            os.startfile(path.parent)
         except Exception as e:
             print(e)
         

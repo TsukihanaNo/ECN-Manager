@@ -19,7 +19,7 @@ class PartsTab(QtWidgets.QWidget):
         self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        #self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
         
         mainlayout.addWidget(self.label_parts)
@@ -106,7 +106,22 @@ class PartsTab(QtWidgets.QWidget):
             #     self.table.item(rowcount,2).
 
             rowcount+=1
-
+            
+    def setStatusColor(self):
+        for x in range(self.table.rowCount()):
+            part = self.table.item(x,0).text()
+            if isinstance(self.table.item(x, 2),QtWidgets.QTableWidgetItem):
+                part_type = self.table.item(x,2).text()
+            else:
+                part_type = self.table.cellWidget(x, 2).currentText()
+            if self.parent.parent.visual.partExist(part):
+                if self.parent.parent.visual.checkPartSetup(part,part_type):
+                    self.table.item(x, 0).setBackground(QtGui.QColor(186,255,180))
+                else: 
+                    self.table.item(x, 0).setBackground(QtGui.QColor(255,253,162))
+            else:
+                self.table.item(x, 0).setBackground(QtGui.QColor(255,99,99))
+                
     def addPart(self,part):
         row = self.table.rowCount()
         self.table.insertRow(row)

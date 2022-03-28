@@ -328,8 +328,15 @@ class ECNWindow(QtWidgets.QWidget):
         #inserting to signature table
         #SIGNATURE(ECN_ID TEXT, NAME TEXT, USER_ID TEXT, HAS_SIGNED TEXT, SIGNED_DATE TEXT)
         try:
-            self.cursor.execute("DELETE FROM SIGNATURE WHERE ECN_ID = '" + self.ecn_id + "'")
-            self.db.commit()
+            #get current values in db
+            current_list = []
+            self.cursor.execute(f"SELECT USER_ID FROM SIGNATURE WHERE ECN_ID='{self.ecn_id}' and TYPE='Signing'")
+            results = self.cursor.fetchall()
+            for result in results:
+                current_list.append(result[0])
+            #print('current list',current_list)
+            #get new values
+            new_list = []
             for x in range(self.tab_signature.table.rowCount()):
                 if isinstance(self.tab_signature.table.item(x, 0),QtWidgets.QTableWidgetItem):
                     job_title = self.tab_signature.table.item(x, 0).text()
@@ -339,8 +346,30 @@ class ECNWindow(QtWidgets.QWidget):
                     job_title = self.tab_signature.table.cellWidget(x, 0).currentText()
                     name = self.tab_signature.table.cellWidget(x,1).currentText()
                     user_id = self.tab_signature.table.cellWidget(x,2).currentText()
-                data = (self.ecn_id,job_title,name,user_id,"Signing")
-                self.cursor.execute("INSERT INTO SIGNATURE(ECN_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(data))
+                new_list.append((self.ecn_id,job_title,name,user_id,"Signing"))
+            #print('new list',new_list)
+            
+            for element in new_list:
+                if element[3] not in current_list:
+                    print(f'insert {element[3]} into signature db')
+                    self.cursor.execute("INSERT INTO SIGNATURE(ECN_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(element))
+            for element in current_list:
+                no_match = True
+                for elements in new_list:
+                    if element == elements[3]:
+                        no_match = False
+                if no_match:
+                    print(f"remove {element} from signature db")
+                    self.cursor.execute(f"DELETE FROM SIGNATURE WHERE ECN_ID = '{self.ecn_id}' and USER_ID='{element}'")
+                    
+                    
+            current_list = []
+            self.cursor.execute(f"SELECT USER_ID FROM SIGNATURE WHERE ECN_ID='{self.ecn_id}' and TYPE='Notify'")
+            results = self.cursor.fetchall()
+            for result in results:
+                current_list.append(result[0])
+            
+            new_list = []
             for x in range(self.tab_notification.table.rowCount()):
                 if isinstance(self.tab_notification.table.item(x, 0),QtWidgets.QTableWidgetItem):
                     job_title = self.tab_notification.table.item(x, 0).text()
@@ -350,10 +379,23 @@ class ECNWindow(QtWidgets.QWidget):
                     job_title = self.tab_notification.table.cellWidget(x, 0).currentText()
                     name = self.tab_notification.table.cellWidget(x,1).currentText()
                     user_id = self.tab_notification.table.cellWidget(x,2).currentText()
-                data = (self.ecn_id,job_title,name,user_id,"Notify")
-                self.cursor.execute("INSERT INTO SIGNATURE(ECN_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(data))
+                new_list.append((self.ecn_id,job_title,name,user_id,"Notify"))
+                
+            for element in new_list:
+                if element[3] not in current_list:
+                    print(f'insert {element[3]} into notify db')
+                    self.cursor.execute("INSERT INTO SIGNATURE(ECN_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(element))
+            for element in current_list:
+                no_match = True
+                for elements in new_list:
+                    if element == elements[3]:
+                        no_match = False
+                if no_match:
+                    print(f"remove {element} from notify db")
+                    self.cursor.execute(f"DELETE FROM SIGNATURE WHERE ECN_ID = '{self.ecn_id}' and USER_ID='{element}'")
+            
             self.db.commit()
-            #print('data inserted')
+            print('data updated')
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data update (signature)!\n Error: {e}")
@@ -380,7 +422,8 @@ class ECNWindow(QtWidgets.QWidget):
                 data = (self.ecn_id, part, desc,ptype,disposition,mfg,mfg_part,rep,insp)
                 self.cursor.execute("INSERT INTO PARTS(ECN_ID,PART_ID,DESC,TYPE,DISPOSITION,MFG,MFG_PART,REPLACING,INSPEC) VALUES(?,?,?,?,?,?,?,?,?)",(data))
             self.db.commit()
-            self.tab_parts.repopulateTable()
+            #self.tab_parts.repopulateTable()
+            self.tab_parts.setStatusColor()
             #print('data inserted')
         except Exception as e:
             print(e)
@@ -726,7 +769,7 @@ class ECNWindow(QtWidgets.QWidget):
                 sigs.append(self.tab_notification.table.item(row, 2).text())
             else:
                 sigs.append(self.tab_notification.table.cellWidget(row, 2).currentText())
-        print(sigs)
+        #print(sigs)
         if len(sigs)==len(set(sigs)):
             return False
         else:
