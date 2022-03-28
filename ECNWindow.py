@@ -662,7 +662,7 @@ class ECNWindow(QtWidgets.QWidget):
         
     def checkComplete(self):
         try:
-            command = "Select * from SIGNATURE where ECN_ID ='" + self.ecn_id + "'"
+            command = f"Select * from SIGNATURE where ECN_ID ='{self.ecn_id}' and TYPE='Signing'"
             self.cursor.execute(command)
             results = self.cursor.fetchall()
             completed = True
