@@ -157,7 +157,7 @@ class Notifier(QtWidgets.QWidget):
         self.cursor.execute("select EMAIL, NAME from USER where STATUS='Active'")
         results = self.cursor.fetchall()
         for result in results:
-            self.emailNameList[result[0]]=result[1]
+            self.emailNameList[result[0]]=result[1].split(" ")[0]
             
     def repopulateTable(self):
         self.table.clearContents()
@@ -389,7 +389,7 @@ class Notifier(QtWidgets.QWidget):
         direct = []
         for email in direct_receivers:
             direct.append(self.emailNameList[email])
-        direct = ",".join(direct)
+        direct = ", ".join(direct)
         message = f"Hello {direct}:\n{ecn_id} has been out for {total_days} and has not moved for {reminder_days} days or more since the last notification has been sent.\n Please work on it at your earlier availability!\n\n You can view the ECN your queue in the ECN Manager application.\n\nYou can also open the attachment file to launch to be directed to the ECN."
         #print(message)
         #print(f"send email these addresses: {receivers} notifying ecn lateness")
