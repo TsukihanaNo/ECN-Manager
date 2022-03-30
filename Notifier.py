@@ -33,9 +33,11 @@ class Notifier(QtWidgets.QWidget):
         #self.checkLockFile()
         #self.generateLockFile()
         self.userList={}
+        self.emailNameList = {}
         self.settings = {}
         self.startUpCheck()
         self.getUserList()
+        self.getEmailNameDict()
         self.getStageDict()
         self.getTitleStageDict()
         self.initAtt()
@@ -150,6 +152,12 @@ class Notifier(QtWidgets.QWidget):
         for result in results:
             self.userList[result[0]]=result[1]
         #print(self.userList)
+        
+    def getEmailNameDict(self):
+        self.cursor.execute("select EMAIL, NAME from USER where STATUS='Active'")
+        results = self.cursor.fetchall()
+        for result in results:
+            self.emailNameList[result[0]]=result[1]
             
     def repopulateTable(self):
         self.table.clearContents()
@@ -236,7 +244,7 @@ class Notifier(QtWidgets.QWidget):
             receivers.append(self.userList[result[0]])
         message = f"{ecn_id} has been rejected to the author! All Signatures have been removed and the ECN approval will start from the beginning once the ECN is released again.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
         print(f"send email to these addresses: {receivers} notifying ecn rejection")
-        self.sendEmail(ecn_id,receivers, message)
+        self.sendEmail(ecn_id,receivers, message,"Rejection")
         self.log_text.append(f"-Rejection Email sent for {ecn_id} to {receivers}")
         
     
@@ -244,7 +252,7 @@ class Notifier(QtWidgets.QWidget):
         receivers = users.split(',')
         message = f"{ecn_id} has been rejected to user: {receivers[0]}. Signatures for the following users has been removed: {users}.\n\n\nYou can open the attachment file to be directed to the ECN."
         print(f"send email to these addresses: {receivers} notifying ecn completion")
-        self.sendEmail(ecn_id,receivers, message)
+        self.sendEmail(ecn_id,receivers, message,"Rejection")
         self.log_text.append(f"-Rejection to Signer Email sent for {ecn_id} to {receivers}")
         
     
@@ -259,7 +267,7 @@ class Notifier(QtWidgets.QWidget):
         for result in results:
             receivers.append(self.userList[result[0]])
         print(f"send email to these addresses: {receivers} notifying ecn completion")
-        self.sendEmail(ecn_id,receivers, message)
+        self.sendEmail(ecn_id,receivers, message,"Completion")
         self.log_text.append(f"-Completion Email sent for {ecn_id} to {receivers}")
         
     def releaseNotification(self,ecn_id):
@@ -284,15 +292,15 @@ class Notifier(QtWidgets.QWidget):
             receivers.append(self.userList[user])
         message = f"{ecn_id} has been released and is now awaiting for your approval!\n\n\n. You can view the ECN your queue in the ECN Manager application.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
         print(f"send email these addresses: {receivers} notifying ecn release stage move")
-        self.sendEmail(ecn_id,receivers, message)
+        self.sendEmail(ecn_id,receivers, message,"Awaiting Approval")
         self.log_text.append(f"-Stage Release Email sent for {ecn_id} to {receivers}")
             
-    def sendEmail(self,ecn_id,receivers,message):
+    def sendEmail(self,ecn_id,receivers,message,subject):
         with smtplib.SMTP(self.settings["SMTP"],self.settings["Port"]) as server:
             msg = MIMEMultipart()
             msg['From'] = self.settings["From_Address"]
             msg['To'] = ", ".join(receivers)
-            msg['Subject']=f"Notification for ECN: {ecn_id}"
+            msg['Subject']=f"{subject} Notification for ECN: {ecn_id}"
             msg.attach(MIMEText(message,'plain'))
             ecnx = os.path.join(program_location,ecn_id+'.ecnx')
             filename = f'{ecn_id}.ecnx'
@@ -340,25 +348,26 @@ class Notifier(QtWidgets.QWidget):
         for result in results:
             if result['LAST_NOTIFIED'] is not None:
                 elapsed = self.getElapsedDays(today, result["LAST_NOTIFIED"])
-                #print(elapsed.days)
+                print(elapsed.days)
             else:
                 elapsed = self.getElapsedDays(today, result["FIRST_RELEASE"])
-                #print(elapsed.days)
+                print(elapsed.days)
             if elapsed.days >= int(self.settings['Reminder_Days']):
                 ecn_id = result["ECN_ID"]
                 first_release = result["FIRST_RELEASE"]
-                receivers = []
+                direct_receivers = []
+                secondary_receivers = []
                 self.cursor.execute(f"Select Stage from ECN where ECN_ID='{ecn_id}'")
                 result = self.cursor.fetchone()
                 stage = result[0]
                 users = self.getWaitingUser(ecn_id, self.titleStageDict[str(stage)])
                 for user in users:
-                    receivers.append(self.userList[user])
+                    direct_receivers.append(self.userList[user])
                 users = self.getWaitingUser(ecn_id, self.titleStageDict[str(self.settings['Reminder_Stages'])])
                 for user in users:
-                    receivers.append(self.userList[user])
+                    secondary_receivers.append(self.userList[user])
                 total_days = self.getElapsedDays(today, first_release)
-                self.lateReminder(ecn_id, receivers, total_days)
+                self.lateReminder(ecn_id,direct_receivers,secondary_receivers, total_days)
 
 
     def setElapsedDays(self):
@@ -374,14 +383,23 @@ class Notifier(QtWidgets.QWidget):
             self.cursor.execute(f"UPDATE ECN SET RELEASE_ELAPSE ='{release_elapse.day}', STATUS_ELAPSE='{status_elapse.day}' WHERE ECN_ID='{ecn}'")
         self.db.commit()
 
-    def lateReminder(self,ecn_id,receivers,total_days):
+    def lateReminder(self,ecn_id,direct_receivers,secondary_receivers,total_days):
         today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         reminder_days = self.settings['Reminder_Days']
-        message = f"{ecn_id} has been out for {total_days} and has not moved for {reminder_days} days or more since the last notification has been sent. Please work on it at your earlier availability!\n\n\n. You can view the ECN your queue in the ECN Manager application.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
+        direct = []
+        for email in direct_receivers:
+            direct.append(self.emailNameList[email])
+        direct = ",".join(direct)
+        message = f"Hello {direct}:\n{ecn_id} has been out for {total_days} and has not moved for {reminder_days} days or more since the last notification has been sent.\n Please work on it at your earlier availability!\n\n You can view the ECN your queue in the ECN Manager application.\n\nYou can also open the attachment file to launch to be directed to the ECN."
         #print(message)
         #print(f"send email these addresses: {receivers} notifying ecn lateness")
         self.generateECNX(ecn_id)
-        self.sendEmail(ecn_id,receivers, message)
+        receivers = []
+        for user in direct_receivers:
+            receivers.append(user)
+        for user in secondary_receivers:
+            receivers.append(user)
+        self.sendEmail(ecn_id,receivers, message,"Reminder")
         data = (ecn_id,"Sent","Reminder")
         self.cursor.execute("INSERT INTO NOTIFICATION(ECN_ID, STATUS, TYPE) VALUES(?,?,?)",(data))
         self.cursor.execute(f"UPDATE ECN SET LAST_NOTIFIED='{today}' WHERE ECN_ID='{ecn_id}'")
@@ -402,7 +420,6 @@ class Notifier(QtWidgets.QWidget):
         # if self.firstInstance:
         #     self.removeLockFile()
 
-            
             
 def main():
     app = QtWidgets.QApplication(sys.argv)
