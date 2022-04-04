@@ -55,6 +55,7 @@ class ECNWindow(QtWidgets.QWidget):
             QtGui.QGuiApplication.primaryScreen().availableGeometry(),
         ),
     )
+        
 
     def initReqUI(self):
         mainlayout = QtWidgets.QVBoxLayout(self)
@@ -828,7 +829,8 @@ class ECNWindow(QtWidgets.QWidget):
     def exportHTML(self):
         foldername = QtWidgets.QFileDialog().getExistingDirectory()
         if foldername:
-            with open(self.parent.programLoc+'\\template.html') as f:
+            template_loc = os.path.join(self.parent.programLoc,'templates','template.html')
+            with open(template_loc) as f:
                 lines = f.read() 
                 #print(lines)
                 f.close()
@@ -990,3 +992,6 @@ class ECNWindow(QtWidgets.QWidget):
         msgbox = QtWidgets.QMessageBox()
         msgbox.setText(msg+"        ")
         msgbox.exec()
+        
+    def closeEvent(self, event):
+        self.parent.ecnWindow = None

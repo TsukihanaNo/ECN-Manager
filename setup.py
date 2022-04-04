@@ -6,7 +6,7 @@ build_exe_options = {
                     "packages": ["os","PySide6"],
                     "excludes": ["tkinter"],
                     "optimize": True,
-                    "include_files":['icons/'],
+                    "include_files":['icons/','templates/'],
                     }
 
 # GUI applications require a different base on Windows (the default is for a

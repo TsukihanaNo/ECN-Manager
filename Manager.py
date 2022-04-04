@@ -47,6 +47,7 @@ class Manager(QtWidgets.QWidget):
         super(Manager, self).__init__()
         self.windowWidth = 1000
         self.windowHeight = 600
+        self.ecnWindow = None
         self.sorting = (0,QtCore.Qt.DescendingOrder)
         self.ecn = ecn
         self.firstInstance = True
@@ -455,7 +456,14 @@ class Manager(QtWidgets.QWidget):
         
     def HookEcn(self,ecn_id=None):
         print("info received",ecn_id)
-        self.ecnWindow = ECNWindow(self,ecn_id)
+        if self.ecnWindow is None:
+            self.ecnWindow = ECNWindow(self,ecn_id)
+        else:
+            if self.ecnWindow.ecn_id !=ecn_id:
+                self.ecnWindow.close()
+                self.ecnWindow = ECNWindow(self,ecn_id)
+            else:
+                self.ecnWindow.activateWindow()
     
     def newECN(self):
         self.HookEcn()
