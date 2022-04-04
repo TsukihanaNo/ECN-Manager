@@ -889,8 +889,8 @@ class ECNWindow(QtWidgets.QWidget):
                         else:
                             signature += "<td>"+self.tab_signature.table.cellWidget(x,0).currentText()+"</td>"
                             signature += "<td>"+self.tab_signature.table.cellWidget(x,1).currentText()+"</td>"
-                            if self.tab_signature.table.cellWidget(x,3) is not None:
-                                signature += "<td>"+self.tab_signature.table.cellWidget(x,3).currentText()+"</td></tr>"
+                            if self.tab_signature.table.item(x,3) is not None:
+                                signature += "<td>"+self.tab_signature.table.item(x,3).text()+"</td></tr>"
                             else:
                                 signature += "<td></td></tr>"
                 else:

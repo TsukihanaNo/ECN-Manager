@@ -61,7 +61,6 @@ class ECNTab(QtWidgets.QWidget):
         layout_summary = QtWidgets.QVBoxLayout()
         self.label_summary = QtWidgets.QLabel("Summary of changes")
         self.text_summary = QtWidgets.QTextEdit(self)
-        self.text_summary.setAutoFormatting(QtWidgets.QTextEdit.AutoAll)
 
         #self.cbpurch.stateChanged.connect(self.parent.togglePurchTab)
         #self.cbplanner.stateChanged.connect(self.parent.togglePlannerTab)
@@ -95,7 +94,6 @@ class ECNTab(QtWidgets.QWidget):
         layout_reason = QtWidgets.QVBoxLayout()
         self.label_reason = QtWidgets.QLabel("Enter reason for ECN below:")
         self.text_reason = QtWidgets.QTextEdit(self)
-        self.text_reason.setAutoFormatting(QtWidgets.QTextEdit.AutoAll)
 
         layout_reason.addWidget(self.label_reason)
         layout_reason.addWidget(self.text_reason)
