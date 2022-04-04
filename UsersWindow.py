@@ -19,6 +19,7 @@ class UsersWindow(QtWidgets.QWidget):
         super(UsersWindow,self).__init__()
         self.windowWidth =  int(830*0.9)
         self.windowHeight = int(580*0.90)
+        self.sorting = (0,QtCore.Qt.AscendingOrder)
         if parent is None:
             print("geting stuff")
             f = open(initfile,'r')
@@ -79,6 +80,8 @@ class UsersWindow(QtWidgets.QWidget):
         titles = ['User ID','Name','Job Title','Role','Status','Email']
         self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
+        self.table.horizontalHeader().setSortIndicatorShown(True)
+        self.table.horizontalHeader().sortIndicatorChanged.connect(self.setSort)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -99,6 +102,10 @@ class UsersWindow(QtWidgets.QWidget):
     #         key,value = stage.split("-")
     #         self.stageDict[key] = value.strip()
     #     print(self.stageDict)
+    
+    def setSort(self, index, order):
+        self.sorting = (index,order)
+        self.repopulateTable()
         
     def onRowSelect(self):
         self.button_edit.setEnabled(bool(self.table.selectionModel().selectedRows()))
@@ -120,6 +127,7 @@ class UsersWindow(QtWidgets.QWidget):
             self.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(result['EMAIL']))
 
             rowcount+=1
+        self.table.sortItems(self.sorting[0],self.sorting[1])
             
     
     def addUser(self):

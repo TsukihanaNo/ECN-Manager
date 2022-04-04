@@ -25,3 +25,4 @@
 - optimize signature, notifications and parts tab saving. (rev 1 done)
 - send an exported html of the completed ecn with the completion notification
 - make the subject of the notification emails detail what kind of email it is. (done)
+- add ability to reset the stage flow due to new roles being added in or just changing the flow of the process.

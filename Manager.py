@@ -425,21 +425,28 @@ class Manager(QtWidgets.QWidget):
                 "&Connect to existing Database", self)
             filemenu.addAction(newDBAction)
             filemenu.addAction(connectDBAction)
-            settingAction = QtGui.QAction("&Settings",self)
-            settingAction.triggered.connect(self.launchSettings)
-            filemenu.addAction(settingAction)
-            userAction = QtGui.QAction("&Users Window",self)
-            userAction.triggered.connect(self.launchUsers)
-            filemenu.addAction(userAction)
+        if self.user_info['role']=="Admin" or self.user_info['role']=='Manager':
+            filemenu.addSeparator()
+            analyticsAction = QtGui.QAction("&Launch Analytics",self)
+            analyticsAction.triggered.connect(self.launchAnalytics)
+            filemenu.addAction(analyticsAction)
         exitAction = QtGui.QAction("&Exit", self)
         exitAction.triggered.connect(self.close)
         exitAction.setShortcut("CTRL+Q")
         filemenu.addAction(exitAction)
         setting_menu=self.menubar.addMenu("&Setting")
-        if self.user_info['role']=="Admin" or self.user_info['role']=='Manager':
-            analyticsAction = QtGui.QAction("&Analytics",self)
-            analyticsAction.triggered.connect(self.launchAnalytics)
-            setting_menu.addAction(analyticsAction)
+        if self.user_info['role']=='Admin':
+            settingAction = QtGui.QAction("&Settings",self)
+            settingAction.triggered.connect(self.launchSettings)
+            setting_menu.addAction(settingAction)
+            userAction = QtGui.QAction("&Users Window",self)
+            userAction.triggered.connect(self.launchUsers)
+            setting_menu.addAction(userAction)
+        else:
+            userAction = QtGui.QAction("&User Panel",self)
+            userAction.triggered.connect(self.launchUser)
+            setting_menu.addAction(userAction)
+        
 
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()
@@ -488,6 +495,9 @@ class Manager(QtWidgets.QWidget):
         
     def launchAnalytics(self):
         self.analyticsWindow = AnalyticsWindow(self)
+        
+    def launchUser(self):
+        self.userPanel = UserPanel(self,user=self.user_info['user'],func='user_edit')
         
     def getStageDict(self):
         self.stageDict = {}

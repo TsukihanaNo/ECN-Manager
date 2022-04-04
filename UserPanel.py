@@ -110,6 +110,14 @@ class UserPanel(QtWidgets.QWidget):
         main_layout.addWidget(self.line_email)
         main_layout.addLayout(layout_buttons)
         
+        if self.func=="user_edit":
+            self.button_clear.setEnabled(False)
+            self.line_name.setEnabled(False)
+            self.combo_role.setEnabled(False)
+            self.combo_dept.setEnabled(False)
+            self.combo_title.setEnabled(False)
+            self.combo_status.setEnabled(False)
+        
     def loadInfo(self):
         self.cursor.execute(f"Select * from USER where USER_ID='{self.user}'")
         result = self.cursor.fetchone()
