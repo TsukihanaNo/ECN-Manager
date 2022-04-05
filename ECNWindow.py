@@ -71,7 +71,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_parts = PartsTab(self)
         self.tab_attach = AttachmentTab(self)
         self.tab_comments = CommentTab(self)
-        self.tab_comments.enterText.setDisabled(True)
+        # self.tab_comments.enterText.setDisabled(True)
         self.tab_signature = SignatureTab(self)
         self.tab_notification = NotificationTab(self)
         #self.tab_changelog = ChangeLogTab(self,self.ecn_id)
@@ -147,17 +147,17 @@ class ECNWindow(QtWidgets.QWidget):
             self.tab_signature.button_remove.setEnabled(True)
             self.tab_attach.button_add.setEnabled(True)
             self.tab_attach.button_remove.setEnabled(True)
-            self.tab_comments.enterText.setEnabled(True)
-            self.tab_comments.label_enterText.setVisible(True)
-            self.tab_comments.enterText.setVisible(True)
+            # self.tab_comments.enterText.setEnabled(True)
+            # self.tab_comments.label_enterText.setVisible(True)
+            # self.tab_comments.enterText.setVisible(True)
         else:
             self.tab_signature.button_add.setDisabled(True)
             self.tab_signature.button_remove.setDisabled(True)
             self.tab_attach.button_add.setDisabled(True)
             self.tab_attach.button_remove.setDisabled(True)
-            self.tab_comments.enterText.setDisabled(True)
-            self.tab_comments.label_enterText.setVisible(False)
-            self.tab_comments.enterText.setVisible(False)
+            # self.tab_comments.enterText.setDisabled(True)
+            # self.tab_comments.label_enterText.setVisible(False)
+            # self.tab_comments.enterText.setVisible(False)
         
         if self.tab_ecn.line_status.text()!="Completed":
             if self.parent.user_info['user']==self.tab_ecn.line_author.text():
@@ -171,8 +171,11 @@ class ECNWindow(QtWidgets.QWidget):
                 self.button_save.clicked.connect(self.save)
                 self.button_release.clicked.connect(self.release)
                 self.button_cancel.clicked.connect(self.cancel)
+                self.button_comment = QtWidgets.QPushButton("Add Comment")
+                self.button_comment.clicked.connect(self.addUserComment)
                 buttonlayout.addWidget(self.button_save)
                 buttonlayout.addWidget(self.button_cancel)
+                buttonlayout.addWidget(self.button_comment)
                 buttonlayout.addWidget(self.button_release)
                 if self.tab_signature.table.rowCount()==0:
                     self.button_release.setDisabled(True)
@@ -187,11 +190,14 @@ class ECNWindow(QtWidgets.QWidget):
                 self.button_approve = QtWidgets.QPushButton("Approve")
                 self.button_approve.clicked.connect(self.approve)
                 self.button_reject = QtWidgets.QPushButton("Reject to Author",self)
+                self.button_comment = QtWidgets.QPushButton("Add Comment")
+                self.button_comment.clicked.connect(self.addUserComment)
                 self.button_reject.clicked.connect(self.reject)
                 self.button_save = QtWidgets.QPushButton("Save")
                 self.button_save.clicked.connect(self.notificationSave)
                 buttonlayout.addWidget(self.button_approve)
                 buttonlayout.addWidget(self.button_reject)
+                buttonlayout.addWidget(self.button_comment)
                 buttonlayout.addWidget(self.button_save)
                 self.tab_ecn.line_ecntitle.setReadOnly(True)
                 self.tab_ecn.text_summary.setReadOnly(True)
@@ -278,8 +284,8 @@ class ECNWindow(QtWidgets.QWidget):
                     self.cursor.execute("INSERT INTO ATTACHMENTS(ECN_ID,FILENAME,FILEPATH) VALUES(?,?,?)",(data))
                     self.db.commit()
             #print('data inserted')
-            if self.tab_comments.enterText.toPlainText()!="":
-                self.addComment(ecn_id,self.tab_comments.enterText.toPlainText(),"Author")
+            # if self.tab_comments.enterText.toPlainText()!="":
+            #     self.addComment(ecn_id,self.tab_comments.enterText.toPlainText(),"Author")
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data insertion (insertData)!\n Error: {e}")
@@ -457,8 +463,8 @@ class ECNWindow(QtWidgets.QWidget):
                     self.cursor.execute("INSERT INTO ATTACHMENTS(ECN_ID,FILENAME,FILEPATH) VALUES(?,?,?)",(data))
                     self.db.commit()
                     
-            if self.tab_comments.enterText.toPlainText()!="":
-                self.addComment(self.ecn_id,self.tab_comments.enterText.toPlainText(),"Author")
+            # if self.tab_comments.enterText.toPlainText()!="":
+            #     self.addComment(self.ecn_id,self.tab_comments.enterText.toPlainText(),"Author")
                 
         except Exception as e:
             print(e)
@@ -520,18 +526,23 @@ class ECNWindow(QtWidgets.QWidget):
         #     rowcount+=1
             
         self.loadComments()    
+        
+    def addUserComment(self):
+        comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Comment", "")
+        if ok and comment!="":
+            self.addComment(self.ecn_id, comment,"User Comment")
 
     def addComment(self,ecn_id,comment,commentType):
         #COMMENTS(ECN_ID TEXT, NAME TEXT, USER TEXT, COMM_DATE DATE, COMMENT TEXT
         data = (ecn_id, self.parent.user_info['user'],datetime.now().strftime('%Y-%m-%d %H:%M:%S'),comment,commentType)
         self.cursor.execute("INSERT INTO COMMENTS(ECN_ID, USER, COMM_DATE, COMMENT,TYPE) VALUES(?,?,?,?,?)",(data))
         self.db.commit()
-        self.tab_comments.enterText.clear()
+        # self.tab_comments.enterText.clear()
         self.tab_comments.mainText.clear()
         self.loadComments()
             
     def loadComments(self):
-            self.tab_comments.enterText.clear()
+            # self.tab_comments.enterText.clear()
             self.tab_comments.mainText.clear()
             command = "Select * from COMMENTS where ECN_ID = '" + self.ecn_id+"'"
             self.cursor.execute(command)

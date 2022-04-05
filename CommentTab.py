@@ -13,13 +13,13 @@ class CommentTab(QtWidgets.QWidget):
     def initUI(self):
         mainlayout = QtWidgets.QVBoxLayout(self)
         self.label_mainText = QtWidgets.QLabel("Current Comments:")
-        self.label_enterText = QtWidgets.QLabel("Comment to be entered:")
+        # self.label_enterText = QtWidgets.QLabel("Comment to be entered:")
         self.mainText = QtWidgets.QTextEdit(self)
         self.mainText.setReadOnly(True)
-        self.enterText = QtWidgets.QTextEdit(self)
-        self.enterText.setMaximumHeight(300)
+        # self.enterText = QtWidgets.QTextEdit(self)
+        # self.enterText.setMaximumHeight(300)
         mainlayout.addWidget(self.label_mainText)
         mainlayout.addWidget(self.mainText)
-        mainlayout.addWidget(self.label_enterText)
-        mainlayout.addWidget(self.enterText)
+        # mainlayout.addWidget(self.label_enterText)
+        # mainlayout.addWidget(self.enterText)
         
