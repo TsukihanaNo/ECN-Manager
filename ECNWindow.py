@@ -223,7 +223,9 @@ class ECNWindow(QtWidgets.QWidget):
         buttonlayout.addWidget(self.button_exportHTML)
             
         mainlayout.addLayout(buttonlayout)
-        
+        self.setCommentCount()
+        self.setPartCount()
+        self.setAttachmentCount()        
 
     def printIndex(self):
         print(self.tabwidget.currentIndex())
@@ -275,6 +277,7 @@ class ECNWindow(QtWidgets.QWidget):
             
             if self.tab_parts.table.rowCount()>0:
                 self.addParts()
+                self.setPartCount()
             
             if self.tab_attach.table.rowCount()>0:
                 for x in range(self.tab_attach.table.rowCount()):
@@ -283,6 +286,7 @@ class ECNWindow(QtWidgets.QWidget):
                     data = (self.ecn_id, filename, filepath)
                     self.cursor.execute("INSERT INTO ATTACHMENTS(ECN_ID,FILENAME,FILEPATH) VALUES(?,?,?)",(data))
                     self.db.commit()
+                    self.setAttachmentCount()
             #print('data inserted')
             # if self.tab_comments.enterText.toPlainText()!="":
             #     self.addComment(ecn_id,self.tab_comments.enterText.toPlainText(),"Author")
@@ -452,6 +456,7 @@ class ECNWindow(QtWidgets.QWidget):
             
             if self.tab_parts.table.rowCount()>0:
                 self.addParts()
+                self.setPartCount()
             
             if self.tab_attach.table.rowCount()>0:
                 self.cursor.execute("DELETE FROM ATTACHMENTS WHERE ECN_ID = '" + self.ecn_id + "'")
@@ -462,6 +467,7 @@ class ECNWindow(QtWidgets.QWidget):
                     data = (self.ecn_id, filename, filepath)
                     self.cursor.execute("INSERT INTO ATTACHMENTS(ECN_ID,FILENAME,FILEPATH) VALUES(?,?,?)",(data))
                     self.db.commit()
+                    self.setAttachmentCount()
                     
             # if self.tab_comments.enterText.toPlainText()!="":
             #     self.addComment(self.ecn_id,self.tab_comments.enterText.toPlainText(),"Author")
@@ -540,6 +546,22 @@ class ECNWindow(QtWidgets.QWidget):
         # self.tab_comments.enterText.clear()
         self.tab_comments.mainText.clear()
         self.loadComments()
+        self.setCommentCount()
+        
+    def setCommentCount(self):
+        self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where ECN_ID='{self.ecn_id}'")
+        result = self.cursor.fetchone()
+        self.tabwidget.setTabText(3, "Comments ("+str(result[0])+")")
+        
+    def setPartCount(self):
+        self.cursor.execute(f"SELECT COUNT(PART_ID) from PARTS where ECN_ID='{self.ecn_id}'")
+        result = self.cursor.fetchone()
+        self.tabwidget.setTabText(1, "Parts ("+str(result[0])+")")
+        
+    def setAttachmentCount(self):
+        self.cursor.execute(f"SELECT COUNT(FILENAME) from ATTACHMENTS where ECN_ID='{self.ecn_id}'")
+        result = self.cursor.fetchone()
+        self.tabwidget.setTabText(2, "Attachments ("+str(result[0])+")")
             
     def loadComments(self):
             # self.tab_comments.enterText.clear()
