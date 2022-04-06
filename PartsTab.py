@@ -15,7 +15,7 @@ class PartsTab(QtWidgets.QWidget):
 
         self.label_parts = QtWidgets.QLabel("Parts",self)
         
-        titles = ['Part ID','Desc','Type','Dispo.','Mfg.','Mfg. #','Repl.','Insp. Req.']
+        titles = ['Part ID','Description','Type','Disposition','Manufacturer','Mfg. #','Replacing','Reference','Inspection Req.']
         self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -54,12 +54,12 @@ class PartsTab(QtWidgets.QWidget):
         self.table.setItem(row, 4, QtWidgets.QTableWidgetItem("NA"))
         self.table.setItem(row, 5, QtWidgets.QTableWidgetItem("NA"))
         self.table.setItem(row, 6, QtWidgets.QTableWidgetItem("NA"))
+        self.table.setItem(row, 7, QtWidgets.QTableWidgetItem("NA"))
         box_inspec = QtWidgets.QComboBox()
         box_inspec.addItems(["","N","Y"])
-        self.table.setCellWidget(row, 7, box_inspec)
+        self.table.setCellWidget(row, 8, box_inspec)
 
     
-        
     def removeRow(self):
         index = self.table.selectionModel().selectedRows()
         for item in sorted(index,reverse=True):
@@ -91,10 +91,11 @@ class PartsTab(QtWidgets.QWidget):
                 box_inspec = QtWidgets.QComboBox()
                 box_inspec.addItems(["","N","Y"])
                 box_inspec.setCurrentText(result['INSPEC'])
-                self.table.setCellWidget(rowcount, 7, box_inspec)
+                self.table.setCellWidget(rowcount, 8, box_inspec)
             self.table.setItem(rowcount, 4, QtWidgets.QTableWidgetItem(result['MFG']))
             self.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(result['MFG_PART']))
             self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(result['REPLACING']))
+            self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(result['REFERENCE']))
             if self.parent.parent.visual.partExist(result['PART_ID']):
                 if self.parent.parent.visual.checkPartSetup(result['PART_ID'], result['TYPE']):
                     self.table.item(rowcount, 0).setBackground(QtGui.QColor(186,255,180))
@@ -122,27 +123,30 @@ class PartsTab(QtWidgets.QWidget):
             else:
                 self.table.item(x, 0).setBackground(QtGui.QColor(255,99,99))
                 
-    def addPart(self,part):
-        row = self.table.rowCount()
-        self.table.insertRow(row)
-        box_type = QtWidgets.QComboBox()
-        box_type.addItems([" ","Fabricated","Purchased","Outside Service"])
-        self.table.setCellWidget(row, 2, box_type)
-        box_dispo = QtWidgets.QComboBox()
-        box_dispo.addItems([" ","Deplete","New","Scrap","Rework"])
-        self.table.setCellWidget(row, 3, box_dispo)
-        self.table.setItem(row,0,QtWidgets.QTableWidgetItem(part))
+    # def addPart(self,part):
+    #     row = self.table.rowCount()
+    #     self.table.insertRow(row)
+    #     box_type = QtWidgets.QComboBox()
+    #     box_type.addItems([" ","Fabricated","Purchased","Outside Service"])
+    #     self.table.setCellWidget(row, 2, box_type)
+    #     box_dispo = QtWidgets.QComboBox()
+    #     box_dispo.addItems([" ","Deplete","New","Scrap","Rework"])
+    #     self.table.setCellWidget(row, 3, box_dispo)
+    #     self.table.setItem(row,0,QtWidgets.QTableWidgetItem(part))
         
     def checkFields(self):
         for x in range(self.table.rowCount()):
-            print("checking row")
+            print(f"checking row {x}")
             for y in range(self.table.columnCount()):
                 if isinstance(self.table.item(x, y),QtWidgets.QTableWidgetItem):
-                    if self.table.item(x, y).text() is None:
+                    if self.table.item(x, y).text() is None or self.table.item(x,y).text()=="":
                         return False
                 else:
                     if self.table.cellWidget(x, y) is None:
                         return False
+                    else:
+                        if self.table.cellWidget(x,y).currentText()=="":
+                            return False
         return True
             
     def dispMsg(self,msg):

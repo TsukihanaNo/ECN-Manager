@@ -486,11 +486,16 @@ class Manager(QtWidgets.QWidget):
         self.animation.start()
 
     def closeEvent(self, event):
+        self.setUserOffline()
         self.db.close()
         if self.firstInstance:
             self.removeLockFile()
         for w in QtWidgets.QApplication.allWidgets():
             w.close()
+            
+    def setUserOffline(self):
+        self.cursor.execute(f"UPDATE USER SET SIGNED_IN ='N' where USER_ID='{self.user_info['user']}'")
+        self.db.commit()
 
     def newDB(self):
         self.newDBWindow = NewDBWindow(self)

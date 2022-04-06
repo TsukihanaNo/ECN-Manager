@@ -94,11 +94,16 @@ class LoginWindow(QtWidgets.QWidget):
                 self.parent.user_info['stage'] = self.parent.stageDict[info['JOB_TITLE']]
                 self.parent.loginDone()
                 self.logged = True
+                self.setUserOnline()
                 self.close()
             else:
                 self.dispMsg("Incorrect password")
         else:
             self.dispMsg("User does not exist")
+            
+    def setUserOnline(self):
+        self.cursor.execute(f"UPDATE USER SET SIGNED_IN ='Y' where USER_ID='{self.parent.user_info['user']}'")
+        self.db.commit()
             
     def closeEvent(self, event):
         if self.logged == False:

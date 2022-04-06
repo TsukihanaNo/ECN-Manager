@@ -21,7 +21,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.db = self.parent.db
         self.settings = parent.settings
         self.user_info = self.parent.user_info
-        self.windowWidth =  830
+        self.windowWidth =  950
         self.windowHeight = 580
         self.ecn_id = ecn_id
         self.tablist = []
@@ -422,16 +422,17 @@ class ECNWindow(QtWidgets.QWidget):
                 if isinstance(self.tab_parts.table.item(x, 2),QtWidgets.QTableWidgetItem):
                     ptype = self.tab_parts.table.item(x, 2).text()
                     disposition = self.tab_parts.table.item(x, 3).text()
-                    insp = self.tab_parts.table.item(x,7).text()
+                    insp = self.tab_parts.table.item(x,8).text()
                 else:
                     ptype = self.tab_parts.table.cellWidget(x, 2).currentText()
                     disposition = self.tab_parts.table.cellWidget(x, 3).currentText()
-                    insp = self.tab_parts.table.cellWidget(x, 7).currentText()
+                    insp = self.tab_parts.table.cellWidget(x, 8).currentText()
                 mfg = self.tab_parts.table.item(x,4).text()
                 mfg_part = self.tab_parts.table.item(x,5).text()
                 rep = self.tab_parts.table.item(x,6).text()
-                data = (self.ecn_id, part, desc,ptype,disposition,mfg,mfg_part,rep,insp)
-                self.cursor.execute("INSERT INTO PARTS(ECN_ID,PART_ID,DESC,TYPE,DISPOSITION,MFG,MFG_PART,REPLACING,INSPEC) VALUES(?,?,?,?,?,?,?,?,?)",(data))
+                ref = self.tab_parts.table.item(x,7).text()
+                data = (self.ecn_id, part, desc,ptype,disposition,mfg,mfg_part,rep,ref,insp)
+                self.cursor.execute("INSERT INTO PARTS(ECN_ID,PART_ID,DESC,TYPE,DISPOSITION,MFG,MFG_PART,REPLACING,REFERENCE,INSPEC) VALUES(?,?,?,?,?,?,?,?,?,?)",(data))
             self.db.commit()
             #self.tab_parts.repopulateTable()
             self.tab_parts.setStatusColor()
