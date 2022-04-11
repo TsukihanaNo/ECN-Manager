@@ -31,3 +31,8 @@
 - add some sort of indicator that there is something unsaved on that tab.
 - add a reference column on the parts tab so that things like website links can be added. (done)
 - something like a signature guideline
+- maybe something what status the disposition impacts (stock, wip, out in field - customer, finished good)
+- be able to let the managers sign off the person in their department (3 levels, person, person's manager, person's manager's manager)
+
+- fix bug for moving stages with notification people added  (fixed)
+- fix bug where ecn.lock file isn't getting removed when you close out of the login screen (fixed)

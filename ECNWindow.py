@@ -220,7 +220,11 @@ class ECNWindow(QtWidgets.QWidget):
                     self.button_reject.setDisabled(True)
         self.button_exportHTML = QtWidgets.QPushButton("Export")
         self.button_exportHTML.clicked.connect(self.exportHTML)
+        
+        # self.button_move_stage = QtWidgets.QPushButton("Move Stage")
+        # self.button_move_stage.clicked.connect(self.moveECNStage)
         buttonlayout.addWidget(self.button_exportHTML)
+        #buttonlayout.addWidget(self.button_move_stage)
             
         mainlayout.addLayout(buttonlayout)
         self.setCommentCount()
@@ -668,7 +672,7 @@ class ECNWindow(QtWidgets.QWidget):
         print("here are the titles",titles)
         move = True
         for title in titles:
-            self.cursor.execute(f"Select SIGNED_DATE from SIGNATURE where ECN_ID = '{self.ecn_id}' and JOB_TITLE='{title}'")
+            self.cursor.execute(f"Select SIGNED_DATE from SIGNATURE where ECN_ID = '{self.ecn_id}' and JOB_TITLE='{title}' and TYPE='Signing'")
             results = self.cursor.fetchall()
             for result in results:
                 print(result['SIGNED_DATE'])
@@ -686,7 +690,7 @@ class ECNWindow(QtWidgets.QWidget):
                 print("this is the last stage")
             
     def getNextStage(self):
-        self.cursor.execute(f"Select JOB_TITLE from SIGNATURE where ECN_ID='{self.ecn_id}' and SIGNED_DATE is NULL")
+        self.cursor.execute(f"Select JOB_TITLE from SIGNATURE where ECN_ID='{self.ecn_id}' and SIGNED_DATE is NULL and TYPE='Signing'")
         results = self.cursor.fetchall()
         stage = []
         for result in results:

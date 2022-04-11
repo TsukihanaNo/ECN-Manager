@@ -330,7 +330,7 @@ class Manager(QtWidgets.QWidget):
         if table_type=="My ECNS":
             command = "Select * from ECN where AUTHOR ='" + self.user_info['user'] + "' and STATUS !='Completed'"
         elif table_type=="Queue":
-            command =f"Select * from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and ECN.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL"
+            command =f"Select * from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and ECN.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
         elif table_type=="Open":
             command = "select * from ECN where STATUS!='Completed'"
         else:
@@ -494,8 +494,9 @@ class Manager(QtWidgets.QWidget):
             w.close()
             
     def setUserOffline(self):
-        self.cursor.execute(f"UPDATE USER SET SIGNED_IN ='N' where USER_ID='{self.user_info['user']}'")
-        self.db.commit()
+        if 'user' in self.user_info.keys():
+            self.cursor.execute(f"UPDATE USER SET SIGNED_IN ='N' where USER_ID='{self.user_info['user']}'")
+            self.db.commit()
 
     def newDB(self):
         self.newDBWindow = NewDBWindow(self)
