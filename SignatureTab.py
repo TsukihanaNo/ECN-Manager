@@ -77,6 +77,7 @@ class SignatureTab(QtWidgets.QWidget):
             if item[1]!=self.parent.user_info['user']:
                 names.append(item[0])
         box = QtWidgets.QComboBox()
+        names.sort()
         box.addItems(names)
         if text is not None:
             box.setCurrentText(text)
@@ -204,6 +205,8 @@ class SignatureTab(QtWidgets.QWidget):
             self.job_titles.remove("Admin")
         if len(self.job_titles)==0:
             self.dispMsg("No Job Titles found, please add Jobs and Users.")
+        else:
+            self.job_titles.sort()
         print(self.job_titles)
         
     def getUserRole(self,user):
@@ -224,6 +227,7 @@ class SignatureTab(QtWidgets.QWidget):
         for item in test:
             names.append(item[0])
         box = QtWidgets.QComboBox()
+        names.sort()
         box.addItems(names)
         self.table.setCellWidget(self.table.currentRow(), 1, box)
         box.currentIndexChanged.connect(self.setUser)
@@ -258,7 +262,7 @@ class SignatureTab(QtWidgets.QWidget):
         rowcount=0
         for result in results:
             print(result['JOB_TITLE'])
-            if self.parent.parent.user_info['user']!=self.parent.tab_ecn.line_author.text():
+            if self.parent.parent.user_info['user']!=self.parent.tab_ecn.line_author.text() or result['SIGNED_DATE'] is not None:
                 self.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['JOB_TITLE']))
                 self.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['NAME']))
                 self.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['USER_ID']))

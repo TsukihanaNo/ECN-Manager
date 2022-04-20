@@ -34,9 +34,13 @@ class ECNTab(QtWidgets.QWidget):
         self.line_id.setReadOnly(True)
         self.line_id.setDisabled(True)
         self.combo_type = QtWidgets.QComboBox(self)
-        self.combo_type.addItems(self.parent.settings["ECN_Types"].split(","))
+        ecn_types = self.parent.settings["ECN_Types"].split(",")
+        ecn_types.sort()
+        self.combo_type.addItems(ecn_types)
         self.combo_dept = QtWidgets.QComboBox(self)
-        self.combo_dept.addItems(self.parent.settings["Dept"].split(","))
+        depts = self.parent.settings["Dept"].split(",")
+        depts.sort()
+        self.combo_dept.addItems(depts)
         self.line_status = QtWidgets.QLineEdit(self)
         self.line_status.setReadOnly(True)
         self.line_status.setDisabled(True)
@@ -120,6 +124,7 @@ class ECNTab(QtWidgets.QWidget):
         results = self.parent.cursor.fetchall()
         for result in results:
             self.nameList.append(result[0])
+        self.nameList.sort()
             
     def getUserList(self):
         command = "Select USER_ID from USER where STATUS ='Active'"
@@ -127,5 +132,6 @@ class ECNTab(QtWidgets.QWidget):
         results = self.parent.cursor.fetchall()
         for result in results:
             self.userList.append(result[0])
+        self.userList.sort()
         self.userList.remove("admin")
 

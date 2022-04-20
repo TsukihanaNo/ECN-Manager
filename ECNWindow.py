@@ -224,7 +224,7 @@ class ECNWindow(QtWidgets.QWidget):
         # self.button_move_stage = QtWidgets.QPushButton("Move Stage")
         # self.button_move_stage.clicked.connect(self.moveECNStage)
         buttonlayout.addWidget(self.button_exportHTML)
-        #buttonlayout.addWidget(self.button_move_stage)
+        # buttonlayout.addWidget(self.button_move_stage)
             
         mainlayout.addLayout(buttonlayout)
         self.setCommentCount()
@@ -274,9 +274,10 @@ class ECNWindow(QtWidgets.QWidget):
             reason =self.tab_ecn.text_reason.toPlainText()
             summary = self.tab_ecn.text_summary.toPlainText()
             modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            dept = self.tab_ecn.combo_dept.currentText()
 
-            data = (self.ecn_id,ecn_type,author,requestor,status,title,reason,summary,modifieddate)
-            self.cursor.execute("INSERT INTO ECN(ECN_ID,ECN_TYPE,AUTHOR,REQUESTOR,STATUS,ECN_TITLE,ECN_REASON,ECN_SUMMARY,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?,?)",(data))
+            data = (self.ecn_id,dept,ecn_type,author,requestor,status,title,reason,summary,modifieddate)
+            self.cursor.execute("INSERT INTO ECN(ECN_ID,DEPARTMENT,ECN_TYPE,AUTHOR,REQUESTOR,STATUS,ECN_TITLE,ECN_REASON,ECN_SUMMARY,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?,?,?)",(data))
             self.db.commit()
             
             if self.tab_parts.table.rowCount()>0:
@@ -448,15 +449,16 @@ class ECNWindow(QtWidgets.QWidget):
     def updateData(self):
         try:
             ecn_type = self.tab_ecn.combo_type.currentText()
+            dept = self.tab_ecn.combo_dept.currentText()
             requestor = self.tab_ecn.box_requestor.currentText()
             title = self.tab_ecn.line_ecntitle.text()
             reason =self.tab_ecn.text_reason.toPlainText()
             summary = self.tab_ecn.text_summary.toPlainText()
             modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            data = (ecn_type,requestor,title,reason,summary,modifieddate,self.ecn_id)
+            data = (dept,ecn_type,requestor,title,reason,summary,modifieddate,self.ecn_id)
 
             #data = (self.combo_type.currentText(),self.box_requestor.text(),self.date_request.date().toString("yyyy-MM-dd"),'Unassigned',self.line_ecntitle.text(),self.text_detail.toPlainText(),self.line_id.text())
-            self.cursor.execute("UPDATE ECN SET ECN_TYPE = ?, REQUESTOR = ?, ECN_TITLE = ?, ECN_REASON = ?, ECN_SUMMARY = ?, LAST_MODIFIED = ? WHERE ECN_ID = ?",(data))
+            self.cursor.execute("UPDATE ECN SET DEPARTMENT = ?, ECN_TYPE = ?, REQUESTOR = ?, ECN_TITLE = ?, ECN_REASON = ?, ECN_SUMMARY = ?, LAST_MODIFIED = ? WHERE ECN_ID = ?",(data))
             self.db.commit()
             
             if self.tab_parts.table.rowCount()>0:
@@ -494,6 +496,8 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_ecn.line_author.setText(results['AUTHOR'])
         self.tab_ecn.box_requestor.setEditText(results['REQUESTOR'])
         self.tab_ecn.line_status.setText(results['STATUS'])
+        if results['DEPARTMENT'] is not None:
+            self.tab_ecn.combo_dept.setCurrentText(results['DEPARTMENT'])
         
         self.tab_signature.repopulateTable()
         self.tab_notification.repopulateTable()
@@ -865,93 +869,104 @@ class ECNWindow(QtWidgets.QWidget):
         self.close()
 
     def exportHTML(self):
-        foldername = QtWidgets.QFileDialog().getExistingDirectory()
-        if foldername:
-            template_loc = os.path.join(self.parent.programLoc,'templates','template.html')
-            with open(template_loc) as f:
-                lines = f.read() 
-                #print(lines)
-                f.close()
-
-                t = Template(lines)
-                id = self.ecn_id
-                title = self.tab_ecn.line_ecntitle.text()
-                author = self.tab_ecn.line_author.text()
-                dept = self.tab_ecn.combo_dept.currentText()
-                requestor = self.tab_ecn.box_requestor.currentText()
-                #316 front html wrapper characters and 14 ending html wrapper from qt.tohtml
-                reason = self.tab_ecn.text_reason.toHtml()[330:-14]
-                summary = self.tab_ecn.text_summary.toHtml()[330:-14]
-                signature = "<tr>"
-                attachment ="<tr>"
-                parts = ""
-                
-                #parts
-                
-                if self.tab_parts.table.rowCount()>0:
-                    for x in range(self.tab_parts.table.rowCount()):
-                        text = f"<p> {self.tab_parts.table.item(x,0).text()}</p>"
-                        text += "<ul>"
-                        text += f"<li>Desc: {self.tab_parts.table.item(x,1).text()}</li>"
-                        if isinstance(self.tab_parts.table.item(x, 2),QtWidgets.QTableWidgetItem):
-                            text += f"<li>Type: {self.tab_parts.table.item(x,2).text()}</li>"
-                            text += f"<li>Disposition: {self.tab_parts.table.item(x,3).text()}</li>"
-                            text += f"<li>Inspection Req.: {self.tab_parts.table.item(x,7).text()}</li>"
-                        else:
-                            text += f"<li>Type: {self.tab_parts.table.cellWidget(x,2).currentText()}</li>"
-                            text += f"<li>Disposition: {self.tab_parts.table.cellWidget(x,3).currentText()}</li>"
-                            text += f"<li>Inspection Req.: {self.tab_parts.table.cellWidget(x,7).currentText()}</li>"
-                        text += f"<li>Mfg.: {self.tab_parts.table.item(x,4).text()}</li>"
-                        text += f"<li>Mfg.#: {self.tab_parts.table.item(x,5).text()}</li>"
-                        text += f"<li>Replacing: {self.tab_parts.table.item(x,6).text()}</li>"
-                        text += "</ul>"
-                        parts += text
-
-                #attachments
-                if self.tab_attach.table.rowCount()>0:
-                    for x in range(self.tab_attach.table.rowCount()):
-                        attachment += "<td>"+self.tab_attach.table.item(x,0).text()+"</td>"
-                        attachment += "<td>"+self.tab_attach.table.item(x,1).text()+"</td></tr>"
-                else:
-                    attachment="<tr><td></td><td></td></tr>"
-                #signatures
-                if self.tab_signature.table.rowCount()>0:
-                    for x in range(self.tab_signature.table.rowCount()):
-                        if isinstance(self.tab_signature.table.item(x, 0),QtWidgets.QTableWidgetItem):
-                            signature += "<td>"+self.tab_signature.table.item(x,0).text()+"</td>"
-                            signature += "<td>"+self.tab_signature.table.item(x,1).text()+"</td>"
-                            if self.tab_signature.table.item(x,3) is not None:
-                                signature += "<td>"+self.tab_signature.table.item(x,3).text()+"</td></tr>"
-                            else:
-                                signature += "<td></td></tr>"
-                        else:
-                            signature += "<td>"+self.tab_signature.table.cellWidget(x,0).currentText()+"</td>"
-                            signature += "<td>"+self.tab_signature.table.cellWidget(x,1).currentText()+"</td>"
-                            if self.tab_signature.table.item(x,3) is not None:
-                                signature += "<td>"+self.tab_signature.table.item(x,3).text()+"</td></tr>"
-                            else:
-                                signature += "<td></td></tr>"
-                else:
-                    signature="<tr><td></td><td></td><td></td></tr>"
-                #print(id, title, author,reason,summary)
-                
-                export = t.substitute(ECNID=id,ECNTitle=title,Requestor=requestor,Department=dept,Author=author, Reason=reason,Summary=summary,Parts=parts,Attachment=attachment,Signature=signature)
-            
-                with open(foldername+'\\'+id+'.html', 'w') as f:
-                    f.write(export)
+        try:
+            foldername = QtWidgets.QFileDialog().getExistingDirectory()
+            if foldername:
+                template_loc = os.path.join(self.parent.programLoc,'templates','template.html')
+                with open(template_loc) as f:
+                    lines = f.read() 
+                    #print(lines)
                     f.close()
+
+                    t = Template(lines)
+                    id = self.ecn_id
+                    self.cursor.execute(f"SELECT * from ECN where ECN_ID='{self.ecn_id}'")
+                    result = self.cursor.fetchone()
+                    title = result['ECN_TITLE']
+                    author = result['AUTHOR']
+                    dept = result['DEPARTMENT']
+                    requestor = result['REQUESTOR']
+                    reason = result['ECN_REASON']
+                    summary = result['ECN_SUMMARY']
+                    # title = self.tab_ecn.line_ecntitle.text()
+                    # author = self.tab_ecn.line_author.text()
+                    # dept = self.tab_ecn.combo_dept.currentText()
+                    # requestor = self.tab_ecn.box_requestor.currentText()
+                    #316 front html wrapper characters and 14 ending html wrapper from qt.tohtml
+                    # reason = self.tab_ecn.text_reason.toHtml()[330:-14]
+                    # summary = self.tab_ecn.text_summary.toHtml()[330:-14]
+                    signature = "<tr>"
+                    attachment ="<tr>"
+                    parts = ""
                     
+                    #parts
+                    #print('exporting parts')
+                    self.cursor.execute(f"SELECT * from PARTS where ECN_ID='{self.ecn_id}'")
+                    results = self.cursor.fetchall()
+                    if results is not None:
+                        for result in results:
+                            text = f"<p> {result['PART_ID']}</p>"
+                            text += "<ul>"
+                            text += f"<li>Desc: {result['DESC']}</li>"
+                            text += f"<li>Type: {result['TYPE']}</li>"
+                            text += f"<li>Disposition: {result['DISPOSITION']}</li>"
+                            text += f"<li>Inspection Req.: {result['INSPEC']}</li>"
+                            text += f"<li>Mfg.: {result['MFG']}</li>"
+                            text += f"<li>Mfg.#: {result['MFG_PART']}</li>"
+                            text += f"<li>Replacing: {result['REPLACING']}</li>"
+                            text += "</ul>"
+                            parts += text
                     
-                # page = QtWebEngineWidgets.QWebEnginePage()
-                
-                # def handle_load_finished(status):
-                #     if status:
-                #         page.printToPdf(foldername+'\\'+id+'.pdf')
+
+                    #attachments
+                    #print('exporting attachments')
+                    self.cursor.execute(f"SELECT * FROM ATTACHMENTS where ECN_ID='{self.ecn_id}'")
+                    results = self.cursor.fetchall()
+                    if results is not None:
+                        for result in results:
+                            attachment += "<td>"+result['FILENAME']+"</td>"
+                            attachment += "<td>"+result['FILEPATH']+"</td></tr>"
+                    else:
+                        attachment="<tr><td></td><td></td></tr>"
+
+                    
+                    #print('exporting signatures')
+                    self.cursor.execute(f"SELECT * from SIGNATURE where ECN_ID='{self.ecn_id}'")
+                    results = self.cursor.fetchall()
+                    if results is not None:
+                        for result in results:
+                            signature += "<td>"+result['JOB_TITLE']+"</td>"
+                            signature += "<td>"+result['NAME']+"</td>"
+                            if result['SIGNED_DATE'] is not None:
+                                signature += "<td>"+str(result['SIGNED_DATE'])+"</td></tr>"
+                            else:
+                                signature += "<td></td></tr>"
+                    else:
+                        signature="<tr><td></td><td></td><td></td></tr>"
                         
-                # page.loadFinished.connect(handle_load_finished)
-                # page.load(QtCore.QUrl.fromLocalFile(foldername+'\\'+id+'.html'))
+                    
+                    #print('substituting text')
+                    
+                    export = t.substitute(ECNID=id,ECNTitle=title,Requestor=requestor,Department=dept,Author=author, Reason=reason,Summary=summary,Parts=parts,Attachment=attachment,Signature=signature)
                 
-                self.dispMsg("Export Completed!")
+                    with open(foldername+'\\'+id+'.html', 'w') as f:
+                        f.write(export)
+                        f.close()
+                        
+                        
+                    # page = QtWebEngineWidgets.QWebEnginePage()
+                    
+                    # def handle_load_finished(status):
+                    #     if status:
+                    #         page.printToPdf(foldername+'\\'+id+'.pdf')
+                            
+                    # page.loadFinished.connect(handle_load_finished)
+                    # page.load(QtCore.QUrl.fromLocalFile(foldername+'\\'+id+'.html'))
+                    
+                    self.dispMsg("Export Completed!")
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error Occured during ecn export.\n Error: {e}")
         
     def addNotification(self,ecn_id,notificationType,userslist=None):
         if userslist is not None:
