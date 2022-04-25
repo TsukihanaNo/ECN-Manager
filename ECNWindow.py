@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore, QtWebEngineCore
 from datetime import datetime
 from AttachmentTab import *
 from ECNTab import *
@@ -954,14 +954,15 @@ class ECNWindow(QtWidgets.QWidget):
                         f.close()
                         
                         
-                    # page = QtWebEngineWidgets.QWebEnginePage()
+                    page = QtWebEngineCore.QWebEnginePage()
                     
-                    # def handle_load_finished(status):
-                    #     if status:
-                    #         page.printToPdf(foldername+'\\'+id+'.pdf')
+                    def handle_load_finished(status):
+                        if status:
+                            page.printToPdf(foldername+'\\'+id+'.pdf')
+                            os.remove(foldername+'\\'+id+'.html')
                             
-                    # page.loadFinished.connect(handle_load_finished)
-                    # page.load(QtCore.QUrl.fromLocalFile(foldername+'\\'+id+'.html'))
+                    page.loadFinished.connect(handle_load_finished)
+                    page.load(QtCore.QUrl.fromLocalFile(foldername+'\\'+id+'.html'))
                     
                     self.dispMsg("Export Completed!")
         except Exception as e:
