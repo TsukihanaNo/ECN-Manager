@@ -448,7 +448,7 @@ class Notifier(QtWidgets.QWidget):
         return elapsed
     
     def checkForReminder(self):
-        self.cursor.execute("SELECT ECN_ID, LAST_NOTIFIED, FIRST_RELEASE, LAST_MODIFIED FROM ECN WHERE STATUS !='Completed' and STATUS!='Draft'")
+        self.cursor.execute("SELECT ECN_ID, LAST_NOTIFIED, FIRST_RELEASE, LAST_MODIFIED FROM ECN WHERE STATUS !='Completed' and STATUS!='Draft' and STAGE!='0'")
         results = self.cursor.fetchall()
         today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         for result in results:
