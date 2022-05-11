@@ -32,7 +32,6 @@ class ECNTab(QtWidgets.QWidget):
 
         self.line_id = QtWidgets.QLineEdit(self)
         self.line_id.setReadOnly(True)
-        self.line_id.setDisabled(True)
         self.combo_type = QtWidgets.QComboBox(self)
         ecn_types = self.parent.settings["ECN_Types"].split(",")
         ecn_types.sort()

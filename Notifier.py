@@ -403,7 +403,7 @@ class Notifier(QtWidgets.QWidget):
 
                 
                 #print('exporting signatures')
-                self.cursor.execute(f"SELECT * from SIGNATURE where ECN_ID='{ecn_id}'")
+                self.cursor.execute(f"SELECT * from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing'")
                 results = self.cursor.fetchall()
                 if results is not None:
                     for result in results:

@@ -16,9 +16,11 @@ class Visual():
             os.environ['PATH'] = instantclient_dir + os.path.pathsep + os.environ['PATH']
             cx_Oracle.init_oracle_client(instantclient_dir)
             self.con = cx_Oracle.connect(user,pw,db)
+            print("Visual Connection Established")
             self.cur = self.con.cursor()
         except Exception as e:
            print(e)
+           self.parent.dispMsg(f"Error: Connection could not be established to Visual. (error code - {e})")
 
     def checkPartSetup(self,part,ptype):
         #planner id, buyer id, safety stock, min-max (not required), order policy, warehouse, inspection, vendor pricing
