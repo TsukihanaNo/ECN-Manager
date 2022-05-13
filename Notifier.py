@@ -207,7 +207,7 @@ class Notifier(QtWidgets.QWidget):
         if len(results)>0:
             for result in results:
                 self.generateECNX(result[0])
-                self.generateHTML(result[0])
+                #self.generateHTML(result[0])
                 if result['TYPE']=="Rejected To Author":
                     self.rejectNotification(result[0])
                 elif result['TYPE']=="Rejected To Signer":
@@ -219,7 +219,7 @@ class Notifier(QtWidgets.QWidget):
                 else:
                     self.releaseNotification(result[0])
                 self.removeECNX(result[0])
-                self.removeHTML(result[0])
+                #self.removeHTML(result[0])
                 self.updateStatus(result[0])
         else:
             self.log_text.append("-No notifications found to be sent")
@@ -249,7 +249,7 @@ class Notifier(QtWidgets.QWidget):
         print(f"send email to these addresses: {receivers} notifying ecn rejection")
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
-        attach.append(os.path.join(program_location,ecn_id+'.html'))
+        #attach.append(os.path.join(program_location,ecn_id+'.html'))
         self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
         self.log_text.append(f"-Rejection Email sent for {ecn_id} to {receivers}")
         
@@ -260,7 +260,7 @@ class Notifier(QtWidgets.QWidget):
         print(f"send email to these addresses: {receivers} notifying ecn completion")
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
-        attach.append(os.path.join(program_location,ecn_id+'.html'))
+        #attach.append(os.path.join(program_location,ecn_id+'.html'))
         self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
         self.log_text.append(f"-Rejection to Signer Email sent for {ecn_id} to {receivers}")
         
@@ -272,13 +272,13 @@ class Notifier(QtWidgets.QWidget):
         receivers.append(self.userList[result[0]])
         self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}'")
         results = self.cursor.fetchall()
-        message = f"{ecn_id} has been completed!\n\n\n You can now view it in the completed section of your viewer.\n\n\nYou can also open the attachment file to launch to be directed to the ECN or open HTML file to view it in your browser."
+        message = f"{ecn_id} has been completed!\n\n\n You can now view it in the completed section of your viewer."
         for result in results:
             receivers.append(self.userList[result[0]])
         print(f"send email to these addresses: {receivers} notifying ecn completion")
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
-        attach.append(os.path.join(program_location,ecn_id+'.html'))
+        #attach.append(os.path.join(program_location,ecn_id+'.html'))
         self.sendEmail(ecn_id,receivers, message,"Completion",attach)
         self.log_text.append(f"-Completion Email sent for {ecn_id} to {receivers}")
         
@@ -286,13 +286,13 @@ class Notifier(QtWidgets.QWidget):
         self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing'")
         results = self.cursor.fetchall()
         receivers = []
-        message = f"{ecn_id} has been released! You can see it in the queue section once it is your turn for approval. Otherwise you can view the ECN in the open section.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
+        message = f"{ecn_id} has been released! You can see it in the queue section once it is your turn for approval.\nYou can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN in the open section in the ECN Manager application."
         for result in results:
             receivers.append(self.userList[result[0]])
         print(f"send email these addresses: {receivers} notifying ecn release")
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
-        attach.append(os.path.join(program_location,ecn_id+'.html'))
+        #attach.append(os.path.join(program_location,ecn_id+'.html'))
         self.sendEmail(ecn_id,receivers, message,attach)
         self.log_text.append(f"-Release Email sent for {ecn_id} to {receivers}")
         
@@ -305,11 +305,11 @@ class Notifier(QtWidgets.QWidget):
         receivers = []
         for user in users:
             receivers.append(self.userList[user])
-        message = f"{ecn_id} has been released and is now awaiting for your approval!\n\n\n. You can view the ECN your queue in the ECN Manager application.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
+        message = f"{ecn_id} has been released and is now awaiting for your approval!\nYou can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN your queue in the ECN Manager application."
         print(f"send email these addresses: {receivers} notifying ecn release stage move")
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
-        attach.append(os.path.join(program_location,ecn_id+'.html'))
+        #attach.append(os.path.join(program_location,ecn_id+'.html'))
         self.sendEmail(ecn_id,receivers, message,"Awaiting Approval",attach)
         self.log_text.append(f"-Stage Release Email sent for {ecn_id} to {receivers}")
             
@@ -321,7 +321,12 @@ class Notifier(QtWidgets.QWidget):
             msg['From'] = self.settings["From_Address"]
             msg['To'] = ", ".join(receivers)
             msg['Subject']=f"{subject} Notification for ECN: {ecn_id}"
-            msg.attach(MIMEText(message,'plain'))
+            
+            message +="\n\n"
+            html = self.generateHTML(ecn_id)
+            message+=html
+            
+            msg.attach(MIMEText(message,'html'))
             #ecnx = os.path.join(program_location,ecn_id+'.ecnx')
             #filename = f'{ecn_id}.ecnx'
             for file in attach:
@@ -419,11 +424,12 @@ class Notifier(QtWidgets.QWidget):
                 
                 export = t.substitute(ECNID=ecn_id,ECNTitle=title,Requestor=requestor,Department=dept,Author=author, Reason=reason,Summary=summary,Parts=parts,Attachment=attachment,Signature=signature)
             
-                with open(foldername+'\\'+ecn_id+'.html', 'w') as f:
-                    f.write(export)
-                    f.close()
+                # with open(foldername+'\\'+ecn_id+'.html', 'w') as f:
+                #     f.write(export)
+                #     f.close()
 
-                self.log_text.append("HTML export Completed!")
+                self.log_text.append("generation complete")
+                return export
         except Exception as e:
             print(e)
             self.log_text.append(f"Error Occured during ecn export.\n Error: {e}")
@@ -500,7 +506,7 @@ class Notifier(QtWidgets.QWidget):
         #print(message)
         #print(f"send email these addresses: {receivers} notifying ecn lateness")
         self.generateECNX(ecn_id)
-        self.generateHTML(ecn_id)
+        #self.generateHTML(ecn_id)
         receivers = []
         for user in direct_receivers:
             receivers.append(user)
@@ -508,7 +514,7 @@ class Notifier(QtWidgets.QWidget):
             receivers.append(user)
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
-        attach.append(os.path.join(program_location,ecn_id+'.html'))
+        #attach.append(os.path.join(program_location,ecn_id+'.html'))
         self.sendEmail(ecn_id,receivers, message,"Reminder",attach)
         data = (ecn_id,"Sent","Reminder")
         self.cursor.execute("INSERT INTO NOTIFICATION(ECN_ID, STATUS, TYPE) VALUES(?,?,?)",(data))
@@ -516,7 +522,7 @@ class Notifier(QtWidgets.QWidget):
         self.db.commit()
         self.log_text.append(f"-lateness Email sent for {ecn_id} to {receivers}")
         self.removeECNX(ecn_id)
-        self.removeHTML(ecn_id)
+        #self.removeHTML(ecn_id)
 
     def getReminderUsers(self):
         self.cursor.execute(f"select USER_ID from SIGNATURE where SIGNED_DATE is NULL")
