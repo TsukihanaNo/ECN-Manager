@@ -721,18 +721,19 @@ class ECNWindow(QtWidgets.QWidget):
             self.dispMsg(f"Error trying to reset ECN stage. Error: {e}")
     
     def isUserSignable(self):
-        self.cursor.execute(f"SELECT SIGNED_DATE from SIGNATURE where ECN_ID='{self.ecn_id}' and USER_ID='{self.parent.user_info['user']}'")
-        result = self.cursor.fetchone()
-        if result is None:
-            return False
-        else:
+        curStage = self.getECNStage()
+        titles = self.getTitlesForStage()
+        titles = titles[str(curStage)]
+        if self.parent.user_info['title'] in titles:
+            #print("found title")
             return True
+        return False
             
     def hasUserSigned(self):
         self.cursor.execute(f"SELECT SIGNED_DATE from SIGNATURE where ECN_ID='{self.ecn_id}' and USER_ID='{self.parent.user_info['user']}'")
         result = self.cursor.fetchone()
         if result[0] is None:
-            print("found none returning false")
+            #print("found none returning false")
             return False
         else:
             return True
