@@ -96,13 +96,14 @@ class PartsTab(QtWidgets.QWidget):
             self.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(result['MFG_PART']))
             self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(result['REPLACING']))
             self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(result['REFERENCE']))
-            if self.parent.parent.visual.partExist(result['PART_ID']):
-                if self.parent.parent.visual.checkPartSetup(result['PART_ID'], result['TYPE']):
-                    self.table.item(rowcount, 0).setBackground(QtGui.QColor(186,255,180))
+            if self.parent.parent.visual is not None:
+                if self.parent.parent.visual.partExist(result['PART_ID']):
+                    if self.parent.parent.visual.checkPartSetup(result['PART_ID'], result['TYPE']):
+                        self.table.item(rowcount, 0).setBackground(QtGui.QColor(186,255,180))
+                    else:
+                        self.table.item(rowcount, 0).setBackground(QtGui.QColor(255,253,162))
                 else:
-                    self.table.item(rowcount, 0).setBackground(QtGui.QColor(255,253,162))
-            else:
-                self.table.item(rowcount, 0).setBackground(QtGui.QColor(255,99,99))
+                    self.table.item(rowcount, 0).setBackground(QtGui.QColor(255,99,99))
             # if self.parent.parent.user_info['user']!=self.parent.tab_ecn.line_author.text():
             #     self.table.item(rowcount,2).
 
@@ -115,13 +116,14 @@ class PartsTab(QtWidgets.QWidget):
                 part_type = self.table.item(x,2).text()
             else:
                 part_type = self.table.cellWidget(x, 2).currentText()
-            if self.parent.parent.visual.partExist(part):
-                if self.parent.parent.visual.checkPartSetup(part,part_type):
-                    self.table.item(x, 0).setBackground(QtGui.QColor(186,255,180))
-                else: 
-                    self.table.item(x, 0).setBackground(QtGui.QColor(255,253,162))
-            else:
-                self.table.item(x, 0).setBackground(QtGui.QColor(255,99,99))
+            if self.parent.parent.visual is not None:
+                if self.parent.parent.visual.partExist(part):
+                    if self.parent.parent.visual.checkPartSetup(part,part_type):
+                        self.table.item(x, 0).setBackground(QtGui.QColor(186,255,180))
+                    else: 
+                        self.table.item(x, 0).setBackground(QtGui.QColor(255,253,162))
+                else:
+                    self.table.item(x, 0).setBackground(QtGui.QColor(255,99,99))
                 
     # def addPart(self,part):
     #     row = self.table.rowCount()

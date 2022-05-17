@@ -267,7 +267,7 @@ class SettingsWindow(QtWidgets.QWidget):
         if self.line_user_v.text()!="" and self.line_pass_v.text()!= "" and self.line_db_v.text()!="":
             data+= f"Visual : {self.line_user_v.text()},{self.line_pass_v.text()},{self.line_db_v.text()}\n"
         else:
-            self.dispMsg("One of the Visual fields are empty")
+            self.dispMsg("One of the Visual fields are empty. Visual module will be disabled until fields are entered.")
         if self.line_smtp_address.text()!="" and self.line_smtp_port.text()!="" and self.line_smtp_email.text()!="":
                 data += "SMTP : " + self.line_smtp_address.text() + "\n"
                 data += "Port : " + self.line_smtp_port.text() +"\n"
@@ -311,7 +311,7 @@ class SettingsWindow(QtWidgets.QWidget):
             print(self.parent)
             if self.parent is not None:
                 self.parent.loadSettings()
-            self.dispMsg("Settings have been saved!")
+            self.dispMsg("Settings have been saved! Please restart application for settings to take effect.")
         except Exception as e:
             self.dispMsg(f"Error occured trying to save settings. Error: {e}")
         #print(data)

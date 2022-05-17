@@ -62,9 +62,14 @@ class Manager(QtWidgets.QWidget):
         self.user_info = {}
         self.programLoc = program_location
         self.nameList = []
-        user,pw,db = self.settings['Visual'].split(',')
-        ic = self.settings['Instant_Client']
-        self.visual = Visual(self,user, pw , db,ic)
+        print("Visual" in self.settings.keys())
+        if "Visual" in self.settings.keys():
+            user,pw,db = self.settings['Visual'].split(',')
+            ic = self.settings['Instant_Client']
+            self.visual = Visual(self,user, pw , db,ic)
+        else:
+            self.visual = None
+        print(self.visual)
         # self.checkDBTables()
 
     def center(self):
