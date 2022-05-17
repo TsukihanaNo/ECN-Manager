@@ -96,6 +96,34 @@ class Manager(QtWidgets.QWidget):
     def removeLockFile(self):
         os.remove(lockfile)
         
+    def existsWindowsUser(self):
+        user = os.getlogin()
+        self.cursor.execute(f"SELECT * from WINDOWSLOG where USER='{user}'")
+        result = self.cursor.fetchone()
+        if result is None:
+            return False
+        else:
+            return True
+        
+    def logWindowsUser(self):
+        user = os.getlogin()
+        time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        if self.existsWindowsUser():
+            data = ("online",time,user)
+            self.cursor.execute("UPDATE WINDOWSLOG SET STATUS = ?, DATETIME = ? WHERE USER = ?",(data))
+        else:
+            data = (user,"online",time)
+            self.cursor.execute("INSERT INTO WINDOWSLOG(USER, STATUS, DATETIME) VALUES(?,?,?)",(data))
+        self.db.commit()
+        
+    def logOutWindowsUser(self):
+        print("logging user out")
+        user = os.getlogin()
+        time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        data = ("offline",time,user)
+        self.cursor.execute("UPDATE WINDOWSLOG SET STATUS = ?, DATETIME = ? WHERE USER = ?",(data))
+        self.db.commit()
+        
     def checkNotifier(self):
         if not os.path.exists(notifier_lockfile):
             self.dispMsg("The Notifier is currently not running. No notifications will be sent until it is launched.")
@@ -142,6 +170,7 @@ class Manager(QtWidgets.QWidget):
                 self.db = sqlite3.connect(db_loc)
                 self.cursor = self.db.cursor()
                 self.cursor.row_factory = sqlite3.Row
+                self.logWindowsUser()
                 self.loginWindow = LoginWindow(self)
             elif msgbox.clickedButton() == addbutton:
                 self.newDB()
@@ -153,6 +182,7 @@ class Manager(QtWidgets.QWidget):
             self.db = sqlite3.connect(self.settings["DB_LOC"])
             self.cursor = self.db.cursor()
             self.cursor.row_factory = sqlite3.Row
+            self.logWindowsUser()
             self.loginWindow = LoginWindow(self)
             
             
@@ -486,7 +516,9 @@ class Manager(QtWidgets.QWidget):
         self.animation.start()
 
     def closeEvent(self, event):
+        print("setting things off")
         self.setUserOffline()
+        self.logOutWindowsUser()
         self.db.close()
         if self.firstInstance:
             self.removeLockFile()

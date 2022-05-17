@@ -732,7 +732,7 @@ class ECNWindow(QtWidgets.QWidget):
     def hasUserSigned(self):
         self.cursor.execute(f"SELECT SIGNED_DATE from SIGNATURE where ECN_ID='{self.ecn_id}' and USER_ID='{self.parent.user_info['user']}'")
         result = self.cursor.fetchone()
-        if result[0] is None:
+        if result is None:
             #print("found none returning false")
             return False
         else:
