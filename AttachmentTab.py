@@ -68,7 +68,7 @@ class AttachmentTab(QtWidgets.QWidget):
                     self.table.insertRow(row)
                     #listItem = QtWidgets.QListWidgetItem(url,self.list_attachment)
                     self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(url[url.rfind("/")+1:]))
-                    self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(url))
+                    self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(str(Path(url).resolve())))
                     row+=1
             else:
                 cfiles.append(url)
@@ -109,7 +109,7 @@ class AttachmentTab(QtWidgets.QWidget):
                         self.files.append(url)
                         self.table.insertRow(row)
                         self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(url[url.rfind("/")+1:]))
-                        self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(url))
+                        self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(str(Path(url).resolve())))
                         row+=1
                 else:
                     cfiles.append(url)
