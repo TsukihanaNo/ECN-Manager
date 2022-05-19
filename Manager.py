@@ -62,14 +62,14 @@ class Manager(QtWidgets.QWidget):
         self.user_info = {}
         self.programLoc = program_location
         self.nameList = []
-        print("Visual" in self.settings.keys())
+        #print("Visual" in self.settings.keys())
         if "Visual" in self.settings.keys():
             user,pw,db = self.settings['Visual'].split(',')
             ic = self.settings['Instant_Client']
             self.visual = Visual(self,user, pw , db,ic)
         else:
             self.visual = None
-        print(self.visual)
+        #print(self.visual)
         # self.checkDBTables()
 
     def center(self):
@@ -122,7 +122,7 @@ class Manager(QtWidgets.QWidget):
         self.db.commit()
         
     def logOutWindowsUser(self):
-        print("logging user out")
+        #print("logging user out")
         user = os.getlogin()
         time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         data = ("offline",time,user)
@@ -197,7 +197,7 @@ class Manager(QtWidgets.QWidget):
         for line in f:
             key,value = line.split(" : ")
             self.settings[key]=value.strip()
-        print(self.settings)
+        #print(self.settings)
         f.close()
         
     def checkSettings(self):
@@ -302,7 +302,7 @@ class Manager(QtWidgets.QWidget):
         
         mainLayout.addLayout(details_layout)
         
-        titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified', 'Stage','Waiting On', 'Elapsed Days']
+        titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified', 'Stage','Waiting On', 'Elapsed Days','💬']
         self.table = QtWidgets.QTableWidget(1,len(titles),self)
         delegate = AlignDelegate(self.table)
         self.table.setItemDelegate(delegate)
@@ -400,7 +400,14 @@ class Manager(QtWidgets.QWidget):
                 self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,99,99))
             if item["STATUS"]=="Out For Approval":
                 self.table.item(rowcount, 3).setBackground(QtGui.QColor(186,255,180))
+            
+            self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where ECN_ID='{item['ECN_ID']}'")
+            comment = self.cursor.fetchone()
+            if comment[0]>0:
+                self.table.setItem(rowcount,8,QtWidgets.QTableWidgetItem(str(comment[0])))
+            
             rowcount+=1
+            
         self.table.sortItems(self.sorting[0],self.sorting[1])
         
     def setSort(self, index, order):
@@ -521,7 +528,7 @@ class Manager(QtWidgets.QWidget):
         self.animation.start()
 
     def closeEvent(self, event):
-        print("setting things off")
+        #print("setting things off")
         self.setUserOffline()
         self.logOutWindowsUser()
         self.db.close()
@@ -556,7 +563,7 @@ class Manager(QtWidgets.QWidget):
         for stage in stages:
             key,value = stage.split("-")
             self.stageDict[key.strip()] = value.strip()
-        print(self.stageDict)
+        #print(self.stageDict)
         
     def getNameList(self):
         command = "Select NAME from USER where STATUS ='Active'"

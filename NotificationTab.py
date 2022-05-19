@@ -115,7 +115,7 @@ class NotificationTab(QtWidgets.QWidget):
             self.job_titles.remove("Admin")
         if len(self.job_titles)==0:
             self.dispMsg("No Job Titles found, please add Jobs and Users.")
-        print(self.job_titles)
+        #print(self.job_titles)
         
     def getUserRole(self,user):
         self.parent.cursor.execute(f"select ROLE from USER where USER_ID='{user}'")
@@ -168,7 +168,7 @@ class NotificationTab(QtWidgets.QWidget):
         self.table.setRowCount(len(results))
         rowcount=0
         for result in results:
-            print(result['JOB_TITLE'])
+            #print(result['JOB_TITLE'])
             if self.parent.parent.user_info['user']!=self.parent.tab_ecn.line_author.text():
                 self.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['JOB_TITLE']))
                 self.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['NAME']))

@@ -151,7 +151,7 @@ class SignatureTab(QtWidgets.QWidget):
             job_title = self.table.item(x, 0).text()
             stage =self.parent.parent.stageDict[job_title]
             table_dict[user]=stage
-        print(table_dict)
+        #print(table_dict)
         return table_dict
         
     def prepopulateTable(self):
@@ -166,7 +166,7 @@ class SignatureTab(QtWidgets.QWidget):
         userList =[]
         for result in results:
             userList.append([result[0],result[1],result[2]])
-        print(userList)
+        #print(userList)
         #setting on specifics
         sigs = ["Engineering Manager","Purchasing Manager","Production Manager","Planning Manager","Buyer","Planner"]
         rowcount=0
@@ -207,7 +207,7 @@ class SignatureTab(QtWidgets.QWidget):
             self.dispMsg("No Job Titles found, please add Jobs and Users.")
         else:
             self.job_titles.sort()
-        print(self.job_titles)
+        #print(self.job_titles)
         
     def getUserRole(self,user):
         self.parent.cursor.execute(f"select ROLE from USER where USER_ID='{user}'")
@@ -261,7 +261,7 @@ class SignatureTab(QtWidgets.QWidget):
         self.table.setRowCount(len(results))
         rowcount=0
         for result in results:
-            print(result['JOB_TITLE'])
+            #print(result['JOB_TITLE'])
             if self.parent.parent.user_info['user']!=self.parent.tab_ecn.line_author.text() or result['SIGNED_DATE'] is not None:
                 self.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['JOB_TITLE']))
                 self.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['NAME']))
