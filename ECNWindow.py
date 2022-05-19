@@ -215,6 +215,8 @@ class ECNWindow(QtWidgets.QWidget):
                 if self.isUserSignable():
                     if self.hasUserSigned():
                         self.button_approve.setDisabled(True)
+                    else:
+                        self.button_approve.setDisabled(False)
                 else:
                     self.button_approve.setDisabled(True)
                     self.button_reject.setDisabled(True)
@@ -722,18 +724,22 @@ class ECNWindow(QtWidgets.QWidget):
     
     def isUserSignable(self):
         curStage = self.getECNStage()
+        print(curStage)
+        if curStage == 0:
+            return False
         titles = self.getTitlesForStage()
         titles = titles[str(curStage)]
-        if self.parent.user_info['title'] in titles:
-            #print("found title")
+        self.cursor.execute(f"SELECT USER_ID from SIGNATURE where ECN_ID='{self.ecn_id}' and USER_ID='{self.parent.user_info['user']}'")
+        result = self.cursor.fetchone()
+        if self.parent.user_info['title'] in titles and result is not None:
             return True
         return False
             
     def hasUserSigned(self):
         self.cursor.execute(f"SELECT SIGNED_DATE from SIGNATURE where ECN_ID='{self.ecn_id}' and USER_ID='{self.parent.user_info['user']}'")
         result = self.cursor.fetchone()
-        if result is None:
-            #print("found none returning false")
+        if result is None or result[0] is None:
+            print("found none returning false")
             return False
         else:
             return True
