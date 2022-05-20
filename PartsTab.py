@@ -73,11 +73,22 @@ class PartsTab(QtWidgets.QWidget):
         self.table.setRowCount(len(results))
         rowcount=0
         for result in results:
-            self.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['PART_ID']))
-            self.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['DESC']))
+            part_id = QtWidgets.QTableWidgetItem(result['PART_ID'])
+            part_id.setToolTip(result['PART_ID'])
+            self.table.setItem(rowcount, 0, part_id)
+            desc = QtWidgets.QTableWidgetItem(result['DESC'])
+            desc.setToolTip(result['DESC'])
+            self.table.setItem(rowcount, 1, desc)
             if self.parent.parent.user_info['user']!=self.parent.tab_ecn.line_author.text():
                 self.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['TYPE']))
                 self.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['DISPOSITION']))
+                if isinstance(self.table.item(rowcount, 3),QtWidgets.QTableWidgetItem):
+                    if result['DISPOSITION']=="New":
+                        self.table.item(rowcount, 3).setBackground(QtGui.QColor(186,255,180))
+                    if result['DISPOSITION']=="SCrap":
+                        self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,99,99))
+                    if result['DISPOSITION']=="Deplete":
+                        self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,253,162))
                 self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(result['INSPEC']))
             else:
                 box_type = QtWidgets.QComboBox()
@@ -104,6 +115,7 @@ class PartsTab(QtWidgets.QWidget):
                         self.table.item(rowcount, 0).setBackground(QtGui.QColor(255,253,162))
                 else:
                     self.table.item(rowcount, 0).setBackground(QtGui.QColor(255,99,99))
+            
             # if self.parent.parent.user_info['user']!=self.parent.tab_ecn.line_author.text():
             #     self.table.item(rowcount,2).
 
