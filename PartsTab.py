@@ -89,7 +89,7 @@ class PartsTab(QtWidgets.QWidget):
                         self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,99,99))
                     if result['DISPOSITION']=="Deplete":
                         self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,253,162))
-                self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(result['INSPEC']))
+                self.table.setItem(rowcount, 8, QtWidgets.QTableWidgetItem(result['INSPEC']))
             else:
                 box_type = QtWidgets.QComboBox()
                 box_type.addItems(["","Fabricated","Purchased","Outside Service"])

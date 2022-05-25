@@ -381,7 +381,9 @@ class Manager(QtWidgets.QWidget):
         for item in test:
             self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
             self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['ECN_TYPE']))
-            self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['ECN_TITLE']))
+            title = QtWidgets.QTableWidgetItem(item['ECN_TITLE'])
+            title.setToolTip(item['ECN_TITLE'])
+            self.table.setItem(rowcount,2,title)
             self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
             self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
             if item['STATUS']!='Draft':
