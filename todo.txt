@@ -1,5 +1,5 @@
 - notification server
-    - email for ecns past a certain elapsed days
+    - email for ecns past a certain elapsed days (done)
 
 - EVN export
 
@@ -25,9 +25,9 @@
 - make the subject of the notification emails detail what kind of email it is. (done)
 - allow all users on the ecn to be able to add comments (done)
 
-- optimize table refresh
+- optimize table refresh (done)
 - add ability to reset the stage flow due to new roles being added in or just changing the flow of the process.
-- send an exported html of the completed ecn with the completion notification
+- send an exported html of the completed ecn with the completion notification(done)
 - add some sort of indicator that there is something unsaved on that tab.
 - add a reference column on the parts tab so that things like website links can be added. (done)
 - something like a signature guideline

@@ -548,6 +548,7 @@ class ECNWindow(QtWidgets.QWidget):
         comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Comment", "")
         if ok and comment!="":
             self.addComment(self.ecn_id, comment,"User Comment")
+            self.addNotification(self.ecn_id, "User Comment")
 
     def addComment(self,ecn_id,comment,commentType):
         #COMMENTS(ECN_ID TEXT, NAME TEXT, USER TEXT, COMM_DATE DATE, COMMENT TEXT
@@ -976,7 +977,7 @@ class ECNWindow(QtWidgets.QWidget):
             print(e)
             self.dispMsg(f"Error Occured during ecn export.\n Error: {e}")
         
-    def addNotification(self,ecn_id,notificationType,userslist=None):
+    def addNotification(self,ecn_id,notificationType,userslist=None,msg=None):
         if userslist is not None:
             if type(userslist)==type([]):
                 users = ""
