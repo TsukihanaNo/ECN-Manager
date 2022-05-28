@@ -41,7 +41,6 @@ databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT"
                         "CHANGELOG": ["ECN_ID TEXT", "CHANGEDATE DATETIME", "NAME TEXT","DATABLOCK TEXT" ,"PREVDATA TEXT", "NEWDATA TEXT"],
                         }
 
-
 class Manager(QtWidgets.QWidget):
     def __init__(self,ecn = None):
         super(Manager, self).__init__()
@@ -268,25 +267,31 @@ class Manager(QtWidgets.QWidget):
 
     def initUI(self):
         self.menubar = QtWidgets.QMenuBar(self)
+        self.toolbar = QtWidgets.QToolBar()
+        self.statusbar = QtWidgets.QStatusBar()
+        self.statusbar.setSizeGripEnabled(False)
         mainLayout = QtWidgets.QVBoxLayout(self)
         mainLayout.setMenuBar(self.menubar)
+        mainLayout.addWidget(self.toolbar)
 
         self.createMenuActions()
         searchLayout = QtWidgets.QHBoxLayout()
         self.line_search = QtWidgets.QLineEdit(self)
         self.line_search.setPlaceholderText("Search here")
-        self.button_search = QtWidgets.QPushButton("Search")
+        self.button_search = QtWidgets.QPushButton()
+        icon_loc = icon = os.path.join(program_location,"icons","search.png")
+        self.button_search.setIcon(QtGui.QIcon(icon_loc))
+        self.button_search.setFixedWidth(25)
         self.line_search.returnPressed.connect(self.search)
         self.button_search.clicked.connect(self.search)
-        searchLayout.addWidget(self.line_search)
-        searchLayout.addWidget(self.button_search)
-        mainLayout.addLayout(searchLayout)
+        #searchLayout.addWidget(self.line_search)
+        #searchLayout.addWidget(self.button_search)
+        #mainLayout.addLayout(searchLayout)
         
-        details_layout = QtWidgets.QHBoxLayout()
-        self.label_ecn_count = QtWidgets.QLabel("ECNs:")
-        self.label_open_ecns = QtWidgets.QLabel("Open:")
-        self.label_wait_ecns = QtWidgets.QLabel("Waiting:")
-        self.label_complete_ecns = QtWidgets.QLabel("Completed:")
+        self.label_ecn_count = QtWidgets.QLabel("ECN Count:")
+        self.label_open_ecns = QtWidgets.QLabel("Open - ")
+        self.label_wait_ecns = QtWidgets.QLabel("Waiting - ")
+        self.label_complete_ecns = QtWidgets.QLabel("Completed - ")
         self.dropdown_type = QtWidgets.QComboBox(self)
         self.dropdown_type.setFixedWidth(100)
         self.button_refresh = QtWidgets.QPushButton()
@@ -316,17 +321,30 @@ class Manager(QtWidgets.QWidget):
         self.button_add.clicked.connect(self.newECN)
         if self.user_info['role']=="Signer":
             self.button_add.setDisabled(True)
-        details_layout.addWidget(self.label_ecn_count)
-        details_layout.addWidget(self.label_open_ecns)
-        details_layout.addWidget(self.label_wait_ecns)
-        details_layout.addWidget(self.label_complete_ecns)
-        details_layout.addWidget(self.button_add)
-        details_layout.addWidget(self.button_open)
-        details_layout.addWidget(self.button_refresh)
-        details_layout.addWidget(self.dropdown_type)
-        
-        mainLayout.addLayout(details_layout)
-        
+            
+        # details_layout = QtWidgets.QHBoxLayout()
+        # details_layout.addWidget(self.label_ecn_count)
+        # details_layout.addWidget(self.label_open_ecns)
+        # details_layout.addWidget(self.label_wait_ecns)
+        # details_layout.addWidget(self.label_complete_ecns)
+        # details_layout.addWidget(self.button_add)
+        # details_layout.addWidget(self.button_open)
+        # details_layout.addWidget(self.button_refresh)
+        # details_layout.addWidget(self.dropdown_type)
+        #mainLayout.addLayout(details_layout)
+        self.statusbar.addPermanentWidget(self.label_ecn_count)
+        self.statusbar.addPermanentWidget(self.label_open_ecns)
+        self.statusbar.addPermanentWidget(self.label_complete_ecns)
+        self.statusbar.addPermanentWidget(self.label_wait_ecns)
+
+        self.toolbar.addWidget(self.line_search)
+        self.toolbar.addWidget(self.button_search)
+        self.toolbar.addSeparator()
+        self.toolbar.addWidget(self.button_add)
+        self.toolbar.addWidget(self.button_open)
+        self.toolbar.addWidget(self.button_refresh)
+        self.toolbar.addWidget(self.dropdown_type)
+
         titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified', 'Stage','Waiting On', 'Elapsed Days','💬']
         self.table = QtWidgets.QTableWidget(1,len(titles),self)
         delegate = AlignDelegate(self.table)
@@ -347,29 +365,12 @@ class Manager(QtWidgets.QWidget):
         #self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         self.table.doubleClicked.connect(self.openECN)
         mainLayout.addWidget(self.table)
+        mainLayout.addWidget(self.statusbar)
         
         self.dropdown_type.currentIndexChanged.connect(self.repopulateTable)
         
         self.table.verticalScrollBar().valueChanged.connect(self.loadMoreTable)
         
-        # self.button_prev = QtWidgets.QPushButton("<<")
-        # self.button_prev.setFixedWidth(50)
-        # self.button_next = QtWidgets.QPushButton(">>")
-        # self.button_next.setFixedWidth(50)
-        # self.dropdown_page = QtWidgets.QComboBox()
-        # self.dropdown_page.setFixedWidth(50)
-        # self.dropdown_page.addItems(['1','2'])
-        # self.label_pages = QtWidgets.QLabel("/ 10")
-        # self.label_pages.setFixedWidth(50)
-        # hlayout = QtWidgets.QHBoxLayout()
-        # #hlayout.addWidget(self.button_open)
-        # hlayout.addWidget(self.button_prev)
-        # hlayout.addWidget(self.dropdown_page)
-        # hlayout.addWidget(self.label_pages)
-        # hlayout.addWidget(self.button_next)
-        # #hlayout.addWidget(self.button_add)
-        # mainLayout.addLayout(hlayout)
-
         mainLayout.setMenuBar(self.menubar)
         
         self.repopulateTable()
@@ -419,15 +420,18 @@ class Manager(QtWidgets.QWidget):
         self.table_data = self.cursor.fetchall()
         rowcount=0
         #print(len(test))
-        if len(self.table_data)>25:
+        data_size = len(self.table_data)
+        if data_size>25:
             self.table.setRowCount(25)
-            test = []
+            table_data = []
             for x in range(25):
-                test.append(self.table_data[x])
+                data.append(self.table_data[x])
+            self.statusbar.showMessage(f"Showing 25 of {data_size}")
         else:
             self.table.setRowCount(len(self.table_data))
-            test = self.table_data
-        for item in test:
+            table_data = self.table_data
+            self.statusbar.showMessage(f"Showing {data_size} of {data_size}")
+        for item in table_data:
             self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
             self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['ECN_TYPE']))
             title = QtWidgets.QTableWidgetItem(item['ECN_TITLE'])
@@ -470,16 +474,17 @@ class Manager(QtWidgets.QWidget):
             diff = total_count - rowcount
             if diff>25:
                 self.table.setRowCount(rowcount+25)
-                test = []
+                self.statusbar.showMessage(f"Showing {rowcount+25} of {total_count}")
+                table_data = []
                 for x in range(25):
-                    test.append(self.table_data[rowcount+x])
+                    table_data.append(self.table_data[rowcount+x])
             else:
                 self.table.setRowCount(rowcount+diff)
-                test = []
+                self.statusbar.showMessage(f"Showing {rowcount+diff} of {total_count}")
+                table_data = []
                 for x in range(diff):
-                    test.append(self.table_data[rowcount+x])
-                 
-            for item in test:
+                    table_data.append(self.table_data[rowcount+x])
+            for item in table_data:
                 self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
                 self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['ECN_TYPE']))
                 title = QtWidgets.QTableWidgetItem(item['ECN_TITLE'])
@@ -546,7 +551,7 @@ class Manager(QtWidgets.QWidget):
         self.cursor.execute(f"SELECT COUNT(ECN_ID) from ECN where STATUS!='Completed'")
         result = self.cursor.fetchone()
         #print("open:",result[0])
-        self.label_open_ecns.setText(f"Open: {result[0]}")
+        self.label_open_ecns.setText(f"Open - {result[0]}")
         self.cursor.execute(f"Select COUNT(ECN.ECN_ID) from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and ECN.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL")
         result = self.cursor.fetchone()
         #print("queue:",result[0])
@@ -554,11 +559,11 @@ class Manager(QtWidgets.QWidget):
             self.label_wait_ecns.setStyleSheet("Color:red;font-weight:bold")
         else:
             self.label_wait_ecns.setStyleSheet("Color:green;font-weight:bold")
-        self.label_wait_ecns.setText(f"Waiting: {result[0]}")
+        self.label_wait_ecns.setText(f"Waiting - {result[0]}")
         self.cursor.execute(f"SELECT COUNT(ECN_ID) from ECN where STATUS='Completed'")
         result = self.cursor.fetchone()
         #print("complete:",result[0])
-        self.label_complete_ecns.setText(f"Completed: {result[0]}")
+        self.label_complete_ecns.setText(f"Completed - {result[0]}")
 
     def createMenuActions(self):
         filemenu = self.menubar.addMenu("&File")
@@ -623,7 +628,7 @@ class Manager(QtWidgets.QWidget):
         self.animation.setDuration(1000)
         self.animation.setEasingCurve(QtCore.QEasingCurve.OutBack)
         self.animation.setStartValue(QtCore.QPoint(
-            self.table.pos().x(), -self.windowHeight))
+            -self.windowWidth, self.table.pos().y()))
         self.animation.setEndValue(QtCore.QPoint(loc))
 
         self.animation.start()

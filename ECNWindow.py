@@ -60,7 +60,6 @@ class ECNWindow(QtWidgets.QWidget):
     def initReqUI(self):
         mainlayout = QtWidgets.QVBoxLayout(self)
         
-        
         self.tabwidget = QtWidgets.QTabWidget(self)
         self.tab_ecn = ECNTab(self)
         self.tab_ecn.line_author.setText(self.parent.user_info['user'])

@@ -17,6 +17,7 @@ class AttachmentTab(QtWidgets.QWidget):
 
     def initUI(self):
         mainlayout = QtWidgets.QVBoxLayout(self)
+        self.toolbar = QtWidgets.QToolBar()
         #self.list_attachment = QtWidgets.QListWidget(self)
         #mainlayout.addWidget(self.list_attachment)
         
@@ -34,12 +35,17 @@ class AttachmentTab(QtWidgets.QWidget):
 
         #self.button_gen_parts = QtWidgets.QPushButton("Autogen Parts")
         #self.button_gen_parts.clicked.connect(self.autoGenParts)
-        hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(self.button_add)
-        hlayout.addWidget(self.button_remove)
-        hlayout.addWidget(self.button_open)
-        hlayout.addWidget(self.button_open_loc)
+        # hlayout = QtWidgets.QHBoxLayout()
+        # hlayout.addWidget(self.button_add)
+        # hlayout.addWidget(self.button_remove)
+        # hlayout.addWidget(self.button_open)
+        # hlayout.addWidget(self.button_open_loc)
         #hlayout.addWidget(self.button_gen_parts)
+        
+        self.toolbar.addWidget(self.button_add)
+        self.toolbar.addWidget(self.button_remove)
+        self.toolbar.addWidget(self.button_open)
+        self.toolbar.addWidget(self.button_open_loc)
         
         titles = ['File Name','File Path']
         self.table = QtWidgets.QTableWidget(0,len(titles),self)
@@ -49,9 +55,9 @@ class AttachmentTab(QtWidgets.QWidget):
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.table.doubleClicked.connect(self.openFile)
 
-        
+        mainlayout.addWidget(self.toolbar)
         mainlayout.addWidget(self.table)
-        mainlayout.addLayout(hlayout)
+        #mainlayout.addLayout(hlayout)
         self.setLayout(mainlayout)
         
 

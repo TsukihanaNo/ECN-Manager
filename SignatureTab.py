@@ -14,9 +14,10 @@ class SignatureTab(QtWidgets.QWidget):
 
     def initUI(self):
         mainlayout = QtWidgets.QVBoxLayout(self)
-
-        self.label_signatures = QtWidgets.QLabel("Signatures",self)
-        mainlayout.addWidget(self.label_signatures)
+        self.toolbar = QtWidgets.QToolBar()
+        #self.label_signatures = QtWidgets.QLabel("Signatures",self)
+        #mainlayout.addWidget(self.label_signatures)
+        mainlayout.addWidget(self.toolbar)
         
         titles = ['Title','Name','User', 'Approval']
         self.table = QtWidgets.QTableWidget(0,len(titles),self)
@@ -27,21 +28,24 @@ class SignatureTab(QtWidgets.QWidget):
         self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
         mainlayout.addWidget(self.table)
                 
-        hlayout = QtWidgets.QHBoxLayout(self)
+        #hlayout = QtWidgets.QHBoxLayout(self)
         self.button_add = QtWidgets.QPushButton("Add Signature")
         self.button_add.clicked.connect(self.addRow)
         self.button_remove = QtWidgets.QPushButton("Remove Signature")
         self.button_remove.setEnabled(False)
         self.button_remove.clicked.connect(self.removeRow)
-        hlayout.addWidget(self.button_add)
-        hlayout.addWidget(self.button_remove)
+        #hlayout.addWidget(self.button_add)
+        #hlayout.addWidget(self.button_remove)
+        self.toolbar.addWidget(self.button_add)
+        self.toolbar.addWidget(self.button_remove)
         if self.parent.parent.user_info['role']=="Manager":
             self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
             self.button_revoke = QtWidgets.QPushButton("Reject to selected")
             self.button_revoke.setEnabled(False)
             self.button_revoke.clicked.connect(self.rejectToSelected)
-            hlayout.addWidget(self.button_revoke)
-        mainlayout.addLayout(hlayout)
+            self.toolbar.addWidget(self.button_revoke)
+            #hlayout.addWidget(self.button_revoke)
+        #mainlayout.addLayout(hlayout)
 
         self.setLayout(mainlayout)       
 

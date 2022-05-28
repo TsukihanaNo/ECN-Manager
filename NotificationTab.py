@@ -16,10 +16,11 @@ class NotificationTab(QtWidgets.QWidget):
 
     def initUI(self):
         mainlayout = QtWidgets.QVBoxLayout(self)
+        self.toolbar = QtWidgets.QToolBar()
 
-        self.label_signatures = QtWidgets.QLabel("Notifications",self)
-        mainlayout.addWidget(self.label_signatures)
-        
+        # self.label_signatures = QtWidgets.QLabel("Notifications",self)
+        # mainlayout.addWidget(self.label_signatures)
+        mainlayout.addWidget(self.toolbar)
         titles = ['Title','Name','User']
         self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
@@ -29,15 +30,17 @@ class NotificationTab(QtWidgets.QWidget):
         self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
         mainlayout.addWidget(self.table)
                 
-        hlayout = QtWidgets.QHBoxLayout(self)
+        # hlayout = QtWidgets.QHBoxLayout(self)
         self.button_add = QtWidgets.QPushButton("Add Notify")
         self.button_add.clicked.connect(self.addRow)
         self.button_remove = QtWidgets.QPushButton("Remove Notify")
         self.button_remove.setEnabled(False)
         self.button_remove.clicked.connect(self.removeRow)
-        hlayout.addWidget(self.button_add)
-        hlayout.addWidget(self.button_remove)
-        mainlayout.addLayout(hlayout)
+        # hlayout.addWidget(self.button_add)
+        # hlayout.addWidget(self.button_remove)
+        # mainlayout.addLayout(hlayout)
+        self.toolbar.addWidget(self.button_add)
+        self.toolbar.addWidget(self.button_remove)
 
         self.setLayout(mainlayout)       
 

@@ -12,8 +12,9 @@ class PartsTab(QtWidgets.QWidget):
 
     def initUI(self): 
         mainlayout = QtWidgets.QVBoxLayout(self)
+        self.toolbar = QtWidgets.QToolBar()
 
-        self.label_parts = QtWidgets.QLabel("Parts",self)
+        # self.label_parts = QtWidgets.QLabel("Parts",self)
         
         titles = ['Part ID','Description','Type','Disposition','Manufacturer','Mfg. #','Replacing','Reference','Inspection Req.']
         self.table = QtWidgets.QTableWidget(0,len(titles),self)
@@ -22,18 +23,22 @@ class PartsTab(QtWidgets.QWidget):
         #self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
         
-        mainlayout.addWidget(self.label_parts)
+        #mainlayout.addWidget(self.label_parts)
+        mainlayout.addWidget(self.toolbar)
         mainlayout.addWidget(self.table)
                 
-        hlayout = QtWidgets.QHBoxLayout(self)
+        #hlayout = QtWidgets.QHBoxLayout(self)
         self.button_add = QtWidgets.QPushButton("Add Part")
         self.button_add.clicked.connect(self.addRow)
         self.button_remove = QtWidgets.QPushButton("Remove Part")
         self.button_remove.setDisabled(True)
         self.button_remove.clicked.connect(self.removeRow)
-        hlayout.addWidget(self.button_add)
-        hlayout.addWidget(self.button_remove)
-        mainlayout.addLayout(hlayout)
+        #hlayout.addWidget(self.button_add)
+        #hlayout.addWidget(self.button_remove)
+        #mainlayout.addLayout(hlayout)
+        
+        self.toolbar.addWidget(self.button_add)
+        self.toolbar.addWidget(self.button_remove)
                 
         self.setLayout(mainlayout)              
         self.repopulateTable()
