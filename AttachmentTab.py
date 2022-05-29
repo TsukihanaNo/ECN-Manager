@@ -2,6 +2,13 @@ from PySide6 import QtGui, QtCore, QtWidgets
 from pathlib import Path
 import os, sys
 
+if getattr(sys, 'frozen', False):
+    # frozen
+    program_location = os.path.dirname(sys.executable)
+else:
+    # unfrozen
+    program_location = os.path.dirname(os.path.realpath(__file__))
+
 class AttachmentTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(AttachmentTab,self).__init__()
@@ -22,15 +29,26 @@ class AttachmentTab(QtWidgets.QWidget):
         #mainlayout.addWidget(self.list_attachment)
         
         self.button_add = QtWidgets.QPushButton("Add Files")
+        icon_loc = icon = os.path.join(program_location,"icons","add.png")
+        self.button_add.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.addFiles)
         
         self.button_remove = QtWidgets.QPushButton("Remove")
+        self.button_remove.setDisabled(True)
+        icon_loc = icon = os.path.join(program_location,"icons","minus.png")
+        self.button_remove.setIcon(QtGui.QIcon(icon_loc))
         self.button_remove.clicked.connect(self.removeRow)
         
         self.button_open = QtWidgets.QPushButton("Open")
+        self.button_open.setDisabled(True)
+        icon_loc = icon = os.path.join(program_location,"icons","open.png")
+        self.button_open.setIcon(QtGui.QIcon(icon_loc))
         self.button_open.clicked.connect(self.openFile)
         
         self.button_open_loc = QtWidgets.QPushButton("Open File Location")
+        self.button_open_loc.setDisabled(True)
+        icon_loc = icon = os.path.join(program_location,"icons","open_folder.png")
+        self.button_open_loc.setIcon(QtGui.QIcon(icon_loc))
         self.button_open_loc.clicked.connect(self.openFileLoc)
 
         #self.button_gen_parts = QtWidgets.QPushButton("Autogen Parts")
@@ -53,6 +71,7 @@ class AttachmentTab(QtWidgets.QWidget):
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
         self.table.doubleClicked.connect(self.openFile)
 
         mainlayout.addWidget(self.toolbar)
@@ -60,6 +79,12 @@ class AttachmentTab(QtWidgets.QWidget):
         #mainlayout.addLayout(hlayout)
         self.setLayout(mainlayout)
         
+    def onRowSelect(self):
+        if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() and self.parent.tab_ecn.line_status.text()!="Completed":
+            self.button_remove.setEnabled(bool(self.table.selectionModel().selectedRows()))
+        self.button_open.setEnabled(bool(self.table.selectionModel().selectedRows()))
+        self.button_open_loc.setEnabled(bool(self.table.selectionModel().selectedRows()))
+
 
     def dropEvent(self, e):
         urlList = e.mimeData().urls()

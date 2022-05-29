@@ -12,6 +12,14 @@ from PartsTab import *
 from CommentTab import *
 from NotificationTab import *
 from string import Template
+import sys
+
+if getattr(sys, 'frozen', False):
+    # frozen
+    program_location = os.path.dirname(sys.executable)
+else:
+    # unfrozen
+    program_location = os.path.dirname(os.path.realpath(__file__))
 
 class ECNWindow(QtWidgets.QWidget):
     def __init__(self, parent = None, ecn_id = None):
@@ -59,6 +67,7 @@ class ECNWindow(QtWidgets.QWidget):
 
     def initReqUI(self):
         mainlayout = QtWidgets.QVBoxLayout(self)
+        self.toolbar = QtWidgets.QToolBar()
         
         self.tabwidget = QtWidgets.QTabWidget(self)
         self.tab_ecn = ECNTab(self)
@@ -74,14 +83,33 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_signature = SignatureTab(self)
         self.tab_notification = NotificationTab(self)
         #self.tab_changelog = ChangeLogTab(self,self.ecn_id)
-        self.button_save = QtWidgets.QPushButton("Save",self)
+        self.button_save = QtWidgets.QPushButton("Save")
+        #self.button_save.setToolTip("Save")
+        icon_loc = icon = os.path.join(program_location,"icons","save.png")
+        self.button_save.setIcon(QtGui.QIcon(icon_loc))
         self.button_release = QtWidgets.QPushButton("Release")
+        #self.button_release.setToolTip("Release")
+        icon_loc = icon = os.path.join(program_location,"icons","release.png")
+        self.button_release.setIcon(QtGui.QIcon(icon_loc))
         self.button_release.setDisabled(True)
         self.button_save.clicked.connect(self.save)
         self.button_release.clicked.connect(self.release)
         self.button_cancel = QtWidgets.QPushButton("Delete")
+        self.button_cancel.setToolTip("Delete")
+        icon_loc = icon = os.path.join(program_location,"icons","cancel.png")
+        self.button_cancel.setIcon(QtGui.QIcon(icon_loc))
         self.button_cancel.setDisabled(True)
         self.button_cancel.clicked.connect(self.cancel)
+        
+        self.toolbar.addWidget(self.button_save)
+        self.toolbar.addWidget(self.button_cancel)
+        self.toolbar.addWidget(self.button_release)
+        
+        # buttonlayout = QtWidgets.QHBoxLayout()
+        # buttonlayout.addWidget(self.button_save)
+        # buttonlayout.addWidget(self.button_cancel)
+        # buttonlayout.addWidget(self.button_release)
+        
         self.tabwidget.addTab(self.tab_ecn, "ECN")
         self.tabwidget.addTab(self.tab_parts,"Parts")
         self.tabwidget.addTab(self.tab_attach, "Attachment")
@@ -96,21 +124,19 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_purch = PurchaserTab(self)
         self.tab_planner = PlannerTab(self)
         self.tab_shop = ShopTab(self)
-        buttonlayout = QtWidgets.QHBoxLayout()
-        buttonlayout.addWidget(self.button_save)
-        buttonlayout.addWidget(self.button_cancel)
-        buttonlayout.addWidget(self.button_release)
+        
+        mainlayout.addWidget(self.toolbar)
         mainlayout.addWidget(self.tabwidget)
-        mainlayout.addLayout(buttonlayout)
+        #mainlayout.addLayout(buttonlayout)
         
         #self.tab_ecn.combo_dept.currentIndexChanged.connect(self.tab_signature.prepopulateTable)
         
         #self.tab_signature.prepopulateTable()
 
 
-
     def initFullUI(self):
         mainlayout = QtWidgets.QVBoxLayout(self)
+        self.toolbar = QtWidgets.QToolBar()
         
         self.tabwidget = QtWidgets.QTabWidget(self)
         #self.tabwidget.currentChanged.connect(self.printIndex)
@@ -137,45 +163,61 @@ class ECNWindow(QtWidgets.QWidget):
                     
         self.loadData()
         
-        mainlayout.addWidget(self.tabwidget)
-        buttonlayout = QtWidgets.QHBoxLayout()
+        #buttonlayout = QtWidgets.QHBoxLayout()
         
         #disable signature and attachment adding if not author and completed
-        if self.parent.user_info['user']==self.tab_ecn.line_author.text() and self.tab_ecn.line_status.text()!="Completed":
+        if self.parent.user_info['user']==self.ecn_data['AUTHOR'] and self.ecn_data['STATUS']!="Completed":
             self.tab_signature.button_add.setEnabled(True)
-            self.tab_signature.button_remove.setEnabled(True)
+            #self.tab_signature.button_remove.setEnabled(True)
             self.tab_attach.button_add.setEnabled(True)
-            self.tab_attach.button_remove.setEnabled(True)
+            #self.tab_attach.button_remove.setEnabled(True)
             # self.tab_comments.enterText.setEnabled(True)
             # self.tab_comments.label_enterText.setVisible(True)
             # self.tab_comments.enterText.setVisible(True)
         else:
             self.tab_signature.button_add.setDisabled(True)
-            self.tab_signature.button_remove.setDisabled(True)
+            #self.tab_signature.button_remove.setDisabled(True)
             self.tab_attach.button_add.setDisabled(True)
-            self.tab_attach.button_remove.setDisabled(True)
+            #self.tab_attach.button_remove.setDisabled(True)
             # self.tab_comments.enterText.setDisabled(True)
             # self.tab_comments.label_enterText.setVisible(False)
             # self.tab_comments.enterText.setVisible(False)
         
         if self.tab_ecn.line_status.text()!="Completed":
             if self.parent.user_info['user']==self.tab_ecn.line_author.text():
-                self.button_save = QtWidgets.QPushButton("Save",self)
+                self.button_save = QtWidgets.QPushButton("Save")
+                #self.button_save.setToolTip("Save")
+                icon_loc = icon = os.path.join(program_location,"icons","save.png")
+                self.button_save.setIcon(QtGui.QIcon(icon_loc))
                 self.button_cancel = QtWidgets.QPushButton("Cancel")
-                if self.tab_ecn.line_status.text()=="Draft":
-                    self.button_cancel.setText("Delete")
-                if self.tab_ecn.line_status.text()!="Rejected" and self.tab_ecn.line_status.text()!="Draft":
-                    self.button_cancel.setDisabled(True)
+                #self.button_cancel.setToolTip("Cancel")
+                icon_loc = icon = os.path.join(program_location,"icons","cancel.png")
+                self.button_cancel.setIcon(QtGui.QIcon(icon_loc))
                 self.button_release = QtWidgets.QPushButton("Release")
+                icon_loc = icon = os.path.join(program_location,"icons","release.png")
+                self.button_release.setIcon(QtGui.QIcon(icon_loc))
                 self.button_save.clicked.connect(self.save)
                 self.button_release.clicked.connect(self.release)
                 self.button_cancel.clicked.connect(self.cancel)
                 self.button_comment = QtWidgets.QPushButton("Add Comment")
+                #self.button_comment.setToolTip("Add comment")
+                icon_loc = icon = os.path.join(program_location,"icons","add_comment.png")
+                self.button_comment.setIcon(QtGui.QIcon(icon_loc))
                 self.button_comment.clicked.connect(self.addUserComment)
-                buttonlayout.addWidget(self.button_save)
-                buttonlayout.addWidget(self.button_cancel)
-                buttonlayout.addWidget(self.button_comment)
-                buttonlayout.addWidget(self.button_release)
+                if self.tab_ecn.line_status.text()=="Draft":
+                    self.button_cancel.setText("Delete")
+                if self.tab_ecn.line_status.text()!="Rejected" and self.tab_ecn.line_status.text()!="Draft":
+                    self.button_cancel.setDisabled(True)
+                
+                # buttonlayout.addWidget(self.button_save)
+                # buttonlayout.addWidget(self.button_cancel)
+                # buttonlayout.addWidget(self.button_comment)
+                # buttonlayout.addWidget(self.button_release)
+                self.toolbar.addWidget(self.button_save)
+                self.toolbar.addWidget(self.button_cancel)
+                self.toolbar.addWidget(self.button_comment)
+                self.toolbar.addSeparator()
+                self.toolbar.addWidget(self.button_release)
                 if self.tab_signature.table.rowCount()==0:
                     self.button_release.setDisabled(True)
                 self.tab_ecn.line_ecntitle.setReadOnly(False)
@@ -183,21 +225,40 @@ class ECNWindow(QtWidgets.QWidget):
                 self.tab_ecn.text_summary.setReadOnly(False)
                 if self.tab_ecn.line_status.text()=="Out For Approval":
                     self.button_release.setDisabled(True)
-                    self.tab_signature.button_add.setDisabled(True)
-                    self.tab_signature.button_remove.setDisabled(True)
+                    #self.tab_signature.button_add.setDisabled(True)
+                    #self.tab_signature.button_remove.setDisabled(True)
             else:
                 self.button_approve = QtWidgets.QPushButton("Approve")
+                #self.button_approve.setToolTip("Approve")
+                icon_loc = icon = os.path.join(program_location,"icons","approve.png")
+                self.button_approve.setIcon(QtGui.QIcon(icon_loc))
                 self.button_approve.clicked.connect(self.approve)
-                self.button_reject = QtWidgets.QPushButton("Reject to Author",self)
+                self.button_reject = QtWidgets.QPushButton("Reject")
+                #self.button_reject.setToolTip("Reject To Author")
+                icon_loc = icon = os.path.join(program_location,"icons","reject.png")
+                self.button_reject.setIcon(QtGui.QIcon(icon_loc))
                 self.button_comment = QtWidgets.QPushButton("Add Comment")
+                #self.button_comment.setToolTip("Add comment")
+                icon_loc = icon = os.path.join(program_location,"icons","add_comment.png")
+                self.button_comment.setIcon(QtGui.QIcon(icon_loc))
                 self.button_comment.clicked.connect(self.addUserComment)
                 self.button_reject.clicked.connect(self.reject)
                 self.button_save = QtWidgets.QPushButton("Save")
+                #self.button_save.setToolTip("Save")
+                icon_loc = icon = os.path.join(program_location,"icons","save.png")
+                self.button_save.setIcon(QtGui.QIcon(icon_loc))
                 self.button_save.clicked.connect(self.notificationSave)
-                buttonlayout.addWidget(self.button_approve)
-                buttonlayout.addWidget(self.button_reject)
-                buttonlayout.addWidget(self.button_comment)
-                buttonlayout.addWidget(self.button_save)
+                # buttonlayout.addWidget(self.button_approve)
+                # buttonlayout.addWidget(self.button_reject)
+                # buttonlayout.addWidget(self.button_comment)
+                # buttonlayout.addWidget(self.button_save)
+                
+                self.toolbar.addWidget(self.button_save)
+                self.toolbar.addWidget(self.button_comment)
+                self.toolbar.addSeparator()
+                self.toolbar.addWidget(self.button_approve)
+                self.toolbar.addWidget(self.button_reject)
+                
                 self.tab_ecn.line_ecntitle.setReadOnly(True)
                 self.tab_ecn.text_summary.setReadOnly(True)
                 self.tab_ecn.text_reason.setReadOnly(True)
@@ -207,7 +268,7 @@ class ECNWindow(QtWidgets.QWidget):
                 self.tab_parts.button_remove.setDisabled(True)
                 self.tab_parts.button_add.setDisabled(True)
                 self.tab_signature.button_add.setDisabled(True)
-                self.tab_signature.button_remove.setDisabled(True)
+                #self.tab_signature.button_remove.setDisabled(True)
                 if self.tab_ecn.line_status.text()=="Rejected":
                     self.button_reject.setDisabled(True)
                     self.button_approve.setDisabled(True)
@@ -219,15 +280,25 @@ class ECNWindow(QtWidgets.QWidget):
                 else:
                     self.button_approve.setDisabled(True)
                     self.button_reject.setDisabled(True)
+        else:
+            self.tab_parts.button_add.setDisabled(True)
+            self.tab_notification.button_add.setDisabled(True)
         self.button_exportHTML = QtWidgets.QPushButton("Export")
+        #self.button_exportHTML.setToolTip("Export ECN")
+        icon_loc = icon = os.path.join(program_location,"icons","export.png")
+        self.button_exportHTML.setIcon(QtGui.QIcon(icon_loc))
         self.button_exportHTML.clicked.connect(self.exportHTML)
+        self.toolbar.addSeparator()
+        self.toolbar.addWidget(self.button_exportHTML)
+        mainlayout.addWidget(self.toolbar)
+        mainlayout.addWidget(self.tabwidget)
         
         # self.button_move_stage = QtWidgets.QPushButton("Move Stage")
         # self.button_move_stage.clicked.connect(self.moveECNStage)
-        buttonlayout.addWidget(self.button_exportHTML)
+        #buttonlayout.addWidget(self.button_exportHTML)
         # buttonlayout.addWidget(self.button_move_stage)
             
-        mainlayout.addLayout(buttonlayout)
+        #mainlayout.addLayout(buttonlayout)
         self.setCommentCount()
         self.setPartCount()
         self.setAttachmentCount()        
@@ -339,7 +410,6 @@ class ECNWindow(QtWidgets.QWidget):
                 self.dispMsg(f"Error occured during data update (reject)!\n Error: {e}")
         if ok and comment=="":
             self.dispMsg("Rejection failed: comment field was left blank.")
-                  
     
     def AddSignatures(self):
         #inserting to signature table
@@ -487,18 +557,18 @@ class ECNWindow(QtWidgets.QWidget):
     def loadData(self):
         command = "Select * from ECN where ECN_ID = '"+self.ecn_id +"'"
         self.cursor.execute(command)
-        results = self.cursor.fetchone()
-        self.tab_ecn.line_id.setText(results['ECN_ID'])
+        self.ecn_data = self.cursor.fetchone()
+        self.tab_ecn.line_id.setText(self.ecn_data['ECN_ID'])
         #self.tab_ecn.combo_type.setCurrentIndex(self.typeindex[results['ECN_TYPE']])
-        self.tab_ecn.combo_type.setCurrentText(results['ECN_TYPE'])
-        self.tab_ecn.line_ecntitle.setText(results['ECN_TITLE'])
-        self.tab_ecn.text_reason.setText(results['ECN_REASON'])
-        self.tab_ecn.text_summary.setText(results['ECN_SUMMARY'])
-        self.tab_ecn.line_author.setText(results['AUTHOR'])
-        self.tab_ecn.box_requestor.setEditText(results['REQUESTOR'])
-        self.tab_ecn.line_status.setText(results['STATUS'])
-        if results['DEPARTMENT'] is not None:
-            self.tab_ecn.combo_dept.setCurrentText(results['DEPARTMENT'])
+        self.tab_ecn.combo_type.setCurrentText(self.ecn_data['ECN_TYPE'])
+        self.tab_ecn.line_ecntitle.setText(self.ecn_data['ECN_TITLE'])
+        self.tab_ecn.text_reason.setText(self.ecn_data['ECN_REASON'])
+        self.tab_ecn.text_summary.setText(self.ecn_data['ECN_SUMMARY'])
+        self.tab_ecn.line_author.setText(self.ecn_data['AUTHOR'])
+        self.tab_ecn.box_requestor.setEditText(self.ecn_data['REQUESTOR'])
+        self.tab_ecn.line_status.setText(self.ecn_data['STATUS'])
+        if self.ecn_data['DEPARTMENT'] is not None:
+            self.tab_ecn.combo_dept.setCurrentText(self.ecn_data['DEPARTMENT'])
         
         self.tab_signature.repopulateTable()
         self.tab_notification.repopulateTable()
@@ -777,6 +847,10 @@ class ECNWindow(QtWidgets.QWidget):
                 self.parent.repopulateTable()
                 self.dispMsg("ECN is now completed")
                 self.addNotification(self.ecn_id, "Completed")
+                self.tab_parts.button_add.setDisabled(True)
+                self.tab_attach.button_add_setDisabled(True)
+                self.tab_signature.button_add.setDisabled(True)
+                self.tab_notification.button_add.setDisabled(True)
             else:
                 self.parent.repopulateTable()
         except Exception as e:

@@ -1,4 +1,13 @@
 from PySide6 import QtGui, QtCore, QtWidgets
+import sys, os
+
+if getattr(sys, 'frozen', False):
+    # frozen
+    program_location = os.path.dirname(sys.executable)
+else:
+    # unfrozen
+    program_location = os.path.dirname(os.path.realpath(__file__))
+
 
 class SignatureTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
@@ -30,9 +39,14 @@ class SignatureTab(QtWidgets.QWidget):
                 
         #hlayout = QtWidgets.QHBoxLayout(self)
         self.button_add = QtWidgets.QPushButton("Add Signature")
+        print(self.parent.tab_ecn.line_status.text())
+        icon_loc = icon = os.path.join(program_location,"icons","add.png")
+        self.button_add.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.addRow)
         self.button_remove = QtWidgets.QPushButton("Remove Signature")
-        self.button_remove.setEnabled(False)
+        self.button_remove.setDisabled(True)
+        icon_loc = icon = os.path.join(program_location,"icons","minus.png")
+        self.button_remove.setIcon(QtGui.QIcon(icon_loc))
         self.button_remove.clicked.connect(self.removeRow)
         #hlayout.addWidget(self.button_add)
         #hlayout.addWidget(self.button_remove)
@@ -41,6 +55,8 @@ class SignatureTab(QtWidgets.QWidget):
         if self.parent.parent.user_info['role']=="Manager":
             self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
             self.button_revoke = QtWidgets.QPushButton("Reject to selected")
+            icon_loc = icon = os.path.join(program_location,"icons","reject.png")
+            self.button_revoke.setIcon(QtGui.QIcon(icon_loc))
             self.button_revoke.setEnabled(False)
             self.button_revoke.clicked.connect(self.rejectToSelected)
             self.toolbar.addWidget(self.button_revoke)
@@ -50,11 +66,11 @@ class SignatureTab(QtWidgets.QWidget):
         self.setLayout(mainlayout)       
 
     def onRowSelect(self):
-        if self.parent.parent.user_info['role']=="Manager":
-            row = self.table.currentRow()
+        row = self.table.currentRow()
+        if self.parent.parent.user_info['role']=="Manager" and self.parent.tab_ecn.line_status.text()!="Completed":
             self.button_revoke.setEnabled(bool(self.table.selectionModel().selectedRows()) and self.table.item(row, 3).text()!="")
-        if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text():
-            self.button_remove.setEnabled(bool(self.table.selectionModel().selectedRows()))
+        if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() and self.parent.tab_ecn.line_status.text()!="Completed":
+            self.button_remove.setEnabled(bool(self.table.selectionModel().selectedRows()) and self.table.item(row, 3).text()=="")
         
     def addRow(self):
         row = self.table.rowCount()

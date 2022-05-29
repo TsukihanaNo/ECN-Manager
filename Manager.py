@@ -278,10 +278,10 @@ class Manager(QtWidgets.QWidget):
         searchLayout = QtWidgets.QHBoxLayout()
         self.line_search = QtWidgets.QLineEdit(self)
         self.line_search.setPlaceholderText("Search here")
-        self.button_search = QtWidgets.QPushButton()
+        self.button_search = QtWidgets.QPushButton("Search")
         icon_loc = icon = os.path.join(program_location,"icons","search.png")
         self.button_search.setIcon(QtGui.QIcon(icon_loc))
-        self.button_search.setFixedWidth(25)
+        #self.button_search.setFixedWidth(25)
         self.line_search.returnPressed.connect(self.search)
         self.button_search.clicked.connect(self.search)
         #searchLayout.addWidget(self.line_search)
@@ -294,11 +294,11 @@ class Manager(QtWidgets.QWidget):
         self.label_complete_ecns = QtWidgets.QLabel("Completed - ")
         self.dropdown_type = QtWidgets.QComboBox(self)
         self.dropdown_type.setFixedWidth(100)
-        self.button_refresh = QtWidgets.QPushButton()
-        self.button_refresh.setToolTip("Refresh")
+        self.button_refresh = QtWidgets.QPushButton("Refresh")
+        #self.button_refresh.setToolTip("Refresh")
         icon_loc = icon = os.path.join(program_location,"icons","refresh.png")
         self.button_refresh.setIcon(QtGui.QIcon(icon_loc))
-        self.button_refresh.setFixedWidth(25)
+        #self.button_refresh.setFixedWidth(25)
         self.button_refresh.clicked.connect(self.repopulateTable)
         
         if self.user_info["role"]!="Engineer" and self.user_info['role']!="Admin":
@@ -307,15 +307,16 @@ class Manager(QtWidgets.QWidget):
             items = ["My ECNS","Queue","Open","Completed"]
         self.dropdown_type.addItems(items)
         
-        self.button_open = QtWidgets.QPushButton()
-        self.button_open.setToolTip("Open ECN")
+        self.button_open = QtWidgets.QPushButton("Open")
+        self.button_open.setEnabled(False)
+        #self.button_open.setToolTip("Open ECN")
         icon_loc = icon = os.path.join(program_location,"icons","open.png")
         self.button_open.setIcon(QtGui.QIcon(icon_loc))
-        self.button_open.setFixedWidth(25)
+        #self.button_open.setFixedWidth(25)
         self.button_open.clicked.connect(self.openECN)
-        self.button_add = QtWidgets.QPushButton()
-        self.button_add.setToolTip("New ECN")
-        self.button_add.setFixedWidth(25)
+        self.button_add = QtWidgets.QPushButton("New")
+        #self.button_add.setToolTip("New ECN")
+        #self.button_add.setFixedWidth(25)
         icon_loc = icon = os.path.join(program_location,"icons","new.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.newECN)
@@ -355,6 +356,7 @@ class Manager(QtWidgets.QWidget):
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
         #self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         header = self.table.horizontalHeader()
         for x in range(self.table.columnCount()):
@@ -394,6 +396,9 @@ class Manager(QtWidgets.QWidget):
         
     # def getTotalPage(self):
     #     self.cursor.execute("")
+    
+    def onRowSelect(self):
+        self.button_open.setEnabled(bool(self.table.selectionModel().selectedRows()))
 
         
     def repopulateTable(self):

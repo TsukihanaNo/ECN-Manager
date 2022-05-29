@@ -2,6 +2,13 @@ from PySide6 import QtGui, QtCore, QtWidgets
 from pathlib import Path
 import os, sys
 
+if getattr(sys, 'frozen', False):
+    # frozen
+    program_location = os.path.dirname(sys.executable)
+else:
+    # unfrozen
+    program_location = os.path.dirname(os.path.realpath(__file__))
+
 class NotificationTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(NotificationTab,self).__init__()
@@ -32,8 +39,12 @@ class NotificationTab(QtWidgets.QWidget):
                 
         # hlayout = QtWidgets.QHBoxLayout(self)
         self.button_add = QtWidgets.QPushButton("Add Notify")
+        icon_loc = icon = os.path.join(program_location,"icons","add.png")
+        self.button_add.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.addRow)
         self.button_remove = QtWidgets.QPushButton("Remove Notify")
+        icon_loc = icon = os.path.join(program_location,"icons","minus.png")
+        self.button_remove.setIcon(QtGui.QIcon(icon_loc))
         self.button_remove.setEnabled(False)
         self.button_remove.clicked.connect(self.removeRow)
         # hlayout.addWidget(self.button_add)
@@ -46,7 +57,8 @@ class NotificationTab(QtWidgets.QWidget):
 
     def onRowSelect(self):
         if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() or self.parent.parent.user_info["role"]=="Manager" or not isinstance(self.table.currentRow(), QtWidgets.QTableWidgetItem):
-            self.button_remove.setEnabled(bool(self.table.selectionModel().selectedRows()))
+            if self.parent.tab_ecn.line_status.text()!="Completed":
+                self.button_remove.setEnabled(bool(self.table.selectionModel().selectedRows()))
         
     def addRow(self):
         row = self.table.rowCount()
