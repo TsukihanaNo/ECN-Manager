@@ -70,7 +70,12 @@ class SignatureTab(QtWidgets.QWidget):
         if self.parent.parent.user_info['role']=="Manager" and self.parent.tab_ecn.line_status.text()!="Completed":
             self.button_revoke.setEnabled(bool(self.table.selectionModel().selectedRows()) and self.table.item(row, 3).text()!="")
         if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() and self.parent.tab_ecn.line_status.text()!="Completed":
-            self.button_remove.setEnabled(bool(self.table.selectionModel().selectedRows()) and self.table.item(row, 3).text()=="")
+            text = ""
+            if self.table.item(row, 3) is None:
+                text = ""
+            else:
+                text =  self.table.item(row, 3).text()
+            self.button_remove.setEnabled(bool(self.table.selectionModel().selectedRows()) and text=="")
         
     def addRow(self):
         row = self.table.rowCount()
@@ -156,8 +161,8 @@ class SignatureTab(QtWidgets.QWidget):
                 self.parent.db.commit()
                 self.parent.setECNStage(table_dict[user])
                 self.dispMsg(f"Rejection successful. ECN stage has been set to {table_dict[user]}")
-                users = user+','+users
-                self.parent.sendNotification(self.parent.ecn_id,"Rejected To Signer",users)
+                # users = user+','+users
+                self.parent.addNotification(self.parent.ecn_id,"Rejected To Signer",from_user=self.parent.parent.user_info['user'],userslist=users,msg=comment)
             if ok and comment=="":
                 self.dispMsg("Rejection failed. Comment field was left blank.")
         else:

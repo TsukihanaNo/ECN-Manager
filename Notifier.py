@@ -209,13 +209,15 @@ class Notifier(QtWidgets.QWidget):
                 self.generateECNX(result[0])
                 #self.generateHTML(result[0])
                 if result['TYPE']=="Rejected To Author":
-                    self.rejectNotification(result[0])
+                    self.rejectNotification(result[0],result['FROM_USER'],result['MSG'])
                 elif result['TYPE']=="Rejected To Signer":
-                    self.rejectSignerNotification(result[0],result['USERS'])
+                    self.rejectSignerNotification(result[0],result['FROM_USER'],result['USERS'],result['MSG'])
                 elif result['TYPE']=="Completed":
                     self.completionNotification(result[0])
                 elif result['TYPE']=="Stage Moved":
                     self.stageReleaseNotification(result[0])
+                elif result['TYPE']=="User Comment":
+                    self.commentNotification(result[0],result['FROM_USER'],result['MSG'])
                 else:
                     self.releaseNotification(result[0])
                 self.removeECNX(result[0])
@@ -236,7 +238,7 @@ class Notifier(QtWidgets.QWidget):
         self.db.commit()
         self.log_text.append("-status updated")
         
-    def rejectNotification(self,ecn_id):
+    def rejectNotification(self,ecn_id,from_user,msg):
         receivers = []
         self.cursor.execute(f"select Author from ECN where ECN_ID='{ecn_id}'")
         result = self.cursor.fetchone()
@@ -245,24 +247,50 @@ class Notifier(QtWidgets.QWidget):
         results = self.cursor.fetchall()
         for result in results:
             receivers.append(self.userList[result[0]])
-        message = f"{ecn_id} has been rejected to the author! All Signatures have been removed and the ECN approval will start from the beginning once the ECN is released again.\n\n\nYou can also open the attachment file to launch to be directed to the ECN."
+        from_user = self.emailNameList[self.userList[from_user]]
+        message = f"{ecn_id} has been rejected to the author by {from_user}! All Signatures have been removed and the ECN approval will start from the beginning once the ECN is released again. See comment below.\n\nComment - {from_user}: {msg}"
         print(f"send email to these addresses: {receivers} notifying ecn rejection")
+        print(message)
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
-        self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
+        #self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
         self.log_text.append(f"-Rejection Email sent for {ecn_id} to {receivers}")
         
     
-    def rejectSignerNotification(self,ecn_id,users):
-        receivers = users.split(',')
-        message = f"{ecn_id} has been rejected to user: {receivers[0]}. Signatures for the following users has been removed: {users}.\n\n\nYou can open the attachment file to be directed to the ECN."
+    def rejectSignerNotification(self,ecn_id,from_user,users,msg):
+        users = users.split(',')
+        receivers = []
+        for user in users:
+            receivers.append(self.userList[user])
+        message = f"{ecn_id} has been rejected to : {users[0]} by {from_user}. Signatures for the following users have also been removed: {users}.See comment below.\nComment: {msg}"
         print(f"send email to these addresses: {receivers} notifying ecn completion")
+        print(message)
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
-        self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
+        #self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
         self.log_text.append(f"-Rejection to Signer Email sent for {ecn_id} to {receivers}")
+        
+    def commentNotification(self,ecn_id,from_user,msg):
+        receivers = []
+        self.cursor.execute(f"select Author from ECN where ECN_ID='{ecn_id}'")
+        result = self.cursor.fetchone()
+        receivers.append(self.userList[result[0]])
+        self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing' and SIGNED_DATE!=''")
+        results = self.cursor.fetchall()
+        for result in results:
+            receivers.append(self.userList[result[0]])
+            
+        from_user = self.emailNameList[self.userList[from_user]]
+        message = f"a comment has been added to {ecn_id} by {from_user}! See comment below.\n\nComment - {from_user}: {msg}"
+        print(f"send email to these addresses: {receivers} notifying ecn comment")
+        print(message)
+        attach = []
+        attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
+        #attach.append(os.path.join(program_location,ecn_id+'.html'))
+        #self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
+        self.log_text.append(f"-user comment Email sent for {ecn_id} to {receivers}")
         
     
     def completionNotification(self,ecn_id):
@@ -279,7 +307,7 @@ class Notifier(QtWidgets.QWidget):
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
-        self.sendEmail(ecn_id,receivers, message,"Completion",attach)
+        #self.sendEmail(ecn_id,receivers, message,"Completion",attach)
         self.log_text.append(f"-Completion Email sent for {ecn_id} to {receivers}")
         
     def releaseNotification(self,ecn_id):
@@ -292,8 +320,7 @@ class Notifier(QtWidgets.QWidget):
         print(f"send email these addresses: {receivers} notifying ecn release")
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
-        #attach.append(os.path.join(program_location,ecn_id+'.html'))
-        self.sendEmail(ecn_id,receivers, message,attach)
+        #self.sendEmail(ecn_id,receivers, message,attach)
         self.log_text.append(f"-Release Email sent for {ecn_id} to {receivers}")
         
     def stageReleaseNotification(self,ecn_id):
@@ -309,8 +336,7 @@ class Notifier(QtWidgets.QWidget):
         print(f"send email these addresses: {receivers} notifying ecn release stage move")
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
-        #attach.append(os.path.join(program_location,ecn_id+'.html'))
-        self.sendEmail(ecn_id,receivers, message,"Awaiting Approval",attach)
+        #self.sendEmail(ecn_id,receivers, message,"Awaiting Approval",attach)
         self.log_text.append(f"-Stage Release Email sent for {ecn_id} to {receivers}")
             
     def sendEmail(self,ecn_id,receivers,message,subject,attach):
