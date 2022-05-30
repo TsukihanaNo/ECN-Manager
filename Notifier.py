@@ -249,12 +249,12 @@ class Notifier(QtWidgets.QWidget):
             receivers.append(self.userList[result[0]])
         from_user = self.emailNameList[self.userList[from_user]]
         message = f"{ecn_id} has been rejected to the author by {from_user}! All Signatures have been removed and the ECN approval will start from the beginning once the ECN is released again. See comment below.\n\nComment - {from_user}: {msg}"
-        print(f"send email to these addresses: {receivers} notifying ecn rejection")
-        print(message)
+        #print(f"send email to these addresses: {receivers} notifying ecn rejection")
+        #print(message)
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
-        #self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
+        self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
         self.log_text.append(f"-Rejection Email sent for {ecn_id} to {receivers}")
         
     
@@ -264,32 +264,39 @@ class Notifier(QtWidgets.QWidget):
         for user in users:
             receivers.append(self.userList[user])
         message = f"{ecn_id} has been rejected to : {users[0]} by {from_user}. Signatures for the following users have also been removed: {users}.See comment below.\nComment: {msg}"
-        print(f"send email to these addresses: {receivers} notifying ecn completion")
-        print(message)
+        #print(f"send email to these addresses: {receivers} notifying ecn completion")
+        #print(message)
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
-        #self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
+        self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
         self.log_text.append(f"-Rejection to Signer Email sent for {ecn_id} to {receivers}")
         
     def commentNotification(self,ecn_id,from_user,msg):
         receivers = []
         self.cursor.execute(f"select Author from ECN where ECN_ID='{ecn_id}'")
         result = self.cursor.fetchone()
-        receivers.append(self.userList[result[0]])
+        if result[0]!=from_user:
+            receivers.append(self.userList[result[0]])
         self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing' and SIGNED_DATE!=''")
         results = self.cursor.fetchall()
         for result in results:
-            receivers.append(self.userList[result[0]])
+            if result[0]!=from_user:
+                receivers.append(self.userList[result[0]])
+        self.cursor.execute(f"select distinct USER from COMMENTS where ECN_ID='{ecn_id}'")
+        results = self.cursor.fetchall()
+        for result in results:
+            if self.userList[result[0]] not in receivers and result[0]!=from_user:
+                receivers.append(self.userList[result[0]])
             
         from_user = self.emailNameList[self.userList[from_user]]
         message = f"a comment has been added to {ecn_id} by {from_user}! See comment below.\n\nComment - {from_user}: {msg}"
-        print(f"send email to these addresses: {receivers} notifying ecn comment")
-        print(message)
+        #print(f"send email to these addresses: {receivers} notifying ecn comment")
+        #print(message)
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
-        #self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
+        self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
         self.log_text.append(f"-user comment Email sent for {ecn_id} to {receivers}")
         
     
@@ -303,11 +310,11 @@ class Notifier(QtWidgets.QWidget):
         message = f"{ecn_id} has been completed!\n\n\n You can now view it in the completed section of your viewer."
         for result in results:
             receivers.append(self.userList[result[0]])
-        print(f"send email to these addresses: {receivers} notifying ecn completion")
+        #print(f"send email to these addresses: {receivers} notifying ecn completion")
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
-        #self.sendEmail(ecn_id,receivers, message,"Completion",attach)
+        self.sendEmail(ecn_id,receivers, message,"Completion",attach)
         self.log_text.append(f"-Completion Email sent for {ecn_id} to {receivers}")
         
     def releaseNotification(self,ecn_id):
@@ -320,7 +327,7 @@ class Notifier(QtWidgets.QWidget):
         print(f"send email these addresses: {receivers} notifying ecn release")
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
-        #self.sendEmail(ecn_id,receivers, message,attach)
+        self.sendEmail(ecn_id,receivers, message,attach)
         self.log_text.append(f"-Release Email sent for {ecn_id} to {receivers}")
         
     def stageReleaseNotification(self,ecn_id):
@@ -333,10 +340,10 @@ class Notifier(QtWidgets.QWidget):
         for user in users:
             receivers.append(self.userList[user])
         message = f"{ecn_id} has been released and is now awaiting for your approval!\nYou can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN your queue in the ECN Manager application."
-        print(f"send email these addresses: {receivers} notifying ecn release stage move")
+        #print(f"send email these addresses: {receivers} notifying ecn release stage move")
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
-        #self.sendEmail(ecn_id,receivers, message,"Awaiting Approval",attach)
+        self.sendEmail(ecn_id,receivers, message,"Awaiting Approval",attach)
         self.log_text.append(f"-Stage Release Email sent for {ecn_id} to {receivers}")
             
     def sendEmail(self,ecn_id,receivers,message,subject,attach):

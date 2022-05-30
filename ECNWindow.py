@@ -618,6 +618,7 @@ class ECNWindow(QtWidgets.QWidget):
         if ok and comment!="":
             self.addComment(self.ecn_id, comment,"User Comment")
             self.addNotification(self.ecn_id, "User Comment",from_user=self.parent.user_info['user'], msg=comment)
+            #self.dispMsg("Comment has been added!")
 
     def addComment(self,ecn_id,comment,commentType):
         #COMMENTS(ECN_ID TEXT, NAME TEXT, USER TEXT, COMM_DATE DATE, COMMENT TEXT
@@ -628,6 +629,7 @@ class ECNWindow(QtWidgets.QWidget):
         #self.tab_comments.mainText.clear()
         self.tab_comments.loadComments()
         self.setCommentCount()
+        self.tabwidget.setCurrentIndex(3)
         
     def setCommentCount(self):
         self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where ECN_ID='{self.ecn_id}'")

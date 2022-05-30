@@ -4,8 +4,12 @@ class CommentTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(CommentTab,self).__init__()
         self.parent = parent
+        self.menu = QtWidgets.QMenu(self)
+        self.getUserNameDict()
         self.initAtt()
+        self.createMenu()
         self.initUI()
+        
         
     def initAtt(self):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -22,6 +26,28 @@ class CommentTab(QtWidgets.QWidget):
         
         mainlayout.addWidget(self.messages)
         
+    def createMenu(self):
+        copy_action = QtGui.QAction("Copy Message",self)
+        copy_action.triggered.connect(self.copyMessage)
+        self.menu.addAction(copy_action)
+        
+        
+    def getUserNameDict(self):
+        self.parent.cursor.execute(f"Select USER_ID, NAME from USER")
+        results = self.parent.cursor.fetchall()
+        self.user_name = {}
+        for result in results:
+            self.user_name[result[0]]=result[1]
+            
+    def copyMessage(self):
+        index = self.messages.currentIndex()
+        #print(index.data(QtCore.Qt.DisplayRole)[2])
+        clipboard = QtGui.QGuiApplication.clipboard()
+        clipboard.setText(index.data(QtCore.Qt.DisplayRole)[2])
+            
+    def contextMenuEvent(self,event):
+        self.menu.exec_(event.globalPos())
+        
     def resizeEvent(self, e):
         self.model.layoutChanged.emit()
         
@@ -35,9 +61,9 @@ class CommentTab(QtWidgets.QWidget):
                 if "Reject" in result["TYPE"]:
                     comment_type="Reject"
                 if self.parent.tab_ecn.line_author.text() == result['USER']:
-                    self.model.add_message(USER_ME,f"{result['USER']}  -  {result['COMM_DATE']}  [{result['TYPE']}]:",result['COMMENT'],comment_type)
+                    self.model.add_message(USER_ME,f"{self.user_name[result['USER']]} ({result['USER']})  -  {result['COMM_DATE']}  [{result['TYPE']}]:",result['COMMENT'],comment_type)
                 else:
-                    self.model.add_message(USER_THEM,f"{result['USER']}  -  {result['COMM_DATE']}  [{result['TYPE']}]:",result['COMMENT'],comment_type)
+                    self.model.add_message(USER_THEM,f"{self.user_name[result['USER']]} ({result['USER']})  -  {result['COMM_DATE']}  [{result['TYPE']}]:",result['COMMENT'],comment_type)
 
 
 USER_ME = 0
@@ -56,6 +82,9 @@ class MessageDelegate(QtWidgets.QStyledItemDelegate):
 
     def paint(self, painter, option, index):
         painter.save()
+        
+        # if option.state & QtWidgets.QStyle.State_Selected:
+        #     painter.fillRect(option.rect, option.palette.highlight())
         # Retrieve the user,message uple from our model.data method.
         user, header, text, comment_type = index.model().data(index, QtCore.Qt.DisplayRole)
 
