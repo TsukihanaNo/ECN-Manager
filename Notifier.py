@@ -127,7 +127,7 @@ class Notifier(QtWidgets.QWidget):
             for line in f:
                 key,value = line.split(" : ")
                 self.settings[key]=value.strip()
-            print(self.settings)
+            #print(self.settings)
             f.close()
             self.db = sqlite3.connect(self.settings["DB_LOC"])
             self.cursor = self.db.cursor()

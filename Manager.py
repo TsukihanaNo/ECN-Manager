@@ -608,7 +608,7 @@ class Manager(QtWidgets.QWidget):
         msgbox.exec()
         
     def HookEcn(self,ecn_id=None):
-        print("info received",ecn_id)
+        #print("info received",ecn_id)
         if self.ecnWindow is None:
             self.ecnWindow = ECNWindow(self,ecn_id)
         else:

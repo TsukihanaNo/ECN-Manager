@@ -438,7 +438,7 @@ class ECNWindow(QtWidgets.QWidget):
             
             for element in new_list:
                 if element[3] not in current_list:
-                    print(f'insert {element[3]} into signature db')
+                    #print(f'insert {element[3]} into signature db')
                     self.cursor.execute("INSERT INTO SIGNATURE(ECN_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(element))
             for element in current_list:
                 no_match = True
@@ -446,7 +446,7 @@ class ECNWindow(QtWidgets.QWidget):
                     if element == elements[3]:
                         no_match = False
                 if no_match:
-                    print(f"remove {element} from signature db")
+                    #print(f"remove {element} from signature db")
                     self.cursor.execute(f"DELETE FROM SIGNATURE WHERE ECN_ID = '{self.ecn_id}' and USER_ID='{element}'")
                     
                     
@@ -470,7 +470,7 @@ class ECNWindow(QtWidgets.QWidget):
                 
             for element in new_list:
                 if element[3] not in current_list:
-                    print(f'insert {element[3]} into notify db')
+                    #print(f'insert {element[3]} into notify db')
                     self.cursor.execute("INSERT INTO SIGNATURE(ECN_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(element))
             for element in current_list:
                 no_match = True
@@ -478,11 +478,11 @@ class ECNWindow(QtWidgets.QWidget):
                     if element == elements[3]:
                         no_match = False
                 if no_match:
-                    print(f"remove {element} from notify db")
+                    #print(f"remove {element} from notify db")
                     self.cursor.execute(f"DELETE FROM SIGNATURE WHERE ECN_ID = '{self.ecn_id}' and USER_ID='{element}'")
             
             self.db.commit()
-            print('data updated')
+            #print('data updated')
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data update (signature)!\n Error: {e}")
@@ -611,7 +611,7 @@ class ECNWindow(QtWidgets.QWidget):
         #     self.tab_attach.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['FILEPATH']))
         #     rowcount+=1
             
-        self.loadComments()    
+        self.tab_comments.loadComments()    
         
     def addUserComment(self):
         comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Comment", "")
@@ -625,8 +625,8 @@ class ECNWindow(QtWidgets.QWidget):
         self.cursor.execute("INSERT INTO COMMENTS(ECN_ID, USER, COMM_DATE, COMMENT,TYPE) VALUES(?,?,?,?,?)",(data))
         self.db.commit()
         # self.tab_comments.enterText.clear()
-        self.tab_comments.mainText.clear()
-        self.loadComments()
+        #self.tab_comments.mainText.clear()
+        self.tab_comments.loadComments()
         self.setCommentCount()
         
     def setCommentCount(self):
@@ -643,22 +643,6 @@ class ECNWindow(QtWidgets.QWidget):
         self.cursor.execute(f"SELECT COUNT(FILENAME) from ATTACHMENTS where ECN_ID='{self.ecn_id}'")
         result = self.cursor.fetchone()
         self.tabwidget.setTabText(2, "Attachments ("+str(result[0])+")")
-            
-    def loadComments(self):
-            # self.tab_comments.enterText.clear()
-            self.tab_comments.mainText.clear()
-            command = "Select * from COMMENTS where ECN_ID = '" + self.ecn_id+"'"
-            self.cursor.execute(command)
-            results = self.cursor.fetchall()
-            for result in results:
-                # if self.tab_ecn.line_author.text() == result['USER']:
-                #     self.tab_comments.mainText.setTextColor(QtGui.QColor(0,0,255))
-                # else:
-                if result['TYPE']=="Reject":
-                    self.tab_comments.mainText.setTextColor(QtGui.QColor(255,0,0))
-                else:
-                    self.tab_comments.mainText.setTextColor(QtGui.QColor(0,0,255))
-                self.tab_comments.mainText.append(">>  " + result['TYPE'] + " : " + result['COMMENT'] + "\r    :: " + result['USER']+ " - " + result['COMM_DATE'] +"\r\r")
                 
     def cancel(self):
         if self.tab_ecn.line_status.text()=="Draft":
@@ -723,7 +707,7 @@ class ECNWindow(QtWidgets.QWidget):
         try:
             self.cursor.execute(f"Select TEMPSTAGE from ECN where ECN_ID='{self.ecn_id}'")
             result = self.cursor.fetchone()
-            print("current stage",result[0])
+            #print("current stage",result[0])
             if result[0] is None:
                 return 0
             else:
@@ -738,32 +722,32 @@ class ECNWindow(QtWidgets.QWidget):
                 titles[value] = [key]
             else:
                 titles[value].append(key)
-        print("titles generated", titles)
+        #print("titles generated", titles)
         return titles
     
     def moveECNStage(self):
         curStage = self.getECNStage()
         titles = self.getTitlesForStage()
         titles = titles[str(curStage)]
-        print("here are the titles",titles)
+        #print("here are the titles",titles)
         move = True
         for title in titles:
             self.cursor.execute(f"Select SIGNED_DATE from SIGNATURE where ECN_ID = '{self.ecn_id}' and JOB_TITLE='{title}' and TYPE='Signing'")
             results = self.cursor.fetchall()
             for result in results:
-                print(result['SIGNED_DATE'])
+                #print(result['SIGNED_DATE'])
                 if result['SIGNED_DATE'] is None:
                     move = False
-                    print("not moving to next stage")
+                    #print("not moving to next stage")
                     break
         if move:
             nextStages = self.getNextStage()
             if len(nextStages)>0:
-                print("moving to stage:", nextStages[0])
+                #print("moving to stage:", nextStages[0])
                 self.setECNStage(nextStages[0])
                 self.addNotification(self.ecn_id, "Stage Moved")
-            else:
-                print("this is the last stage")
+            # else:
+            #     print("this is the last stage")
             
     def getNextStage(self):
         self.cursor.execute(f"Select JOB_TITLE from SIGNATURE where ECN_ID='{self.ecn_id}' and SIGNED_DATE is NULL and TYPE='Signing'")
@@ -773,12 +757,12 @@ class ECNWindow(QtWidgets.QWidget):
             #print(result[0])
             stage.append(self.parent.stageDict[result[0]])
         stage = sorted(stage)
-        print(stage)
+        #print(stage)
         return stage
     
     def setECNStage(self,stage):
         try:
-            print('setting ecn to ', stage)
+            #print('setting ecn to ', stage)
             self.cursor.execute(f"UPDATE ECN SET STAGE ='{stage}', TEMPSTAGE = '{stage}' where ECN_ID='{self.ecn_id}'")
             self.db.commit()
         except Exception as e:
@@ -786,7 +770,7 @@ class ECNWindow(QtWidgets.QWidget):
             
     def resetECNStage(self):
         try:
-            print('resetting ecn stage')
+            #print('resetting ecn stage')
             self.cursor.execute(f"UPDATE ECN SET STAGE = Null, TEMPSTAGE = Null where ECN_ID='{self.ecn_id}'")
             self.db.commit()
         except Exception as e:
@@ -794,7 +778,7 @@ class ECNWindow(QtWidgets.QWidget):
     
     def isUserSignable(self):
         curStage = self.getECNStage()
-        print(curStage)
+        #print(curStage)
         if curStage == 0:
             return False
         titles = self.getTitlesForStage()
@@ -809,7 +793,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.cursor.execute(f"SELECT SIGNED_DATE from SIGNATURE where ECN_ID='{self.ecn_id}' and USER_ID='{self.parent.user_info['user']}'")
         result = self.cursor.fetchone()
         if result is None or result[0] is None:
-            print("found none returning false")
+            #print("found none returning false")
             return False
         else:
             return True
@@ -839,7 +823,7 @@ class ECNWindow(QtWidgets.QWidget):
                 #print(result[0])
                 #first_release = datetime.strptime(str(result[0]),'%Y-%m-%d %H:%M:%S')
                 elapsed = self.getElapsedDays(result[0], completeddate)
-                print(elapsed)
+                #print(elapsed)
                 #elapsed = self.getElapsedDays(first_release, completeddate)
                 data = (completeddate,completeddate,elapsed, "Completed",self.ecn_id)
                 self.cursor.execute("UPDATE ECN SET LAST_MODIFIED = ?,COMP_DATE = ?, COMP_DAYS = ?, STATUS = ? WHERE ECN_ID = ?",(data))

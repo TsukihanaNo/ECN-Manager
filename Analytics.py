@@ -21,15 +21,15 @@ class AnalyticsWindow(QtWidgets.QWidget):
         self.windowHeight = 600
         self.titleStageDict = parent.titleStageDict
         self.stageDict = parent.stageDict
-        print(self.titleStageDict)
+        #print(self.titleStageDict)
         if parent is None:
-            print("geting stuff")
+            #print("geting stuff")
             f = open(initfile,'r')
             self.settings = {}
             for line in f:
                 key,value = line.split(" : ")
                 self.settings[key]=value.strip()
-            print(self.settings)
+            #print(self.settings)
             f.close()
             self.db = sqlite3.connect(self.settings["DB_LOC"])
             self.cursor = self.db.cursor()
@@ -340,7 +340,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
         for value in self.stageDict.values():
             stages.append(value)
         stages = sorted(set(stages))
-        print(stages)
+        #print(stages)
         for stage in stages:
             self.cursor.execute(f"select COUNT(ECN_ID) from ECN where STAGE='{stage}' and STATUS!='Completed' and STATUS!='Draft' and STATUS!='Canceled'")
             result = self.cursor.fetchone()

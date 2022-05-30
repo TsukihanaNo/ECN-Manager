@@ -15,15 +15,15 @@ else:
 #check for lock file
 lock_loc = r"C:\ProgramData\ECN-Manager"
 
-print(sys.argv)
+#print(sys.argv)
 f = open(sys.argv[1],'r')
 ecn = f.readline().strip()
-print(ecn)
+#print(ecn)
 
 lockfile = os.path.join(lock_loc,"ecn.lock")
 program = os.path.join(program_location,"Manager.exe")
 if not os.path.exists(lockfile):
-    print(f"launching: {program}")
+    #print(f"launching: {program}")
     subprocess.Popen([program,ecn])
 else:
     address = ('localhost', 6000)

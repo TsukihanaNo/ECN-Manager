@@ -11,9 +11,9 @@ class Hook(QtCore.QObject):
         
     def run(self):
         while self.running:
-            print("starting hook")
+            #print("starting hook")
             conn = self.listener.accept()
-            print('connection accepted from', self.listener.last_accepted)
+            #print('connection accepted from', self.listener.last_accepted)
             msg = conn.recv()
             # do something with msg
             #print(msg)
