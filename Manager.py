@@ -430,7 +430,7 @@ class Manager(QtWidgets.QWidget):
             self.table.setRowCount(25)
             table_data = []
             for x in range(25):
-                data.append(self.table_data[x])
+                table_data.append(self.table_data[x])
             self.statusbar.showMessage(f"Showing 25 of {data_size}")
         else:
             self.table.setRowCount(len(self.table_data))
