@@ -45,6 +45,7 @@ class Notifier(QtWidgets.QWidget):
         self.initUI()
         self.center()
         self.show()
+        self.startTask()
         
         # self.checkDBTables()
         
@@ -76,8 +77,9 @@ class Notifier(QtWidgets.QWidget):
         # mainLayout.setMenuBar(self.menubar)
         self.setLayout(mainLayout)
         self.repopulateTable()
+    
+    def startTask(self):
         self.recurringTask()
-        
         timer = QtCore.QTimer(self)
         timer.timeout.connect(self.recurringTask)
         timer.start(60000)

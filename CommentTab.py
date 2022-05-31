@@ -53,6 +53,7 @@ class CommentTab(QtWidgets.QWidget):
         
     def loadComments(self):
             # self.tab_comments.enterText.clear()
+            self.model.clear_message()
             command = "Select * from COMMENTS where ECN_ID = '" + self.parent.ecn_id+"'"
             self.parent.cursor.execute(command)
             results = self.parent.cursor.fetchall()
@@ -166,6 +167,9 @@ class MessageModel(QtCore.QAbstractListModel):
 
     def rowCount(self, index):
         return len(self.messages)
+
+    def clear_message(self):
+        self.messages = []
 
     def add_message(self, who, header, text,comment_type):
         """
