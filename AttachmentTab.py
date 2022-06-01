@@ -95,7 +95,7 @@ class AttachmentTab(QtWidgets.QWidget):
             url = item.toLocalFile()
             if "C:" not in url:
                 if url not in self.files:
-                    self.files.append(url)
+                    self.files.append(str(Path(url).resolve()))
                     self.table.insertRow(row)
                     #listItem = QtWidgets.QListWidgetItem(url,self.list_attachment)
                     self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(url[url.rfind("/")+1:]))
@@ -149,10 +149,12 @@ class AttachmentTab(QtWidgets.QWidget):
                 
                 
     def removeRow(self):
+        print(self.files)
         index = self.table.selectionModel().selectedRows()
         index = sorted(index, reverse=True)
         for item in index:
             row = item.row()
+            print(self.table.item(row, 1).text())
             self.files.remove(self.table.item(row, 1).text())
             self.table.removeRow(row)
         
