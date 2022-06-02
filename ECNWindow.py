@@ -356,10 +356,10 @@ class ECNWindow(QtWidgets.QWidget):
                 self.addParts()
                 self.setPartCount()
             
-            if self.tab_attach.table.rowCount()>0:
-                for x in range(self.tab_attach.table.rowCount()):
-                    filename = self.tab_attach.table.item(x, 0).text()
-                    filepath = self.tab_attach.table.item(x, 1).text()
+            if self.tab_attach.rowCount()>0:
+                for x in range(self.tab_attach.rowCount()):
+                    filename = self.tab_attach.model.getFileName(x)
+                    filepath = self.tab_attach.model.getFilePath(x)
                     data = (self.ecn_id, filename, filepath)
                     self.cursor.execute("INSERT INTO ATTACHMENTS(ECN_ID,FILENAME,FILEPATH) VALUES(?,?,?)",(data))
                     self.db.commit()
@@ -536,16 +536,20 @@ class ECNWindow(QtWidgets.QWidget):
                 self.addParts()
                 self.setPartCount()
             
-            if self.tab_attach.table.rowCount()>0:
+            if self.tab_attach.rowCount()>0:
                 self.cursor.execute("DELETE FROM ATTACHMENTS WHERE ECN_ID = '" + self.ecn_id + "'")
                 self.db.commit()
-                for x in range(self.tab_attach.table.rowCount()):
-                    filename = self.tab_attach.table.item(x, 0).text()
-                    filepath = self.tab_attach.table.item(x, 1).text()
+                for x in range(self.tab_attach.rowCount()):
+                    filename = self.tab_attach.model.getFileName(x)
+                    filepath = self.tab_attach.model.getFilePath(x)
                     data = (self.ecn_id, filename, filepath)
                     self.cursor.execute("INSERT INTO ATTACHMENTS(ECN_ID,FILENAME,FILEPATH) VALUES(?,?,?)",(data))
                     self.db.commit()
                     self.setAttachmentCount()
+            if self.tab_attach.rowCount()==0:
+                self.cursor.execute("DELETE FROM ATTACHMENTS WHERE ECN_ID = '" + self.ecn_id + "'")
+                self.db.commit()
+                self.setAttachmentCount()
                     
             # if self.tab_comments.enterText.toPlainText()!="":
             #     self.addComment(self.ecn_id,self.tab_comments.enterText.toPlainText(),"Author")
@@ -913,7 +917,7 @@ class ECNWindow(QtWidgets.QWidget):
                         self.dispMsg("ECN has been saved!")
                     self.tabwidget.setTabVisible(3, True)
                     self.parent.repopulateTable()
-                    if self.tab_signature.table.rowCount()>0:
+                    if self.tab_signature.table.rowCount()>0 and self.tab_ecn.line_status.text()!="Out For Approval":
                         self.button_release.setDisabled(False)
                     self.button_cancel.setDisabled(False)
         else:
@@ -925,7 +929,7 @@ class ECNWindow(QtWidgets.QWidget):
                     self.AddSignatures()
                     if not msg:
                         self.dispMsg("ECN has been updated!")
-                    if self.tab_signature.table.rowCount()>0:
+                    if self.tab_signature.table.rowCount()>0 and self.tab_ecn.line_status.text()!="Out For Approval":
                         self.button_release.setDisabled(False)
                     #self.getCurrentValues()
                     #self.checkDiff()

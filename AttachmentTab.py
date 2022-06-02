@@ -9,6 +9,8 @@ else:
     # unfrozen
     program_location = os.path.dirname(os.path.realpath(__file__))
 
+supported_type = ["doc","docx","dwg","stl","slddrw","sldprt","stp","sldasm","ppt","pptx",""]
+
 class AttachmentTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(AttachmentTab,self).__init__()
@@ -16,7 +18,6 @@ class AttachmentTab(QtWidgets.QWidget):
         self.files = []
         self.initAtt()
         self.initUI()
-        self.generateFileList()
 
     def initAtt(self):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -65,42 +66,51 @@ class AttachmentTab(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_open)
         self.toolbar.addWidget(self.button_open_loc)
         
-        titles = ['File Name','File Path']
-        self.table = QtWidgets.QTableWidget(0,len(titles),self)
-        self.table.setHorizontalHeaderLabels(titles)
-        self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
-        self.table.doubleClicked.connect(self.openFile)
+        # titles = ['File Name','File Path']
+        # self.table = QtWidgets.QTableWidget(0,len(titles),self)
+        # self.table.setHorizontalHeaderLabels(titles)
+        # self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        # self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        # self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
+        # self.table.doubleClicked.connect(self.openFile)
+        
+        self.attachments = QtWidgets.QListView()
+        self.attachments.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.attachments.setResizeMode(QtWidgets.QListView.Adjust)
+        self.attachments.setItemDelegate(AttachmentDelegate())
+        self.attachments.doubleClicked.connect(self.openFile)
+        
+        self.model = AttachmentModel()
+        self.attachments.setModel(self.model)
+        
+        self.attachments.selectionModel().selectionChanged.connect(self.onRowSelect)
 
         mainlayout.addWidget(self.toolbar)
-        mainlayout.addWidget(self.table)
+        mainlayout.addWidget(self.attachments)
+        #mainlayout.addWidget(self.table)
         #mainlayout.addLayout(hlayout)
         self.setLayout(mainlayout)
         
     def onRowSelect(self):
         if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() and self.parent.tab_ecn.line_status.text()!="Completed":
-            self.button_remove.setEnabled(bool(self.table.selectionModel().selectedRows()))
-        self.button_open.setEnabled(bool(self.table.selectionModel().selectedRows()))
-        self.button_open_loc.setEnabled(bool(self.table.selectionModel().selectedRows()))
+            self.button_remove.setEnabled(bool(self.attachments.selectionModel().selectedIndexes()))
+        self.button_open.setEnabled(bool(self.attachments.selectionModel().selectedIndexes()))
+        self.button_open_loc.setEnabled(bool(self.attachments.selectionModel().selectedIndexes()))
 
 
     def dropEvent(self, e):
         urlList = e.mimeData().urls()
-        #self.table.setRowCount(len(urlList))
-        row=self.table.rowCount()
         cfiles=[]
         for item in urlList:
             url = item.toLocalFile()
             if "C:" not in url:
-                if url not in self.files:
+                if str(Path(url).resolve()) not in self.files:
+                    file_info = QtCore.QFileInfo(url)
+                    icon_provider=QtGui.QAbstractFileIconProvider()
+                    icon = icon_provider.icon(file_info)
+                    self.model.add_attachment(url[url.rfind("/")+1:], str(Path(url).resolve()),icon)
                     self.files.append(str(Path(url).resolve()))
-                    self.table.insertRow(row)
-                    #listItem = QtWidgets.QListWidgetItem(url,self.list_attachment)
-                    self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(url[url.rfind("/")+1:]))
-                    self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(str(Path(url).resolve())))
-                    row+=1
             else:
                 cfiles.append(url)
         if len(cfiles)>0:
@@ -113,16 +123,16 @@ class AttachmentTab(QtWidgets.QWidget):
             e.ignore()
             
     def openFile(self):
-        row = self.table.currentRow()
+        index = self.attachments.currentIndex()
         try:
-            os.startfile(self.table.item(row,1).text())
+            os.startfile(index.data(QtCore.Qt.DisplayRole)[1])
         except Exception as e:
             print(e)
             
     def openFileLoc(self):
-        row = self.table.currentRow()
+        index = self.attachments.currentIndex()
         try:
-            path = Path(self.table.item(row,1).text())
+            path = Path(index.data(QtCore.Qt.DisplayRole)[1])
             os.startfile(path.parent)
         except Exception as e:
             print(e)
@@ -133,15 +143,14 @@ class AttachmentTab(QtWidgets.QWidget):
         cfiles = []
         if dialog.exec():
             fileNames = dialog.selectedFiles()
-            row=self.table.rowCount()
             for url in fileNames:
                 if "C:" not in url:
-                    if url not in self.files:
-                        self.files.append(url)
-                        self.table.insertRow(row)
-                        self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(url[url.rfind("/")+1:]))
-                        self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(str(Path(url).resolve())))
-                        row+=1
+                    if str(Path(url).resolve()) not in self.files:
+                        file_info = QtCore.QFileInfo(url)
+                        icon_provider=QtGui.QAbstractFileIconProvider()
+                        icon = icon_provider.icon(file_info)
+                        self.model.add_attachment(url[url.rfind("/")+1:], str(Path(url).resolve()),icon)
+                        self.files.append(str(Path(url).resolve()))
                 else:
                     cfiles.append(url)
             if len(cfiles)>0:
@@ -149,19 +158,18 @@ class AttachmentTab(QtWidgets.QWidget):
                 
                 
     def removeRow(self):
-        print(self.files)
-        index = self.table.selectionModel().selectedRows()
+        index = self.attachments.selectionModel().selectedIndexes()
         index = sorted(index, reverse=True)
         for item in index:
             row = item.row()
-            print(self.table.item(row, 1).text())
-            self.files.remove(self.table.item(row, 1).text())
-            self.table.removeRow(row)
-        
-    def generateFileList(self):
-        if self.table.rowCount()>0:
-            for x in range(self.table.rowCount()):
-                self.files.append(self.table.item(x, 1).text())
+            #print(self.table.item(row, 1).text())
+            #print(item.data(QtCore.Qt.DisplayRole)[1])
+            #print(self.files)
+            self.files.remove(item.data(QtCore.Qt.DisplayRole)[1])
+            self.model.removeRow(row)
+            
+    def rowCount(self):
+        return self.model.rowCount(self.attachments)
 
     def autoGenParts(self):
         parts = []
@@ -177,12 +185,16 @@ class AttachmentTab(QtWidgets.QWidget):
         command = "Select * from ATTACHMENTS where ECN_ID= '"+self.parent.ecn_id +"'"
         self.parent.cursor.execute(command)
         results = self.parent.cursor.fetchall()
-        self.table.setRowCount(len(results))
-        rowcount=0
         for result in results:
-            self.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['FILENAME']))
-            self.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['FILEPATH']))
-            rowcount+=1
+            #print(result['FILEPATH'])
+            file_info = QtCore.QFileInfo(result['FILEPATH'])
+            icon_provider=QtGui.QAbstractFileIconProvider()
+            icon = icon_provider.icon(file_info)
+            self.model.add_attachment(result['FILENAME'], result['FILEPATH'],icon)
+            self.files.append(result['FILEPATH'])
+            
+    def resizeEvent(self, e):
+        self.model.layoutChanged.emit()
     
 
     def dispMsg(self,msg):
@@ -190,3 +202,80 @@ class AttachmentTab(QtWidgets.QWidget):
         msgbox.setText(msg+"        ")
         msgbox.exec()
 
+
+
+PADDING = QtCore.QMargins(5, 1, 5, 1)
+
+class AttachmentDelegate(QtWidgets.QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        painter.save()
+        
+        filename, filepath, icon = index.model().data(index, QtCore.Qt.DisplayRole)
+        
+        r = option.rect.marginsRemoved(PADDING)
+        painter.setPen(QtCore.Qt.NoPen)
+        if option.state & QtWidgets.QStyle.State_Selected:
+            color = QtGui.QColor("#ffadad")
+        elif option.state & QtWidgets.QStyle.State_MouseOver:
+            color = QtGui.QColor("#a5d6a7")
+        else:
+            color = QtGui.QColor("#90caf9")
+        painter.setBrush(color)
+        painter.drawRoundedRect(r, 3, 3)
+        
+        # draw filname
+        font = painter.font()
+        font.setPointSize(10)
+        font.setBold(True)
+        painter.setFont(font)
+        painter.setPen(QtCore.Qt.black)
+        painter.drawText(r.topLeft()+QtCore.QPoint(35,12),filename)
+        # draw the filepath
+        font = painter.font()
+        font.setPointSize(8)
+        #font.setBold(True)
+        painter.setFont(font)
+        painter.setPen(QtCore.Qt.black)
+        painter.drawText(r.topLeft()+QtCore.QPoint(35,25),filepath)
+        
+        ic = QtGui.QIcon(icon)
+        ic.paint(painter,r,QtCore.Qt.AlignLeft)
+        
+        painter.restore()
+
+    def sizeHint(self, option, index):
+        return QtCore.QSize(option.rect.width()-50,30)
+
+class AttachmentModel(QtCore.QAbstractListModel):
+    def __init__(self, *args, **kwargs):
+        super(AttachmentModel, self).__init__(*args, **kwargs)
+        self.attachments = []
+
+    def data(self, index, role):
+        if role == QtCore.Qt.DisplayRole:
+            return self.attachments[index.row()]
+
+    def setData(self, index, role, value):
+        self._size[index.row()]
+
+    def rowCount(self, index):
+        return len(self.attachments)
+    
+    def removeRow(self, row):
+        del self.attachments[row]
+        self.layoutChanged.emit()
+
+    def clear_attachments(self):
+        self.attachments = []
+        
+    def getFilePath(self, row):
+        return self.attachments[row][1]
+    
+    def getFileName(self, row):
+        return self.attachments[row][0]
+
+    def add_attachment(self, filename, filepath, icon=None):
+        # Access the list via the model.
+        self.attachments.append((filename, filepath, icon))
+        # Trigger refresh.
+        self.layoutChanged.emit()
