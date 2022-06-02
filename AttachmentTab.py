@@ -204,7 +204,7 @@ class AttachmentTab(QtWidgets.QWidget):
 
 
 
-PADDING = QtCore.QMargins(5, 1, 5, 1)
+PADDING = QtCore.QMargins(15, 2, 15, 2)
 
 class AttachmentDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
@@ -221,22 +221,22 @@ class AttachmentDelegate(QtWidgets.QStyledItemDelegate):
         else:
             color = QtGui.QColor("#90caf9")
         painter.setBrush(color)
-        painter.drawRoundedRect(r, 3, 3)
+        painter.drawRoundedRect(r, 0, 0)
         
         # draw filname
         font = painter.font()
-        font.setPointSize(10)
+        font.setPointSize(9)
         font.setBold(True)
         painter.setFont(font)
         painter.setPen(QtCore.Qt.black)
-        painter.drawText(r.topLeft()+QtCore.QPoint(35,12),filename)
+        painter.drawText(r.topLeft()+QtCore.QPoint(30,12),filename)
         # draw the filepath
         font = painter.font()
         font.setPointSize(8)
-        #font.setBold(True)
+        font.setBold(False)
         painter.setFont(font)
         painter.setPen(QtCore.Qt.black)
-        painter.drawText(r.topLeft()+QtCore.QPoint(35,25),filepath)
+        painter.drawText(r.topLeft()+QtCore.QPoint(30,25),filepath)
         
         ic = QtGui.QIcon(icon)
         ic.paint(painter,r,QtCore.Qt.AlignLeft)
@@ -244,7 +244,7 @@ class AttachmentDelegate(QtWidgets.QStyledItemDelegate):
         painter.restore()
 
     def sizeHint(self, option, index):
-        return QtCore.QSize(option.rect.width()-50,30)
+        return QtCore.QSize(option.rect.width()-50,32)
 
 class AttachmentModel(QtCore.QAbstractListModel):
     def __init__(self, *args, **kwargs):
