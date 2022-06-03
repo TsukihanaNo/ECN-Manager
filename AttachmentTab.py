@@ -51,29 +51,12 @@ class AttachmentTab(QtWidgets.QWidget):
         icon_loc = icon = os.path.join(program_location,"icons","open_folder.png")
         self.button_open_loc.setIcon(QtGui.QIcon(icon_loc))
         self.button_open_loc.clicked.connect(self.openFileLoc)
-
-        #self.button_gen_parts = QtWidgets.QPushButton("Autogen Parts")
-        #self.button_gen_parts.clicked.connect(self.autoGenParts)
-        # hlayout = QtWidgets.QHBoxLayout()
-        # hlayout.addWidget(self.button_add)
-        # hlayout.addWidget(self.button_remove)
-        # hlayout.addWidget(self.button_open)
-        # hlayout.addWidget(self.button_open_loc)
-        #hlayout.addWidget(self.button_gen_parts)
         
         self.toolbar.addWidget(self.button_add)
         self.toolbar.addWidget(self.button_remove)
         self.toolbar.addWidget(self.button_open)
         self.toolbar.addWidget(self.button_open_loc)
         
-        # titles = ['File Name','File Path']
-        # self.table = QtWidgets.QTableWidget(0,len(titles),self)
-        # self.table.setHorizontalHeaderLabels(titles)
-        # self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        # self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        # self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        # self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
-        # self.table.doubleClicked.connect(self.openFile)
         
         self.attachments = QtWidgets.QListView()
         self.attachments.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
@@ -88,8 +71,7 @@ class AttachmentTab(QtWidgets.QWidget):
 
         mainlayout.addWidget(self.toolbar)
         mainlayout.addWidget(self.attachments)
-        #mainlayout.addWidget(self.table)
-        #mainlayout.addLayout(hlayout)
+
         self.setLayout(mainlayout)
         
     def onRowSelect(self):
@@ -104,7 +86,7 @@ class AttachmentTab(QtWidgets.QWidget):
         cfiles=[]
         for item in urlList:
             url = item.toLocalFile()
-            if "C:" not in url:
+            if str(Path(url).resolve())[:2] ==r"\\":
                 if str(Path(url).resolve()) not in self.files:
                     file_info = QtCore.QFileInfo(url)
                     icon_provider=QtGui.QAbstractFileIconProvider()
@@ -112,7 +94,7 @@ class AttachmentTab(QtWidgets.QWidget):
                     self.model.add_attachment(url[url.rfind("/")+1:], str(Path(url).resolve()),icon)
                     self.files.append(str(Path(url).resolve()))
             else:
-                cfiles.append(url)
+                cfiles.append(str(Path(url).resolve()))
         if len(cfiles)>0:
             self.dispMsg(f"The following files were not accepted as they reside on your local machine and is not accessible by other users:{cfiles}")
 
@@ -144,7 +126,7 @@ class AttachmentTab(QtWidgets.QWidget):
         if dialog.exec():
             fileNames = dialog.selectedFiles()
             for url in fileNames:
-                if "C:" not in url:
+                if str(Path(url).resolve())[:2] ==r"\\":
                     if str(Path(url).resolve()) not in self.files:
                         file_info = QtCore.QFileInfo(url)
                         icon_provider=QtGui.QAbstractFileIconProvider()
@@ -152,7 +134,7 @@ class AttachmentTab(QtWidgets.QWidget):
                         self.model.add_attachment(url[url.rfind("/")+1:], str(Path(url).resolve()),icon)
                         self.files.append(str(Path(url).resolve()))
                 else:
-                    cfiles.append(url)
+                    cfiles.append(str(Path(url).resolve()))
             if len(cfiles)>0:
                 self.dispMsg(f"The following were files not accepted as they reside on your local machine and is not accessible by other users:{cfiles}")
                 
