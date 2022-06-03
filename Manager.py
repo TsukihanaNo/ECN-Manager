@@ -350,6 +350,7 @@ class Manager(QtWidgets.QWidget):
         self.table = QtWidgets.QTableWidget(1,len(titles),self)
         delegate = AlignDelegate(self.table)
         self.table.setItemDelegate(delegate)
+        self.table.setStyleSheet("QTableWidget::item{selection-background-color:#A0C4FF}")
         self.table.setHorizontalHeaderLabels(titles)
         self.table.horizontalHeader().setSortIndicatorShown(True)
         self.table.horizontalHeader().sortIndicatorChanged.connect(self.setSort)
@@ -440,7 +441,7 @@ class Manager(QtWidgets.QWidget):
             self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
             self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['ECN_TYPE']))
             title = QtWidgets.QTableWidgetItem(item['ECN_TITLE'])
-            title.setToolTip(item['ECN_TITLE'])
+            #title.setToolTip(item['ECN_TITLE'])
             self.table.setItem(rowcount,2,title)
             self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
             self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
@@ -457,9 +458,9 @@ class Manager(QtWidgets.QWidget):
                     users = self.getWaitingUser(item['ECN_ID'], self.titleStageDict[str(item['STAGE'])])
                     self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(users))
             if item["STATUS"]=="Rejected":
-                self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,99,99))
+                self.table.item(rowcount, 3).setBackground(QtGui.QColor("#FFADAD"))
             if item["STATUS"]=="Out For Approval":
-                self.table.item(rowcount, 3).setBackground(QtGui.QColor(186,255,180))
+                self.table.item(rowcount, 3).setBackground(QtGui.QColor("#CAFFBF"))
             
             self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where ECN_ID='{item['ECN_ID']}'")
             comment = self.cursor.fetchone()
@@ -467,6 +468,7 @@ class Manager(QtWidgets.QWidget):
                 self.table.setItem(rowcount,8,QtWidgets.QTableWidgetItem(str(comment[0])))
             
             rowcount+=1
+        self.table.resizeRowsToContents()
             
         
     def loadMoreTable(self):
@@ -493,7 +495,7 @@ class Manager(QtWidgets.QWidget):
                 self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
                 self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['ECN_TYPE']))
                 title = QtWidgets.QTableWidgetItem(item['ECN_TITLE'])
-                title.setToolTip(item['ECN_TITLE'])
+                #title.setToolTip(item['ECN_TITLE'])
                 self.table.setItem(rowcount,2,title)
                 self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
                 self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
@@ -510,9 +512,9 @@ class Manager(QtWidgets.QWidget):
                         users = self.getWaitingUser(item['ECN_ID'], self.titleStageDict[str(item['STAGE'])])
                         self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(users))
                 if item["STATUS"]=="Rejected":
-                    self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,99,99))
+                    self.table.item(rowcount, 3).setBackground(QtGui.QColor("#FFADAD"))
                 if item["STATUS"]=="Out For Approval":
-                    self.table.item(rowcount, 3).setBackground(QtGui.QColor(186,255,180))
+                    self.table.item(rowcount, 3).setBackground(QtGui.QColor("#CAFFBF"))
                 
                 self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where ECN_ID='{item['ECN_ID']}'")
                 comment = self.cursor.fetchone()
@@ -520,6 +522,7 @@ class Manager(QtWidgets.QWidget):
                     self.table.setItem(rowcount,8,QtWidgets.QTableWidgetItem(str(comment[0])))
                 
                 rowcount+=1
+            self.table.resizeRowsToContents()
         
     def setSort(self, index, order):
         self.sorting = (index,order)

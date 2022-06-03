@@ -204,7 +204,7 @@ class AttachmentTab(QtWidgets.QWidget):
 
 
 
-PADDING = QtCore.QMargins(15, 2, 15, 2)
+PADDING = QtCore.QMargins(15, 0, 15, 0)
 
 class AttachmentDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
@@ -212,16 +212,25 @@ class AttachmentDelegate(QtWidgets.QStyledItemDelegate):
         
         filename, filepath, icon = index.model().data(index, QtCore.Qt.DisplayRole)
         
+        linepen = QtGui.QPen(QtGui.QColor.fromRgb(211,211,211),1,QtCore.Qt.SolidLine)
+        lineMarkedPen = QtGui.QPen(QtGui.QColor.fromRgb(0,90,131),1,QtCore.Qt.SolidLine)
+        
         r = option.rect.marginsRemoved(PADDING)
         painter.setPen(QtCore.Qt.NoPen)
         if option.state & QtWidgets.QStyle.State_Selected:
-            color = QtGui.QColor("#ffadad")
+            color = QtGui.QColor("#A0C4FF")
         elif option.state & QtWidgets.QStyle.State_MouseOver:
-            color = QtGui.QColor("#a5d6a7")
+            color = QtGui.QColor("#BDB2FF")
         else:
-            color = QtGui.QColor("#90caf9")
+            color = QtGui.QColor("#FFFFFC")
         painter.setBrush(color)
         painter.drawRoundedRect(r, 0, 0)
+        
+        painter.setPen(lineMarkedPen)
+        painter.drawLine(r.topLeft(),r.topRight())
+        painter.drawLine(r.topRight(),r.bottomRight())
+        painter.drawLine(r.bottomLeft(),r.bottomRight())
+        painter.drawLine(r.topLeft(),r.bottomLeft())
         
         # draw filname
         font = painter.font()
@@ -229,14 +238,14 @@ class AttachmentDelegate(QtWidgets.QStyledItemDelegate):
         font.setBold(True)
         painter.setFont(font)
         painter.setPen(QtCore.Qt.black)
-        painter.drawText(r.topLeft()+QtCore.QPoint(30,12),filename)
+        painter.drawText(r.topLeft()+QtCore.QPoint(35,12),filename)
         # draw the filepath
         font = painter.font()
         font.setPointSize(8)
         font.setBold(False)
         painter.setFont(font)
         painter.setPen(QtCore.Qt.black)
-        painter.drawText(r.topLeft()+QtCore.QPoint(30,25),filepath)
+        painter.drawText(r.topLeft()+QtCore.QPoint(35,25),filepath)
         
         ic = QtGui.QIcon(icon)
         ic.paint(painter,r,QtCore.Qt.AlignLeft)

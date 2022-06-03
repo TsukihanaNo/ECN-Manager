@@ -122,9 +122,9 @@ class SearchResults(QtWidgets.QWidget):
                         users = self.getWaitingUser(item['ECN_ID'], self.titleStageDict[str(item['STAGE'])])
                         self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(users))
                 if item["STATUS"]=="Rejected":
-                    self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,99,99))
+                    self.table.item(rowcount, 3).setBackground(QtGui.QColor("#FFADAD")) #red
                 if item["STATUS"]=="Out For Approval":
-                    self.table.item(rowcount, 3).setBackground(QtGui.QColor(186,255,180))
+                    self.table.item(rowcount, 3).setBackground(QtGui.QColor("#CAFFBF")) #green
                 rowcount+=1
             self.table.sortItems(self.sorting[0],self.sorting[1])
 

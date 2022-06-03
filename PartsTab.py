@@ -102,11 +102,11 @@ class PartsTab(QtWidgets.QWidget):
                 self.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['DISPOSITION']))
                 if isinstance(self.table.item(rowcount, 3),QtWidgets.QTableWidgetItem):
                     if result['DISPOSITION']=="New":
-                        self.table.item(rowcount, 3).setBackground(QtGui.QColor(186,255,180))
+                        self.table.item(rowcount, 3).setBackground(QtGui.QColor("#CAFFBF")) #green
                     if result['DISPOSITION']=="SCrap":
-                        self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,99,99))
+                        self.table.item(rowcount, 3).setBackground(QtGui.QColor("#FFADAD")) #red
                     if result['DISPOSITION']=="Deplete":
-                        self.table.item(rowcount, 3).setBackground(QtGui.QColor(255,253,162))
+                        self.table.item(rowcount, 3).setBackground(QtGui.QColor("#FDFFB6")) #yellow
                 self.table.setItem(rowcount, 8, QtWidgets.QTableWidgetItem(result['INSPEC']))
             else:
                 box_type = QtWidgets.QComboBox()
@@ -128,11 +128,11 @@ class PartsTab(QtWidgets.QWidget):
             if self.parent.parent.visual is not None:
                 if self.parent.parent.visual.partExist(result['PART_ID']):
                     if self.parent.parent.visual.checkPartSetup(result['PART_ID'], result['TYPE']):
-                        self.table.item(rowcount, 0).setBackground(QtGui.QColor(186,255,180))
+                        self.table.item(rowcount, 0).setBackground(QtGui.QColor("#CAFFBF")) #green
                     else:
-                        self.table.item(rowcount, 0).setBackground(QtGui.QColor(255,253,162))
+                        self.table.item(rowcount, 0).setBackground(QtGui.QColor("#FDFFB6")) #yellow
                 else:
-                    self.table.item(rowcount, 0).setBackground(QtGui.QColor(255,99,99))
+                    self.table.item(rowcount, 0).setBackground(QtGui.QColor("#FFADAD")) #red
             
             # if self.parent.parent.user_info['user']!=self.parent.tab_ecn.line_author.text():
             #     self.table.item(rowcount,2).
@@ -149,11 +149,11 @@ class PartsTab(QtWidgets.QWidget):
             if self.parent.parent.visual is not None:
                 if self.parent.parent.visual.partExist(part):
                     if self.parent.parent.visual.checkPartSetup(part,part_type):
-                        self.table.item(x, 0).setBackground(QtGui.QColor(186,255,180))
+                        self.table.item(x, 0).setBackground(QtGui.QColor("#CAFFBF")) #green
                     else: 
-                        self.table.item(x, 0).setBackground(QtGui.QColor(255,253,162))
+                        self.table.item(x, 0).setBackground(QtGui.QColor("#FDFFB6")) #yellow
                 else:
-                    self.table.item(x, 0).setBackground(QtGui.QColor(255,99,99))
+                    self.table.item(x, 0).setBackground(QtGui.QColor("#FFADAD")) #red
                 
     # def addPart(self,part):
     #     row = self.table.rowCount()

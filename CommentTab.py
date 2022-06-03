@@ -71,7 +71,7 @@ USER_ME = 0
 USER_THEM = 1
 REJECT = "Reject"
 
-BUBBLE_COLORS = {USER_ME: "#90caf9", USER_THEM: "#a5d6a7", REJECT: "#ffadad"}
+BUBBLE_COLORS = {USER_ME: "#A0C4FF", USER_THEM: "#CAFFBF", REJECT: "#FFADAD"}
 USER_TRANSLATE = {USER_ME: QtCore.QPoint(20, 0), USER_THEM: QtCore.QPoint(0, 0)}
 
 BUBBLE_PADDING = QtCore.QMargins(15, 5, 35, 5)
@@ -91,15 +91,10 @@ class MessageDelegate(QtWidgets.QStyledItemDelegate):
 
         trans = USER_TRANSLATE[user]
         painter.translate(trans)
-
-        # option.rect contains our item dimensions. We need to pad it a bit
-        # to give us space from the edge to draw our shape.
+        
         bubblerect = option.rect.marginsRemoved(BUBBLE_PADDING)
         textrect = option.rect.marginsRemoved(TEXT_PADDING)
 
-        # draw the bubble, changing color + arrow position depending on who
-        # sent the message. the bubble is a rounded rect, with a triangle in
-        # the edge.
         painter.setPen(QtCore.Qt.NoPen)
         if comment_type != REJECT:
             color = QtGui.QColor(BUBBLE_COLORS[user])
