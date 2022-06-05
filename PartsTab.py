@@ -38,6 +38,8 @@ class PartsTab(QtWidgets.QWidget):
         self.button_remove.setDisabled(True)
         self.button_remove.clicked.connect(self.removeRow)
         self.button_edit = QtWidgets.QPushButton("Edit Part")
+        icon_loc = icon = os.path.join(program_location,"icons","edit.png")
+        self.button_edit.setIcon(QtGui.QIcon(icon_loc))
         self.button_edit.setDisabled(True)
         self.button_edit.clicked.connect(self.editPart)
         
@@ -50,11 +52,13 @@ class PartsTab(QtWidgets.QWidget):
         self.parts.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.parts.setResizeMode(QtWidgets.QListView.Adjust)
         self.parts.setItemDelegate(PartsDelegate())
-        if self.parent.parent.user_info['user']==self.parent.ecn_data["AUTHOR"]:
-            self.parts.doubleClicked.connect(self.editPart)
+        if self.parent.ecn_data is not None:
+            if self.parent.parent.user_info['user']==self.parent.ecn_data["AUTHOR"]:
+                self.parts.doubleClicked.connect(self.editPart)
+            else:
+                self.button_add.setDisabled(True)
         else:
-            self.button_add.setDisabled(True)
-        
+            self.parts.doubleClicked.connect(self.editPart)
         self.model = PartsModel()
         self.parts.setModel(self.model)
         

@@ -323,16 +323,6 @@ class Manager(QtWidgets.QWidget):
         if self.user_info['role']=="Signer":
             self.button_add.setDisabled(True)
             
-        # details_layout = QtWidgets.QHBoxLayout()
-        # details_layout.addWidget(self.label_ecn_count)
-        # details_layout.addWidget(self.label_open_ecns)
-        # details_layout.addWidget(self.label_wait_ecns)
-        # details_layout.addWidget(self.label_complete_ecns)
-        # details_layout.addWidget(self.button_add)
-        # details_layout.addWidget(self.button_open)
-        # details_layout.addWidget(self.button_refresh)
-        # details_layout.addWidget(self.dropdown_type)
-        #mainLayout.addLayout(details_layout)
         self.statusbar.addPermanentWidget(self.label_ecn_count)
         self.statusbar.addPermanentWidget(self.label_open_ecns)
         self.statusbar.addPermanentWidget(self.label_complete_ecns)
@@ -345,70 +335,41 @@ class Manager(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_open)
         self.toolbar.addWidget(self.button_refresh)
         self.toolbar.addWidget(self.dropdown_type)
-
-        titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified', 'Stage','Waiting On', 'Elapsed Days','💬']
-        self.table = QtWidgets.QTableWidget(1,len(titles),self)
-        delegate = AlignDelegate(self.table)
-        self.table.setItemDelegate(delegate)
-        self.table.setStyleSheet("QTableWidget::item{selection-background-color:#A0C4FF}")
-        self.table.setHorizontalHeaderLabels(titles)
-        self.table.horizontalHeader().setSortIndicatorShown(True)
-        self.table.horizontalHeader().sortIndicatorChanged.connect(self.setSort)
-        self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
-        #self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        header = self.table.horizontalHeader()
-        for x in range(self.table.columnCount()):
-            if x != 2 and x!=6:
-                header.setSectionResizeMode(x,QtWidgets.QHeaderView.ResizeToContents)
-            else:
-                header.setSectionResizeMode(x,QtWidgets.QHeaderView.Stretch)
-        #self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-        self.table.doubleClicked.connect(self.openECN)
-        mainLayout.addWidget(self.table)
+        
+        self.ecns = QtWidgets.QListView()
+        self.ecns.setStyleSheet("QListView{background-color:#f0f0f0}")
+        self.ecns.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.ecns.setResizeMode(QtWidgets.QListView.Adjust)
+        self.ecns.setItemDelegate(ECNDelegate())
+        self.ecns.doubleClicked.connect(self.openECN)
+        
+        
+        self.model = ECNModel()
+        self.ecns.setModel(self.model)
+        
+        self.ecns.selectionModel().selectionChanged.connect(self.onRowSelect)
+        
+        mainLayout.addWidget(self.ecns)
+        
         mainLayout.addWidget(self.statusbar)
         
         self.dropdown_type.currentIndexChanged.connect(self.repopulateTable)
         
-        self.table.verticalScrollBar().valueChanged.connect(self.loadMoreTable)
+        self.ecns.verticalScrollBar().valueChanged.connect(self.loadMoreTable)
         
         mainLayout.setMenuBar(self.menubar)
         
         self.repopulateTable()
-
-        # self.tabWidget = QtWidgets.QTabWidget(self)
-        # mainLayout.addWidget(self.tabWidget)
-        
-        # if self.user_info["role"]!="Signer":
-        #     self.myECNTab = MyECNTab(self)
-        #     self.tabWidget.addTab(self.myECNTab, "My ECNs")
-
-        # self.queueTab = MyQueueTab(self)
-        # self.tabWidget.addTab(self.queueTab, "My Queue")
-
-        # self.completedTab = CompletedTab(self)
-        # self.tabWidget.addTab(self.completedTab, "Completed")
-
-        # timer = QtCore.QTimer(self)
-        # timer.timeout.connect(self.repopulateTable)
-        # timer.start(15000)
-        
-    # def getTotalPage(self):
-    #     self.cursor.execute("")
     
     def onRowSelect(self):
-        self.button_open.setEnabled(bool(self.table.selectionModel().selectedRows()))
+        self.button_open.setEnabled(bool(self.ecns.selectionModel().selectedIndexes()))
 
         
     def repopulateTable(self):
         self.getECNQty()
-        self.table.clearContents()
-        if self.table.verticalScrollBar().value()>0:
-            self.table.verticalScrollBar().setValue(0)
-        self.table.setRowCount(0)
-        #print("table cleared and row set to 0")
+        self.model.clear_ecns()
+        if self.ecns.verticalScrollBar().value()>0:
+            self.ecns.verticalScrollBar().setValue(0)
         table_type = self.dropdown_type.currentText()
         if table_type=="My ECNS":
             command = "Select * from ECN where AUTHOR ='" + self.user_info['user'] + "' and STATUS !='Completed'"
@@ -418,111 +379,86 @@ class Manager(QtWidgets.QWidget):
             command = "select * from ECN where STATUS!='Completed'"
         else:
             command = "select * from ECN where STATUS='Completed'"
-        if table_type=="Completed":
-            self.table.setHorizontalHeaderItem(7, QtWidgets.QTableWidgetItem("Days Taken"))
-        else:
-            self.table.setHorizontalHeaderItem(7, QtWidgets.QTableWidgetItem("Days Elapsed"))
+
         self.cursor.execute(command)
         self.table_data = self.cursor.fetchall()
-        rowcount=0
-        #print(len(test))
         data_size = len(self.table_data)
-        if data_size>25:
-            self.table.setRowCount(25)
-            table_data = []
-            for x in range(25):
-                table_data.append(self.table_data[x])
-            self.statusbar.showMessage(f"Showing 25 of {data_size}")
+        if data_size>10:
+            counter = 10
         else:
-            self.table.setRowCount(len(self.table_data))
-            table_data = self.table_data
-            self.statusbar.showMessage(f"Showing {data_size} of {data_size}")
-        for item in table_data:
-            self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
-            self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['ECN_TYPE']))
-            title = QtWidgets.QTableWidgetItem(item['ECN_TITLE'])
-            #title.setToolTip(item['ECN_TITLE'])
-            self.table.setItem(rowcount,2,title)
-            self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
-            self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
-            if item['STATUS']!='Draft':
-                self.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(str(item['STAGE'])))
-                if table_type!="Completed":
+            counter = data_size
+        for x in range(counter):
+            if self.table_data[x]['STAGE']!=0 and self.table_data[x]['STAGE'] is not None:
+                users = self.getWaitingUser(self.table_data[x]['ECN_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
+            else:
+                users = ""
+            if table_type!="Completed":
+                if self.table_data[x]['STATUS']!="Draft":
                     today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    elapsed = self.getElapsedDays(today, item['FIRST_RELEASE'])
-                    #print(elapsed.days,elapsed.seconds)
-                    self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(elapsed.days + round(elapsed.seconds/86400,2))))
+                    elapsed = self.getElapsedDays(today, self.table_data[x]['FIRST_RELEASE'])
+                    elapsed_days = str(elapsed.days + round(elapsed.seconds/86400,2))
                 else:
-                    self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(item["COMP_DAYS"])))
-                if item['STAGE']!=0:
-                    users = self.getWaitingUser(item['ECN_ID'], self.titleStageDict[str(item['STAGE'])])
-                    self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(users))
-            if item["STATUS"]=="Rejected":
-                self.table.item(rowcount, 3).setBackground(QtGui.QColor("#FFADAD"))
-            if item["STATUS"]=="Out For Approval":
-                self.table.item(rowcount, 3).setBackground(QtGui.QColor("#CAFFBF"))
-            
-            self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where ECN_ID='{item['ECN_ID']}'")
-            comment = self.cursor.fetchone()
-            if comment[0]>0:
-                self.table.setItem(rowcount,8,QtWidgets.QTableWidgetItem(str(comment[0])))
-            
-            rowcount+=1
-        self.table.resizeRowsToContents()
-            
-        
+                    elapsed_days =""
+            else:
+                elapsed_days = str(self.table_data[x]["COMP_DAYS"])
+                
+            self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where ECN_ID='{self.table_data[x]['ECN_ID']}'")
+            comment_count = self.cursor.fetchone()
+            if comment_count[0]>0:
+                comment_count = str(comment_count[0])
+            else:
+                comment_count=""
+            if self.table_data[x]['STAGE'] is not None:
+                status = self.table_data[x]['STAGE']
+            else:
+                status = ""
+            self.model.add_ecn(self.table_data[x]['ECN_ID'], self.table_data[x]['ECN_TITLE'], self.table_data[x]['ECN_TYPE'], self.table_data[x]['STATUS'],self.table_data[x]['LAST_MODIFIED'], status, users, elapsed_days, comment_count)
+        self.statusbar.showMessage(f"Showing {counter} of {data_size}")
+
     def loadMoreTable(self):
-        percent = self.table.verticalScrollBar().value()/self.table.verticalScrollBar().maximum()
-        rowcount = self.table.rowCount()
+        percent = self.ecns.verticalScrollBar().value()/self.ecns.verticalScrollBar().maximum()
+        rowcount = self.rowCount()
         total_count= len(self.table_data)
         table_type = self.dropdown_type.currentText()
+        offset = 10
         #print(rowcount,percent)
         if percent> 0.75 and rowcount<total_count:
             diff = total_count - rowcount
-            if diff>25:
-                self.table.setRowCount(rowcount+25)
-                self.statusbar.showMessage(f"Showing {rowcount+25} of {total_count}")
-                table_data = []
-                for x in range(25):
-                    table_data.append(self.table_data[rowcount+x])
+            if diff>offset:
+                counter = 10
             else:
-                self.table.setRowCount(rowcount+diff)
-                self.statusbar.showMessage(f"Showing {rowcount+diff} of {total_count}")
-                table_data = []
-                for x in range(diff):
-                    table_data.append(self.table_data[rowcount+x])
-            for item in table_data:
-                self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
-                self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['ECN_TYPE']))
-                title = QtWidgets.QTableWidgetItem(item['ECN_TITLE'])
-                #title.setToolTip(item['ECN_TITLE'])
-                self.table.setItem(rowcount,2,title)
-                self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
-                self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
-                if item['STATUS']!='Draft':
-                    self.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(str(item['STAGE'])))
-                    if table_type!="Completed":
+                counter = diff
+            for x in range(counter):
+                x = x + offset -1
+                if self.table_data[x]['STAGE']!=0 and self.table_data[x]['STAGE'] is not None:
+                    users = self.getWaitingUser(self.table_data[x]['ECN_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
+                else:
+                    users = ""
+                if table_type!="Completed":
+                    if self.table_data[x]['STATUS']!="Draft":
                         today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        elapsed = self.getElapsedDays(today, item['FIRST_RELEASE'])
-                        #print(elapsed.days,elapsed.seconds)
-                        self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(elapsed.days + round(elapsed.seconds/86400,2))))
+                        elapsed = self.getElapsedDays(today, self.table_data[x]['FIRST_RELEASE'])
+                        elapsed_days = str(elapsed.days + round(elapsed.seconds/86400,2))
                     else:
-                        self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(item["COMP_DAYS"])))
-                    if item['STAGE']!=0:
-                        users = self.getWaitingUser(item['ECN_ID'], self.titleStageDict[str(item['STAGE'])])
-                        self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(users))
-                if item["STATUS"]=="Rejected":
-                    self.table.item(rowcount, 3).setBackground(QtGui.QColor("#FFADAD"))
-                if item["STATUS"]=="Out For Approval":
-                    self.table.item(rowcount, 3).setBackground(QtGui.QColor("#CAFFBF"))
-                
-                self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where ECN_ID='{item['ECN_ID']}'")
-                comment = self.cursor.fetchone()
-                if comment[0]>0:
-                    self.table.setItem(rowcount,8,QtWidgets.QTableWidgetItem(str(comment[0])))
-                
-                rowcount+=1
-            self.table.resizeRowsToContents()
+                        elapsed_days =""
+                else:
+                    elapsed_days = str(self.table_data[x]["COMP_DAYS"])
+                    
+                self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where ECN_ID='{self.table_data[x]['ECN_ID']}'")
+                comment_count = self.cursor.fetchone()
+                if comment_count[0]>0:
+                    comment_count = str(comment_count[0])
+                else:
+                    comment_count=""
+                if self.table_data[x]['STAGE'] is not None:
+                    status = self.table_data[x]['STAGE']
+                else:
+                    status = ""
+                self.model.add_ecn(self.table_data[x]['ECN_ID'], self.table_data[x]['ECN_TITLE'], self.table_data[x]['ECN_TYPE'], self.table_data[x]['STATUS'],self.table_data[x]['LAST_MODIFIED'], status, users, elapsed_days, comment_count)
+            self.statusbar.showMessage(f"Showing {rowcount+counter} of {total_count}")
+            
+    def rowCount(self):
+        return self.model.rowCount(self.ecns)
         
     def setSort(self, index, order):
         self.sorting = (index,order)
@@ -625,18 +561,18 @@ class Manager(QtWidgets.QWidget):
         self.HookEcn()
         
     def openECN(self):
-        row = self.table.currentRow()
-        ecn_id=self.table.item(row,0).text()
+        index = self.ecns.currentIndex()
+        ecn_id = index.data(QtCore.Qt.DisplayRole)[0]
         self.HookEcn(ecn_id)
 
 
     def loadInAnim(self):
-        loc = self.table.pos()
-        self.animation = QtCore.QPropertyAnimation(self.table, b"pos")
+        loc = self.ecns.pos()
+        self.animation = QtCore.QPropertyAnimation(self.ecns, b"pos")
         self.animation.setDuration(1000)
         self.animation.setEasingCurve(QtCore.QEasingCurve.OutBack)
         self.animation.setStartValue(QtCore.QPoint(
-            -self.windowWidth, self.table.pos().y()))
+            -self.windowWidth, self.ecns.pos().y()))
         self.animation.setEndValue(QtCore.QPoint(loc))
 
         self.animation.start()
@@ -725,6 +661,108 @@ class AlignDelegate(QtWidgets.QStyledItemDelegate):
     def initStyleOption(self, option, index):
         super(AlignDelegate, self).initStyleOption(option, index)
         option.displayAlignment = QtCore.Qt.AlignCenter
+        
+PADDING = QtCore.QMargins(15, 2, 15, 2)
+
+class ECNDelegate(QtWidgets.QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        painter.save()
+        
+        ecn_id, title, ecn_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count = index.model().data(index, QtCore.Qt.DisplayRole)
+        
+        lineMarkedPen = QtGui.QPen(QtGui.QColor("#f0f0f0"),1,QtCore.Qt.SolidLine)
+        
+        r = option.rect.marginsRemoved(PADDING)
+        painter.setPen(QtCore.Qt.NoPen)
+        if option.state & QtWidgets.QStyle.State_Selected:
+            color = QtGui.QColor("#A0C4FF")
+        elif option.state & QtWidgets.QStyle.State_MouseOver:
+            color = QtGui.QColor("#BDB2FF")
+        else:
+            color = QtGui.QColor("#FFFFFC")
+        painter.setBrush(color)
+        painter.drawRoundedRect(r, 5, 5)
+        
+        rect = QtCore.QRect(r.topRight()+QtCore.QPoint(-150,2),QtCore.QSize(125,20))
+        if status =="Out For Approval":
+            color = QtGui.QColor("#CAFFBF")
+        elif status =="Rejected":
+            color = QtGui.QColor("#FFADAD")
+        else:
+            color = QtGui.QColor("#FDFFB6")
+        painter.setBrush(color)
+        painter.drawRoundedRect(rect, 5, 5)
+        font = painter.font()
+        font.setPointSize(8)
+        painter.setFont(font)
+        painter.setPen(QtCore.Qt.black)
+        painter.drawText(r.topRight()+QtCore.QPoint(-145,16),status)
+        
+        painter.setPen(lineMarkedPen)
+        painter.drawLine(r.topLeft()+QtCore.QPoint(0,25),r.topRight()+QtCore.QPoint(0,25))
+
+        
+        text_offsetx1 = 15
+        text_offsetx2 = r.width()/2+10
+        
+        font = painter.font()
+        font.setPointSize(12)
+        font.setBold(True)
+        painter.setFont(font)
+        painter.setPen(QtCore.Qt.black)
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,20),ecn_id)
+        if len(title)>85:
+            title = title[:85] + "..."
+        font.setBold(False)
+        painter.setFont(font)
+        painter.drawText(r.topLeft()+QtCore.QPoint(175,20),title)
+        font.setPointSize(10)
+        font.setBold(False)
+        painter.setFont(font)
+        #ecn_id, title, ecn_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,45),f"Type: {ecn_type}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(175,45),f"Last Modified: {last_modified}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1+375,45),f"Stage: {stage}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1+450,45),f"Elapsed: {elapsed_days}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1+550,45),f"💬: {comment_count}")
+        if len(waiting_on)>25:
+            waiting_on = waiting_on[:25] + "..."
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1+610,45),f"Waiting On: {waiting_on}")
+        painter.restore()
+
+    def sizeHint(self, option, index):
+        return QtCore.QSize(option.rect.width()-50,55)
+
+class ECNModel(QtCore.QAbstractListModel):
+    def __init__(self, *args, **kwargs):
+        super(ECNModel, self).__init__(*args, **kwargs)
+        self.ecns = []
+
+    def data(self, index, role):
+        if role == QtCore.Qt.DisplayRole:
+            return self.ecns[index.row()]
+
+    def setData(self, index, role, value):
+        self._size[index.row()]
+        
+    def rowCount(self, index):
+        return len(self.ecns)
+    
+    def removeRow(self, row):
+        del self.ecns[row]
+        self.layoutChanged.emit()
+        
+    def get_ecn_data(self,row):
+        return self.ecns[row]
+
+    def clear_ecns(self):
+        self.ecns = []
+    
+    def add_ecn(self, ecn_id, title, ecn_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count):
+        # Access the list via the model.
+        self.ecns.append((ecn_id, title, ecn_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count))
+        # Trigger refresh.
+        self.layoutChanged.emit()
 
 # execute the program
 def main():

@@ -36,9 +36,13 @@ class ECNWindow(QtWidgets.QWidget):
         #self.typeindex = {'New Part':0, 'BOM Update':1, 'Firmware Update':2, 'Configurator Update' : 3,'Product EOL':4}
         self.initAtt()
         if self.ecn_id == None:
+            self.ecn_data = None
             self.initReqUI()
             self.generateECNID()
         else:
+            command = "Select * from ECN where ECN_ID = '"+self.ecn_id +"'"
+            self.cursor.execute(command)
+            self.ecn_data = self.cursor.fetchone()
             self.initFullUI()
             self.getCurrentValues()
             
@@ -54,6 +58,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         self.setMinimumWidth(self.windowWidth)
         #self.setWindowModality(QtCore.Qt.ApplicationModal)
+        
 
     def center(self):
         window = self.window()
@@ -137,10 +142,6 @@ class ECNWindow(QtWidgets.QWidget):
 
 
     def initFullUI(self):
-        command = "Select * from ECN where ECN_ID = '"+self.ecn_id +"'"
-        self.cursor.execute(command)
-        self.ecn_data = self.cursor.fetchone()
-        
         mainlayout = QtWidgets.QVBoxLayout(self)
         self.toolbar = QtWidgets.QToolBar()
         
@@ -968,25 +969,28 @@ class ECNWindow(QtWidgets.QWidget):
                     
                     export = t.substitute(ECNID=id,ECNTitle=title,Requestor=requestor,Department=dept,Author=author, Reason=reason,Summary=summary,Parts=parts,Attachment=attachment,Signature=signature)
                 
-                    with open(foldername+'\\'+id+'.html', 'w') as f:
-                        f.write(export)
-                        f.close()
+                    # with open(foldername+'\\'+id+'.html', 'w') as f:
+                    #     f.write(export)
+                    #     f.close()
                         
                         
-                    page = QtWebEngineCore.QWebEnginePage()
+                    self.page = QtWebEngineCore.QWebEnginePage()
                     
-                    def handle_load_finished(status):
-                        if status:
-                            page.printToPdf(foldername+'\\'+id+'.pdf')
-                            os.remove(foldername+'\\'+id+'.html')
-                            
-                    page.loadFinished.connect(handle_load_finished)
-                    page.load(QtCore.QUrl.fromLocalFile(foldername+'\\'+id+'.html'))
                     
-                    self.dispMsg("Export Completed!")
+                    self.foldername = foldername
+                    self.page.loadFinished.connect(self.handle_load_finished)
+                    self.page.setHtml(export)
+                    #page.load(QtCore.QUrl.fromLocalFile(foldername+'\\'+id+'.html'))
+                    
+                    #self.dispMsg("Export Completed!")
         except Exception as e:
             print(e)
             self.dispMsg(f"Error Occured during ecn export.\n Error: {e}")
+    
+    def handle_load_finished(self,status):
+            if status:
+                self.page.printToPdf(self.foldername+'\\'+self.ecn_id+'.pdf')
+                self.dispMsg("Export Completed!")
         
     def addNotification(self,ecn_id,notificationType,from_user=None,userslist=None,msg=""):
         if userslist is not None:
