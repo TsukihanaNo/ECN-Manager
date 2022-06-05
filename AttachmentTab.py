@@ -59,6 +59,7 @@ class AttachmentTab(QtWidgets.QWidget):
         
         
         self.attachments = QtWidgets.QListView()
+        self.attachments.setStyleSheet("QListView{background-color:#f0f0f0}")
         self.attachments.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.attachments.setResizeMode(QtWidgets.QListView.Adjust)
         self.attachments.setItemDelegate(AttachmentDelegate())
@@ -75,7 +76,7 @@ class AttachmentTab(QtWidgets.QWidget):
         self.setLayout(mainlayout)
         
     def onRowSelect(self):
-        if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() and self.parent.tab_ecn.line_status.text()!="Completed":
+        if self.parent.parent.user_info['user']==self.parent.ecn_data["AUTHOR"] and self.parent.ecn_data["STATUS"]!="Completed":
             self.button_remove.setEnabled(bool(self.attachments.selectionModel().selectedIndexes()))
         self.button_open.setEnabled(bool(self.attachments.selectionModel().selectedIndexes()))
         self.button_open_loc.setEnabled(bool(self.attachments.selectionModel().selectedIndexes()))
@@ -186,7 +187,7 @@ class AttachmentTab(QtWidgets.QWidget):
 
 
 
-PADDING = QtCore.QMargins(15, 0, 15, 0)
+PADDING = QtCore.QMargins(15, 2, 15, 2)
 
 class AttachmentDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
@@ -194,8 +195,7 @@ class AttachmentDelegate(QtWidgets.QStyledItemDelegate):
         
         filename, filepath, icon = index.model().data(index, QtCore.Qt.DisplayRole)
         
-        linepen = QtGui.QPen(QtGui.QColor.fromRgb(211,211,211),1,QtCore.Qt.SolidLine)
-        lineMarkedPen = QtGui.QPen(QtGui.QColor.fromRgb(0,90,131),1,QtCore.Qt.SolidLine)
+        #lineMarkedPen = QtGui.QPen(QtGui.QColor("#f0f0f0"),1,QtCore.Qt.SolidLine)
         
         r = option.rect.marginsRemoved(PADDING)
         painter.setPen(QtCore.Qt.NoPen)
@@ -206,13 +206,13 @@ class AttachmentDelegate(QtWidgets.QStyledItemDelegate):
         else:
             color = QtGui.QColor("#FFFFFC")
         painter.setBrush(color)
-        painter.drawRoundedRect(r, 0, 0)
+        painter.drawRoundedRect(r, 5, 5)
         
-        painter.setPen(lineMarkedPen)
-        painter.drawLine(r.topLeft(),r.topRight())
-        painter.drawLine(r.topRight(),r.bottomRight())
-        painter.drawLine(r.bottomLeft(),r.bottomRight())
-        painter.drawLine(r.topLeft(),r.bottomLeft())
+        # painter.setPen(lineMarkedPen)
+        # painter.drawLine(r.topLeft(),r.topRight())
+        # painter.drawLine(r.topRight(),r.bottomRight())
+        # painter.drawLine(r.bottomLeft(),r.bottomRight())
+        # painter.drawLine(r.topLeft(),r.bottomLeft())
         
         # draw filname
         font = painter.font()

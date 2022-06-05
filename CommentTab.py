@@ -41,7 +41,6 @@ class CommentTab(QtWidgets.QWidget):
             
     def copyMessage(self):
         index = self.messages.currentIndex()
-        #print(index.data(QtCore.Qt.DisplayRole)[2])
         clipboard = QtGui.QGuiApplication.clipboard()
         clipboard.setText(index.data(QtCore.Qt.DisplayRole)[2])
             
@@ -52,20 +51,27 @@ class CommentTab(QtWidgets.QWidget):
         self.model.layoutChanged.emit()
         
     def loadComments(self):
-            # self.tab_comments.enterText.clear()
-            self.model.clear_message()
-            command = "Select * from COMMENTS where ECN_ID = '" + self.parent.ecn_id+"'"
-            self.parent.cursor.execute(command)
-            results = self.parent.cursor.fetchall()
-            for result in results:
-                comment_type = ""
-                if "Reject" in result["TYPE"]:
-                    comment_type="Reject"
-                if self.parent.tab_ecn.line_author.text() == result['USER']:
-                    self.model.add_message(USER_ME,f"{self.user_name[result['USER']]} ({result['USER']})  -  {result['COMM_DATE']}  [{result['TYPE']}]:",result['COMMENT'],comment_type)
-                else:
-                    self.model.add_message(USER_THEM,f"{self.user_name[result['USER']]} ({result['USER']})  -  {result['COMM_DATE']}  [{result['TYPE']}]:",result['COMMENT'],comment_type)
-
+        self.model.clear_message()
+        command = "Select * from COMMENTS where ECN_ID = '" + self.parent.ecn_id+"'"
+        self.parent.cursor.execute(command)
+        results = self.parent.cursor.fetchall()
+        for result in results:
+            comment_type = ""
+            if "Reject" in result["TYPE"]:
+                comment_type="Reject"
+            if self.parent.tab_ecn.line_author.text() == result['USER']:
+                self.model.add_message(USER_ME,f"{self.user_name[result['USER']]} ({result['USER']})  -  {result['COMM_DATE']}  [{result['TYPE']}]:",result['COMMENT'],comment_type)
+            else:
+                self.model.add_message(USER_THEM,f"{self.user_name[result['USER']]} ({result['USER']})  -  {result['COMM_DATE']}  [{result['TYPE']}]:",result['COMMENT'],comment_type)
+                
+    def addComment(self,user,comm_date,comm_type,comment):
+        comment_type = ""
+        if "Reject" in comm_type:
+            comment_type="Reject"
+        if self.parent.tab_ecn.line_author.text() == user:
+            self.model.add_message(USER_ME,f"{self.user_name[user]} ({user})  -  {comm_date}  [{comm_type}]:",comment,comment_type)
+        else:
+            self.model.add_message(USER_THEM,f"{self.user_name[user]} ({user})  -  {comm_date}  [{comm_type}]:",comment,comment_type)
 
 USER_ME = 0
 USER_THEM = 1
@@ -84,9 +90,6 @@ class MessageDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         painter.save()
         
-        # if option.state & QtWidgets.QStyle.State_Selected:
-        #     painter.fillRect(option.rect, option.palette.highlight())
-        # Retrieve the user,message uple from our model.data method.
         user, header, text, comment_type = index.model().data(index, QtCore.Qt.DisplayRole)
 
         trans = USER_TRANSLATE[user]
@@ -103,7 +106,6 @@ class MessageDelegate(QtWidgets.QStyledItemDelegate):
         painter.setBrush(color)
         painter.drawRoundedRect(bubblerect, 10, 10)
 
-        #draw the triangle bubble-pointer, starting from the top left/right.
         if user == USER_ME:
             p1 = bubblerect.topRight()
         else:
@@ -113,14 +115,13 @@ class MessageDelegate(QtWidgets.QStyledItemDelegate):
         toption = QtGui.QTextOption()
         toption.setWrapMode(QtGui.QTextOption.WrapAtWordBoundaryOrAnywhere)
         
-        # draw header
         font = painter.font()
         font.setPointSize(8)
         font.setBold(True)
         painter.setFont(font)
         painter.setPen(QtCore.Qt.black)
         painter.drawText(textrect.topLeft()+QtCore.QPoint(0,5),header)
-        # draw the text
+        
         doc = QtGui.QTextDocument(text)
         doc.setTextWidth(textrect.width())
         doc.setDefaultTextOption(toption)
@@ -154,7 +155,6 @@ class MessageModel(QtCore.QAbstractListModel):
 
     def data(self, index, role):
         if role == QtCore.Qt.DisplayRole:
-            # Here we pass the delegate the user, message tuple.
             return self.messages[index.row()]
 
     def setData(self, index, role, value):
@@ -167,11 +167,6 @@ class MessageModel(QtCore.QAbstractListModel):
         self.messages = []
 
     def add_message(self, who, header, text,comment_type):
-        """
-        Add an message to our message list, getting the text from the QLineEdit
-        """
-        if text:  # Don't add empty strings.
-            # Access the list via the model.
+        if text:
             self.messages.append((who, header, text, comment_type))
-            # Trigger refresh.
             self.layoutChanged.emit()

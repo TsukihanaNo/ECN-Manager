@@ -44,6 +44,7 @@ class ECNWindow(QtWidgets.QWidget):
             
         self.center()
         self.show()
+        self.activateWindow()
 
     def initAtt(self):
         self.setWindowIcon(self.parent.ico)
@@ -52,6 +53,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         self.setMinimumWidth(self.windowWidth)
+        #self.setWindowModality(QtCore.Qt.ApplicationModal)
 
     def center(self):
         window = self.window()
@@ -135,6 +137,10 @@ class ECNWindow(QtWidgets.QWidget):
 
 
     def initFullUI(self):
+        command = "Select * from ECN where ECN_ID = '"+self.ecn_id +"'"
+        self.cursor.execute(command)
+        self.ecn_data = self.cursor.fetchone()
+        
         mainlayout = QtWidgets.QVBoxLayout(self)
         self.toolbar = QtWidgets.QToolBar()
         
@@ -229,29 +235,21 @@ class ECNWindow(QtWidgets.QWidget):
                     #self.tab_signature.button_remove.setDisabled(True)
             else:
                 self.button_approve = QtWidgets.QPushButton("Approve")
-                #self.button_approve.setToolTip("Approve")
                 icon_loc = icon = os.path.join(program_location,"icons","approve.png")
                 self.button_approve.setIcon(QtGui.QIcon(icon_loc))
                 self.button_approve.clicked.connect(self.approve)
                 self.button_reject = QtWidgets.QPushButton("Reject")
-                #self.button_reject.setToolTip("Reject To Author")
                 icon_loc = icon = os.path.join(program_location,"icons","reject.png")
                 self.button_reject.setIcon(QtGui.QIcon(icon_loc))
                 self.button_comment = QtWidgets.QPushButton("Add Comment")
-                #self.button_comment.setToolTip("Add comment")
                 icon_loc = icon = os.path.join(program_location,"icons","add_comment.png")
                 self.button_comment.setIcon(QtGui.QIcon(icon_loc))
                 self.button_comment.clicked.connect(self.addUserComment)
                 self.button_reject.clicked.connect(self.reject)
                 self.button_save = QtWidgets.QPushButton("Save")
-                #self.button_save.setToolTip("Save")
                 icon_loc = icon = os.path.join(program_location,"icons","save.png")
                 self.button_save.setIcon(QtGui.QIcon(icon_loc))
                 self.button_save.clicked.connect(self.notificationSave)
-                # buttonlayout.addWidget(self.button_approve)
-                # buttonlayout.addWidget(self.button_reject)
-                # buttonlayout.addWidget(self.button_comment)
-                # buttonlayout.addWidget(self.button_save)
                 
                 self.toolbar.addWidget(self.button_save)
                 self.toolbar.addWidget(self.button_comment)
@@ -264,7 +262,6 @@ class ECNWindow(QtWidgets.QWidget):
                 self.tab_ecn.text_reason.setReadOnly(True)
                 self.tab_ecn.box_requestor.setDisabled(True)
                 self.tab_ecn.combo_type.setDisabled(True)
-                self.tab_parts.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
                 self.tab_parts.button_remove.setDisabled(True)
                 self.tab_parts.button_add.setDisabled(True)
                 self.tab_signature.button_add.setDisabled(True)
@@ -352,7 +349,7 @@ class ECNWindow(QtWidgets.QWidget):
             self.cursor.execute("INSERT INTO ECN(ECN_ID,DEPARTMENT,ECN_TYPE,AUTHOR,REQUESTOR,STATUS,ECN_TITLE,ECN_REASON,ECN_SUMMARY,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?,?,?)",(data))
             self.db.commit()
             
-            if self.tab_parts.table.rowCount()>0:
+            if self.tab_parts.rowCount()>0:
                 self.addParts()
                 self.setPartCount()
             
@@ -364,9 +361,6 @@ class ECNWindow(QtWidgets.QWidget):
                     self.cursor.execute("INSERT INTO ATTACHMENTS(ECN_ID,FILENAME,FILEPATH) VALUES(?,?,?)",(data))
                     self.db.commit()
                     self.setAttachmentCount()
-            #print('data inserted')
-            # if self.tab_comments.enterText.toPlainText()!="":
-            #     self.addComment(ecn_id,self.tab_comments.enterText.toPlainText(),"Author")
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data insertion (insertData)!\n Error: {e}")
@@ -491,27 +485,21 @@ class ECNWindow(QtWidgets.QWidget):
         try:
             self.cursor.execute("DELETE FROM PARTS WHERE ECN_ID = '" + self.ecn_id + "'")
             self.db.commit()
-            for x in range(self.tab_parts.table.rowCount()):
-                part = self.tab_parts.table.item(x, 0).text()
-                desc = self.tab_parts.table.item(x, 1).text()
-                print(x,part,desc,self.tab_parts.table.item(x,2))
-                if isinstance(self.tab_parts.table.item(x, 2),QtWidgets.QTableWidgetItem):
-                    ptype = self.tab_parts.table.item(x, 2).text()
-                    disposition = self.tab_parts.table.item(x, 3).text()
-                    insp = self.tab_parts.table.item(x,8).text()
-                else:
-                    ptype = self.tab_parts.table.cellWidget(x, 2).currentText()
-                    disposition = self.tab_parts.table.cellWidget(x, 3).currentText()
-                    insp = self.tab_parts.table.cellWidget(x, 8).currentText()
-                mfg = self.tab_parts.table.item(x,4).text()
-                mfg_part = self.tab_parts.table.item(x,5).text()
-                rep = self.tab_parts.table.item(x,6).text()
-                ref = self.tab_parts.table.item(x,7).text()
+            for row in range(self.tab_parts.rowCount()):
+                part = self.tab_parts.model.get_part_id(row)
+                desc = self.tab_parts.model.get_desc(row)
+                ptype = self.tab_parts.model.get_type(row)
+                disposition = self.tab_parts.model.get_disposition(row)
+                insp = self.tab_parts.model.get_inspection(row)
+                mfg = self.tab_parts.model.get_mfg(row)
+                mfg_part = self.tab_parts.model.get_mfg_part(row)
+                rep = self.tab_parts.model.get_replace(row)
+                ref = self.tab_parts.model.get_reference(row)
                 data = (self.ecn_id, part, desc,ptype,disposition,mfg,mfg_part,rep,ref,insp)
                 self.cursor.execute("INSERT INTO PARTS(ECN_ID,PART_ID,DESC,TYPE,DISPOSITION,MFG,MFG_PART,REPLACING,REFERENCE,INSPEC) VALUES(?,?,?,?,?,?,?,?,?,?)",(data))
+                
             self.db.commit()
-            #self.tab_parts.repopulateTable()
-            self.tab_parts.setStatusColor()
+            #self.tab_parts.setStatusColor()
             #print('data inserted')
         except Exception as e:
             print(e)
@@ -532,7 +520,7 @@ class ECNWindow(QtWidgets.QWidget):
             self.cursor.execute("UPDATE ECN SET DEPARTMENT = ?, ECN_TYPE = ?, REQUESTOR = ?, ECN_TITLE = ?, ECN_REASON = ?, ECN_SUMMARY = ?, LAST_MODIFIED = ? WHERE ECN_ID = ?",(data))
             self.db.commit()
             
-            if self.tab_parts.table.rowCount()>0:
+            if self.tab_parts.rowCount()>0:
                 self.addParts()
                 self.setPartCount()
             
@@ -559,9 +547,6 @@ class ECNWindow(QtWidgets.QWidget):
             self.dispMsg(f"Error occured during data update (updateData)!\n Error: {e}")
 
     def loadData(self):
-        command = "Select * from ECN where ECN_ID = '"+self.ecn_id +"'"
-        self.cursor.execute(command)
-        self.ecn_data = self.cursor.fetchone()
         self.tab_ecn.line_id.setText(self.ecn_data['ECN_ID'])
         #self.tab_ecn.combo_type.setCurrentIndex(self.typeindex[results['ECN_TYPE']])
         self.tab_ecn.combo_type.setCurrentText(self.ecn_data['ECN_TYPE'])
@@ -576,45 +561,8 @@ class ECNWindow(QtWidgets.QWidget):
         
         self.tab_signature.repopulateTable()
         self.tab_notification.repopulateTable()
-        # command = "Select * from SIGNATURE where ECN_ID= '"+self.ecn_id +"'"
-        # self.cursor.execute(command)
-        # results = self.cursor.fetchall()
-        # self.tab_signature.table.setRowCount(len(results))
-        # rowcount=0
-        # for result in results:
-        #     #print(result['JOB_TITLE'],result['SIGNED_DATE'])
-        #     self.tab_signature.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['JOB_TITLE']))
-        #     self.tab_signature.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['NAME']))
-        #     self.tab_signature.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['USER_ID']))
-        #     self.tab_signature.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['SIGNED_DATE']))
-        #     rowcount+=1
-            
         self.tab_parts.repopulateTable()
-        # command = "Select * from PARTS where ECN_ID= '"+self.ecn_id +"'"
-        # self.cursor.execute(command)
-        # results = self.cursor.fetchall()
-        # self.tab_parts.table.setRowCount(len(results))
-        # rowcount=0
-        # for result in results:
-        #     self.tab_parts.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['PART_ID']))
-        #     self.tab_parts.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['DESC']))
-        #     self.tab_parts.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['TYPE']))
-        #     self.tab_parts.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['DISPOSITION']))
-        #     self.tab_parts.table.setItem(rowcount, 4, QtWidgets.QTableWidgetItem(result['MFG']))
-        #     self.tab_parts.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(result['MFG_PART']))
-        #     rowcount+=1
-        
         self.tab_attach.repopulateTable()
-        # command = "Select * from ATTACHMENTS where ECN_ID= '"+self.ecn_id +"'"
-        # self.cursor.execute(command)
-        # results = self.cursor.fetchall()
-        # self.tab_attach.table.setRowCount(len(results))
-        # rowcount=0
-        # for result in results:
-        #     self.tab_attach.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['FILENAME']))
-        #     self.tab_attach.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['FILEPATH']))
-        #     rowcount+=1
-            
         self.tab_comments.loadComments()    
         
     def addUserComment(self):
@@ -631,7 +579,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.db.commit()
         # self.tab_comments.enterText.clear()
         #self.tab_comments.mainText.clear()
-        self.tab_comments.loadComments()
+        self.tab_comments.addComment(data[1], data[2], data[4], data[3])
         self.setCommentCount()
         self.tabwidget.setCurrentIndex(3)
         
@@ -890,9 +838,9 @@ class ECNWindow(QtWidgets.QWidget):
             return True
         
     def checkAllFields(self):
-        if not self.tab_parts.checkFields():
-            self.dispMsg("Error: Empty fields in parts tab. Please fill them in and try again.")
-            return False
+        # if not self.tab_parts.checkFields():
+        #     self.dispMsg("Error: Empty fields in parts tab. Please fill them in and try again.")
+        #     return False
         if self.checkSigNotiDuplicate():
             self.dispMsg("Error: Duplicate user found in Signature and Notifications. Please remove the duplicate before trying again.")
             return False
