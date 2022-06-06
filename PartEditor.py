@@ -17,6 +17,7 @@ class PartEditor(QtWidgets.QWidget):
         super(PartEditor,self).__init__()
         self.windowWidth =  400
         self.windowHeight = 550
+        self.setFixedSize(self.windowWidth,self.windowHeight)
         self.parent = parent
         self.initAtt()
         self.initUI()

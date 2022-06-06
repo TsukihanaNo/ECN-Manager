@@ -46,6 +46,7 @@ class Manager(QtWidgets.QWidget):
         super(Manager, self).__init__()
         self.windowWidth = 1000
         self.windowHeight = 600
+        self.setFixedSize(self.windowWidth,self.windowHeight)
         self.ecnWindow = None
         self.sorting = (0,QtCore.Qt.DescendingOrder)
         self.ecn = ecn
