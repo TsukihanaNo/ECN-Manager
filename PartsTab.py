@@ -146,11 +146,11 @@ class PartsTab(QtWidgets.QWidget):
     def getStatus(self,part,part_type):
         if self.parent.parent.visual.partExist(part):
             if self.parent.parent.visual.checkPartSetup(part,part_type):
-                self.model.update_status(row, "Complete")
+                return "Completed"
             else: 
-                self.model.update_status(row, "Incomplete")
+                return "Incomplete"
         else:
-            self.model.update_status(row, "Not Found")
+            return "Not Found"
             
     def updateStatusColor(self):
         for row in range(self.rowCount()):
@@ -199,7 +199,7 @@ class PartsDelegate(QtWidgets.QStyledItemDelegate):
         
         if status !="NA":
             rect = QtCore.QRect(r.topRight()+QtCore.QPoint(-150,12),QtCore.QSize(110,25))
-            if status =="Complete":
+            if status =="Completed":
                 color = QtGui.QColor("#CAFFBF")
             elif status =="Incomplete":
                 color = QtGui.QColor("#FDFFB6")
@@ -238,11 +238,13 @@ class PartsDelegate(QtWidgets.QStyledItemDelegate):
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,45),f"Inspection: {Inspection}")
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,65),f"Manufacturer: {mfg}")
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,65),f"Mfg. Part: {mfg_part_id}")
-        if len(reference)>50:
-            reference = reference[:50] +" ..."
+        if reference is not None:
+            if len(reference)>50:
+                reference = reference[:50] +" ..."
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,80),f"Reference: {reference}")
-        if len(replacing)>100:
-            replacing = replacing[:100] +" ..."
+        if replacing is not None:
+            if len(replacing)>100:
+                replacing = replacing[:100] +" ..."
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,95),f"Replacing: {replacing}")
         painter.restore()
 

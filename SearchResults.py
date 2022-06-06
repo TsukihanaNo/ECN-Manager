@@ -115,7 +115,8 @@ class SearchResults(QtWidgets.QWidget):
                     if item['STATUS']!="Completed":
                         today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                         elapsed = self.getElapsedDays(today, item['FIRST_RELEASE'])
-                        self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(round(elapsed.seconds/86400,2))))
+                        elapsed_days = "{:.2f}".format(elapsed.days + round(elapsed.seconds/86400,2))
+                        self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(elapsed_days))
                     else:
                         self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(item["COMP_DAYS"])))
                     if item['STAGE']!=0:

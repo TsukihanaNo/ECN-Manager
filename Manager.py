@@ -397,7 +397,7 @@ class Manager(QtWidgets.QWidget):
                 if self.table_data[x]['STATUS']!="Draft":
                     today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     elapsed = self.getElapsedDays(today, self.table_data[x]['FIRST_RELEASE'])
-                    elapsed_days = str(elapsed.days + round(elapsed.seconds/86400,2))
+                    elapsed_days = "{:.2f}".format(elapsed.days + round(elapsed.seconds/86400,2))
                 else:
                     elapsed_days =""
             else:
@@ -439,7 +439,7 @@ class Manager(QtWidgets.QWidget):
                     if self.table_data[x]['STATUS']!="Draft":
                         today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                         elapsed = self.getElapsedDays(today, self.table_data[x]['FIRST_RELEASE'])
-                        elapsed_days = str(elapsed.days + round(elapsed.seconds/86400,2))
+                        elapsed_days = "{:.2f}".format(elapsed.days + round(elapsed.seconds/86400,2))
                     else:
                         elapsed_days =""
                 else:
@@ -497,7 +497,7 @@ class Manager(QtWidgets.QWidget):
         result = self.cursor.fetchone()
         #print("open:",result[0])
         self.label_open_ecns.setText(f"Open - {result[0]}")
-        self.cursor.execute(f"Select COUNT(ECN.ECN_ID) from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and ECN.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL")
+        self.cursor.execute(f"Select COUNT(ECN.ECN_ID) from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and ECN.STAGE={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL")
         result = self.cursor.fetchone()
         #print("queue:",result[0])
         if result[0]>0:
@@ -684,20 +684,22 @@ class ECNDelegate(QtWidgets.QStyledItemDelegate):
         painter.setBrush(color)
         painter.drawRoundedRect(r, 5, 5)
         
-        rect = QtCore.QRect(r.topRight()+QtCore.QPoint(-150,2),QtCore.QSize(125,20))
-        if status =="Out For Approval":
-            color = QtGui.QColor("#CAFFBF")
-        elif status =="Rejected":
-            color = QtGui.QColor("#FFADAD")
-        else:
-            color = QtGui.QColor("#FDFFB6")
-        painter.setBrush(color)
-        painter.drawRoundedRect(rect, 5, 5)
-        font = painter.font()
-        font.setPointSize(8)
-        painter.setFont(font)
-        painter.setPen(QtCore.Qt.black)
-        painter.drawText(r.topRight()+QtCore.QPoint(-145,16),status)
+        
+        if status !="Completed":
+            rect = QtCore.QRect(r.topRight()+QtCore.QPoint(-150,2),QtCore.QSize(125,20))
+            if status =="Out For Approval":
+                color = QtGui.QColor("#CAFFBF")
+            elif status =="Rejected":
+                color = QtGui.QColor("#FFADAD")
+            else:
+                color = QtGui.QColor("#FDFFB6")
+            painter.setBrush(color)
+            painter.drawRoundedRect(rect, 5, 5)
+            font = painter.font()
+            font.setPointSize(8)
+            painter.setFont(font)
+            painter.setPen(QtCore.Qt.black)
+            painter.drawText(r.topRight()+QtCore.QPoint(-145,16),status)
         
         painter.setPen(lineMarkedPen)
         painter.drawLine(r.topLeft()+QtCore.QPoint(0,25),r.topRight()+QtCore.QPoint(0,25))
@@ -712,8 +714,8 @@ class ECNDelegate(QtWidgets.QStyledItemDelegate):
         painter.setFont(font)
         painter.setPen(QtCore.Qt.black)
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,20),ecn_id)
-        if len(title)>85:
-            title = title[:85] + "..."
+        if len(title)>75:
+            title = title[:75] + "..."
         font.setBold(False)
         painter.setFont(font)
         painter.drawText(r.topLeft()+QtCore.QPoint(175,20),title)
