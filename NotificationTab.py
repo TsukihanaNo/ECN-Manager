@@ -1,5 +1,7 @@
 from PySide6 import QtGui, QtCore, QtWidgets
 from pathlib import Path
+from SignaturePanel import *
+from SignatureTab import SignatureDelegate, SignatureModel
 import os, sys
 
 if getattr(sys, 'frozen', False):
@@ -24,102 +26,71 @@ class NotificationTab(QtWidgets.QWidget):
     def initUI(self):
         mainlayout = QtWidgets.QVBoxLayout(self)
         self.toolbar = QtWidgets.QToolBar()
-
-        # self.label_signatures = QtWidgets.QLabel("Notifications",self)
-        # mainlayout.addWidget(self.label_signatures)
         mainlayout.addWidget(self.toolbar)
-        titles = ['Title','Name','User']
-        self.table = QtWidgets.QTableWidget(0,len(titles),self)
-        self.table.setHorizontalHeaderLabels(titles)
-        self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
-        mainlayout.addWidget(self.table)
+        
+        self.signatures = QtWidgets.QListView()
+        self.signatures.setStyleSheet("QListView{background-color:#f0f0f0}")
+        self.signatures.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.signatures.setResizeMode(QtWidgets.QListView.Adjust)
+        self.signatures.setItemDelegate(SignatureDelegate())
+        self.signatures.doubleClicked.connect(self.editSignature)
+        
+        self.model = SignatureModel()
+        self.signatures.setModel(self.model)
+        
+        self.signatures.selectionModel().selectionChanged.connect(self.onRowSelect)
+        
+        mainlayout.addWidget(self.signatures)
                 
-        # hlayout = QtWidgets.QHBoxLayout(self)
-        self.button_add = QtWidgets.QPushButton("Add Notify")
+        self.button_add = QtWidgets.QPushButton("Add Signature")
+        print(self.parent.tab_ecn.line_status.text())
         icon_loc = icon = os.path.join(program_location,"icons","add.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.addRow)
-        self.button_remove = QtWidgets.QPushButton("Remove Notify")
+        self.button_remove = QtWidgets.QPushButton("Remove Signature")
+        self.button_remove.setDisabled(True)
         icon_loc = icon = os.path.join(program_location,"icons","minus.png")
         self.button_remove.setIcon(QtGui.QIcon(icon_loc))
-        self.button_remove.setEnabled(False)
         self.button_remove.clicked.connect(self.removeRow)
-        # hlayout.addWidget(self.button_add)
-        # hlayout.addWidget(self.button_remove)
-        # mainlayout.addLayout(hlayout)
+        self.button_edit = QtWidgets.QPushButton("Edit Signature")
+        icon_loc = icon = os.path.join(program_location,"icons","edit.png")
+        self.button_edit.setIcon(QtGui.QIcon(icon_loc))
+        self.button_edit.setDisabled(True)
+        self.button_edit.clicked.connect(self.editSignature)
         self.toolbar.addWidget(self.button_add)
         self.toolbar.addWidget(self.button_remove)
-
+        self.toolbar.addWidget(self.button_edit)
+        
+        
+        if self.parent.ecn_data is not None:
+            if self.parent.parent.user_info['user']==self.parent.ecn_data["AUTHOR"]:
+                self.signatures.doubleClicked.connect(self.editSignature)
+            else:
+                self.button_add.setDisabled(True)
         self.setLayout(mainlayout)       
 
     def onRowSelect(self):
-        if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() or self.parent.parent.user_info["role"]=="Manager" or not isinstance(self.table.currentRow(), QtWidgets.QTableWidgetItem):
-            if self.parent.tab_ecn.line_status.text()!="Completed":
-                self.button_remove.setEnabled(bool(self.table.selectionModel().selectedRows()))
+        if self.parent.parent.user_info['role']=="Manager" and self.parent.tab_ecn.line_status.text()!="Completed":
+            row = self.signatures.currentIndex().row()
+            self.button_revoke.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()) and self.model.get_signed_date(row) is not None)
+        if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() and self.parent.tab_ecn.line_status.text()!="Completed":
+            self.button_remove.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
+            self.button_edit.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
         
     def addRow(self):
-        row = self.table.rowCount()
-        self.table.insertRow(row)
-        self.setBoxJob(row)
-        self.setBoxName(row)
-        self.setBoxUser(row)
-    
-    def setBoxJob(self,row,text=None):
-        box = QtWidgets.QComboBox()
-        box.addItems(self.job_titles)
-        if text is not None:
-            box.setCurrentText(text)
-        box.currentIndexChanged.connect(self.setNameList)
-        box.currentIndexChanged.connect(self.setUser)
-        self.table.setCellWidget(row, 0, box)
-        
-    def setBoxName(self,row,text=None):
-        command = "Select NAME,USER_ID from USER where JOB_TITLE = '" + self.table.cellWidget(row, 0).currentText() +"'"
-        self.parent.cursor.execute(command)
-        test = self.parent.cursor.fetchall()
-        names = []
-        for item in test:
-            if item[1]!=self.parent.user_info['user']:
-                names.append(item[0])
-        box = QtWidgets.QComboBox()
-        box.addItems(names)
-        if text is not None:
-            box.setCurrentText(text)
-        box.currentIndexChanged.connect(self.setUser)
-        self.table.setCellWidget(row, 1, box)
-        
-    def setBoxUser(self,row, text=None):
-        command = "Select USER_ID from USER where NAME = '" + self.table.cellWidget(row, 1).currentText() +"'"
-        self.parent.cursor.execute(command)
-        test = self.parent.cursor.fetchall()
-        names = []
-        for item in test:
-            names.append(item[0])
-        box = QtWidgets.QComboBox()
-        box.addItems(names)
-        if text is not None:
-            box.setCurrentText(text)
-        self.table.setCellWidget(row, 2, box)
-        
-
-    def findUserIndex(self,userList, role):
-        index = 0
-        try:
-            for user in userList:
-                if user[0]==role:
-                    return index
-                else:
-                    index+=1
-            self.dispMsg(f"No users found matching role:{role}. Please add user or remove role from requirements.")
-        except Exception as e:
-            print(e)
-
+        self.signature = SignaturePanel(self)
         
     def removeRow(self):
-        self.table.removeRow(self.table.currentRow())
+        index = self.signatures.selectionModel().selectedIndexes()
+        index = sorted(index, reverse=True)
+        for item in index:
+            row = item.row()
+            if self.model.get_signed_date(row) is None:
+                self.model.removeRow(row)
+                
+    def editSignature(self):
+        index = self.signatures.currentIndex()
+        self.sig_editor = SignaturePanel(self,index.row())
         
     def findJobTitles(self):
         self.parent.cursor.execute("Select DISTINCT JOB_TITLE FROM USER")
@@ -130,77 +101,26 @@ class NotificationTab(QtWidgets.QWidget):
             self.job_titles.remove("Admin")
         if len(self.job_titles)==0:
             self.dispMsg("No Job Titles found, please add Jobs and Users.")
+        else:
+            self.job_titles.sort()
         #print(self.job_titles)
         
-    def getUserRole(self,user):
-        self.parent.cursor.execute(f"select ROLE from USER where USER_ID='{user}'")
-        result = self.parent.cursor.fetchone()
-        if result is not None:
-            return result[0]
-        else:
-            self.dispMsg(f"Error: no role found for {user}")
-            return None
-    
-        
-    def setNameList(self):
-        command = "Select NAME from USER where JOB_TITLE = '" + self.table.cellWidget(self.table.currentRow(), 0).currentText() +"' and STATUS='Active'"
-        self.parent.cursor.execute(command)
-        test = self.parent.cursor.fetchall()
-        names = []
-        for item in test:
-            names.append(item[0])
-        box = QtWidgets.QComboBox()
-        box.addItems(names)
-        self.table.setCellWidget(self.table.currentRow(), 1, box)
-        box.currentIndexChanged.connect(self.setUser)
-        
-    def checkDuplicate(self):
-        sigs = []
-        for row in range(self.table.rowCount()):
-            sigs.append(self.table.cellWidget(row, 2).currentText())
-        if len(sigs)==len(set(sigs)):
-            return False
-        else:
-            return True
-
-    
-    def setUser(self):
-        command = "Select USER_ID from USER where NAME = '" + self.table.cellWidget(self.table.currentRow(), 1).currentText() +"'"
-        self.parent.cursor.execute(command)
-        test = self.parent.cursor.fetchall()
-        names = []
-        for item in test:
-            names.append(item[0])
-        box = QtWidgets.QComboBox()
-        box.addItems(names)
-        self.table.setCellWidget(self.table.currentRow(), 2, box)
-        
     def repopulateTable(self):
-        self.table.clearContents()
+        self.model.clear_signatures()
         command = f"Select * from SIGNATURE where ECN_ID='{self.parent.ecn_id}' and TYPE='Notify'"
         self.parent.cursor.execute(command)
         results = self.parent.cursor.fetchall()
-        self.table.setRowCount(len(results))
-        rowcount=0
         for result in results:
-            #print(result['JOB_TITLE'])
-            if self.parent.parent.user_info['user']!=self.parent.tab_ecn.line_author.text():
-                self.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['JOB_TITLE']))
-                self.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['NAME']))
-                self.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['USER_ID']))
-            else:
-                self.setBoxJob(rowcount,result['JOB_TITLE'])
-                self.setBoxName(rowcount,result['NAME'])
-                self.setBoxUser(rowcount,result['USER_ID'])
-
-            rowcount+=1
+            self.model.add_signature(result['JOB_TITLE'], result['NAME'], result['USER_ID'], result['SIGNED_DATE'])
+            
+    def rowCount(self):
+        return self.model.rowCount(self.signatures)
+    
             
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()
         msgbox.setText(msg+"        ")
         msgbox.exec()
             
-    def resizeEvent(self,event):
-            width = int(self.table.width()/self.table.columnCount())-3
-            for x in range(self.table.columnCount()):
-                self.table.setColumnWidth(x,width)
+    def resizeEvent(self, e):
+        self.model.layoutChanged.emit()

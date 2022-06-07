@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets, QtCore, QtWebEngineCore
+from PySide6 import QtWidgets, QtCore
 from datetime import datetime
 from AttachmentTab import *
 from ECNTab import *
@@ -226,7 +226,7 @@ class ECNWindow(QtWidgets.QWidget):
                 self.toolbar.addWidget(self.button_comment)
                 self.toolbar.addSeparator()
                 self.toolbar.addWidget(self.button_release)
-                if self.tab_signature.table.rowCount()==0:
+                if self.tab_signature.rowCount()==0:
                     self.button_release.setDisabled(True)
                 self.tab_ecn.line_ecntitle.setReadOnly(False)
                 self.tab_ecn.text_reason.setReadOnly(False)
@@ -420,15 +420,10 @@ class ECNWindow(QtWidgets.QWidget):
             #print('current list',current_list)
             #get new values
             new_list = []
-            for x in range(self.tab_signature.table.rowCount()):
-                if isinstance(self.tab_signature.table.item(x, 0),QtWidgets.QTableWidgetItem):
-                    job_title = self.tab_signature.table.item(x, 0).text()
-                    name = self.tab_signature.table.item(x,1).text()
-                    user_id = self.tab_signature.table.item(x,2).text()
-                else:
-                    job_title = self.tab_signature.table.cellWidget(x, 0).currentText()
-                    name = self.tab_signature.table.cellWidget(x,1).currentText()
-                    user_id = self.tab_signature.table.cellWidget(x,2).currentText()
+            for x in range(self.tab_signature.rowCount()):
+                job_title = self.tab_signature.model.get_job_title(x)
+                name = self.tab_signature.model.get_name(x)
+                user_id = self.tab_signature.model.get_user(x)
                 new_list.append((self.ecn_id,job_title,name,user_id,"Signing"))
             #print('new list',new_list)
             
@@ -453,15 +448,10 @@ class ECNWindow(QtWidgets.QWidget):
                 current_list.append(result[0])
             
             new_list = []
-            for x in range(self.tab_notification.table.rowCount()):
-                if isinstance(self.tab_notification.table.item(x, 0),QtWidgets.QTableWidgetItem):
-                    job_title = self.tab_notification.table.item(x, 0).text()
-                    name = self.tab_notification.table.item(x,1).text()
-                    user_id = self.tab_notification.table.item(x,2).text()
-                else:
-                    job_title = self.tab_notification.table.cellWidget(x, 0).currentText()
-                    name = self.tab_notification.table.cellWidget(x,1).currentText()
-                    user_id = self.tab_notification.table.cellWidget(x,2).currentText()
+            for x in range(self.tab_notification.rowCount()):
+                job_title = self.tab_notification.model.get_job_title(x)
+                name = self.tab_notification.model.get_name(x)
+                user_id = self.tab_notification.model.get_user(x)
                 new_list.append((self.ecn_id,job_title,name,user_id,"Notify"))
                 
             for element in new_list:
@@ -823,16 +813,10 @@ class ECNWindow(QtWidgets.QWidget):
     
     def checkSigNotiDuplicate(self):
         sigs = []
-        for row in range(self.tab_signature.table.rowCount()):
-            if isinstance(self.tab_signature.table.item(row, 2),QtWidgets.QTableWidgetItem):
-                sigs.append(self.tab_signature.table.item(row, 2).text())
-            else:
-                sigs.append(self.tab_signature.table.cellWidget(row, 2).currentText())
-        for row in range(self.tab_notification.table.rowCount()):
-            if isinstance(self.tab_notification.table.item(row, 2),QtWidgets.QTableWidgetItem):
-                sigs.append(self.tab_notification.table.item(row, 2).text())
-            else:
-                sigs.append(self.tab_notification.table.cellWidget(row, 2).currentText())
+        for row in range(self.tab_signature.rowCount()):
+            sigs.append(self.tab_signature.model.get_user(row))
+        for row in range(self.tab_notification.rowCount()):
+            sigs.append(self.tab_notification.model.get_user(row))
         #print(sigs)
         if len(sigs)==len(set(sigs)):
             return False
@@ -879,7 +863,7 @@ class ECNWindow(QtWidgets.QWidget):
                     self.AddSignatures()
                     if not msg:
                         self.dispMsg("ECN has been updated!")
-                    if self.tab_signature.table.rowCount()>0 and self.tab_ecn.line_status.text()!="Out For Approval":
+                    if self.tab_signature.rowCount()>0 and self.tab_ecn.line_status.text()!="Out For Approval":
                         self.button_release.setDisabled(False)
                     #self.getCurrentValues()
                     #self.checkDiff()
@@ -896,7 +880,6 @@ class ECNWindow(QtWidgets.QWidget):
                 template_loc = os.path.join(self.parent.programLoc,'templates','template.html')
                 with open(template_loc) as f:
                     lines = f.read() 
-                    #print(lines)
                     f.close()
 
                     t = Template(lines)
@@ -909,13 +892,6 @@ class ECNWindow(QtWidgets.QWidget):
                     requestor = result['REQUESTOR']
                     reason = result['ECN_REASON']
                     summary = result['ECN_SUMMARY']
-                    # title = self.tab_ecn.line_ecntitle.text()
-                    # author = self.tab_ecn.line_author.text()
-                    # dept = self.tab_ecn.combo_dept.currentText()
-                    # requestor = self.tab_ecn.box_requestor.currentText()
-                    #316 front html wrapper characters and 14 ending html wrapper from qt.tohtml
-                    # reason = self.tab_ecn.text_reason.toHtml()[330:-14]
-                    # summary = self.tab_ecn.text_summary.toHtml()[330:-14]
                     signature = "<tr>"
                     attachment ="<tr>"
                     parts = ""
@@ -970,28 +946,15 @@ class ECNWindow(QtWidgets.QWidget):
                     
                     export = t.substitute(ECNID=id,ECNTitle=title,Requestor=requestor,Department=dept,Author=author, Reason=reason,Summary=summary,Parts=parts,Attachment=attachment,Signature=signature)
                 
-                    # with open(foldername+'\\'+id+'.html', 'w') as f:
-                    #     f.write(export)
-                    #     f.close()
+                    with open(foldername+'\\'+id+'.html', 'w') as f:
+                        f.write(export)
+                        f.close()
                         
-                        
-                    self.page = QtWebEngineCore.QWebEnginePage()
                     
-                    
-                    self.foldername = foldername
-                    self.page.loadFinished.connect(self.handle_load_finished)
-                    self.page.setHtml(export)
-                    #page.load(QtCore.QUrl.fromLocalFile(foldername+'\\'+id+'.html'))
-                    
-                    #self.dispMsg("Export Completed!")
+                    self.dispMsg("Export Completed!")
         except Exception as e:
             print(e)
             self.dispMsg(f"Error Occured during ecn export.\n Error: {e}")
-    
-    def handle_load_finished(self,status):
-            if status:
-                self.page.printToPdf(self.foldername+'\\'+self.ecn_id+'.pdf')
-                self.dispMsg("Export Completed!")
         
     def addNotification(self,ecn_id,notificationType,from_user=None,userslist=None,msg=""):
         if userslist is not None:
