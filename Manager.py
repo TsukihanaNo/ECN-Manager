@@ -423,14 +423,14 @@ class Manager(QtWidgets.QWidget):
         table_type = self.dropdown_type.currentText()
         offset = 10
         #print(rowcount,percent)
-        if percent> 0.75 and rowcount<total_count:
+        if percent> 0.90 and rowcount<total_count:
             diff = total_count - rowcount
             if diff>offset:
                 counter = 10
             else:
                 counter = diff
             for x in range(counter):
-                x = x + offset -1
+                x = x + offset
                 if self.table_data[x]['STAGE']!=0 and self.table_data[x]['STAGE'] is not None:
                     users = self.getWaitingUser(self.table_data[x]['ECN_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
                 else:
