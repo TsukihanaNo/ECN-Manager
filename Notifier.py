@@ -220,6 +220,8 @@ class Notifier(QtWidgets.QWidget):
                     self.stageReleaseNotification(result[0])
                 elif result['TYPE']=="User Comment":
                     self.commentNotification(result[0],result['FROM_USER'],result['MSG'])
+                elif result['TYPE']=="Canceling":
+                    self.cancelNotification(result[0],result['MSG'])
                 else:
                     self.releaseNotification(result[0])
                 self.removeECNX(result[0])
@@ -318,6 +320,20 @@ class Notifier(QtWidgets.QWidget):
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
         self.sendEmail(ecn_id,receivers, message,"Completion",attach)
         self.log_text.append(f"-Completion Email sent for {ecn_id} to {receivers}")
+        
+        
+    def cancelNotification(self,ecn_id,msg):
+        self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing'")
+        results = self.cursor.fetchall()
+        receivers = []
+        message = f"{ecn_id} has been canceled by the author! See comment below.\n\nComment: {msg}"
+        for result in results:
+            receivers.append(self.userList[result[0]])
+        print(f"send email these addresses: {receivers} notifying ecn cancelation")
+        attach = []
+        attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
+        self.sendEmail(ecn_id,receivers, message,"Cancelation",attach)
+        self.log_text.append(f"-Rejection Email sent for {ecn_id} to {receivers}")
         
     def releaseNotification(self,ecn_id):
         self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing'")

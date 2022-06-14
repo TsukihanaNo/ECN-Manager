@@ -612,15 +612,21 @@ class ECNWindow(QtWidgets.QWidget):
             self.dispMsg(f"Problems occured trying to delete ECN.\n Error: {e}")
         
     def cancelECN(self,ecn_id):
-        try:
-            self.cursor.execute(f"UPDATE ECN SET STATUS='Canceled' where ECN_ID='{ecn_id}'")
-            self.db.commit()
-            self.dispMsg("ECN has been canceled")
-            self.tab_ecn.line_status.setText("Canceled")
-            self.parent.repopulateTable()
-        except Exception as e:
-            print(e)
-            self.dispMsg(f"Problems occured trying to cancel ECN.\n Error:{e}")
+        comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Comment", "")
+        if ok and comment!="":
+            try:
+                self.addComment(self.ecn_id, comment,"Canceling")
+                self.cursor.execute(f"UPDATE ECN SET STATUS='Canceled' where ECN_ID='{ecn_id}'")
+                self.db.commit()
+                self.dispMsg("ECN has been canceled")
+                self.tab_ecn.line_status.setText("Canceled")
+                self.parent.repopulateTable()
+                self.addNotification(self.ecn_id, "Canceling",from_user=self.parent.user_info['user'],msg=comment)
+            except Exception as e:
+                print(e)
+                self.dispMsg(f"Problems occured trying to cancel ECN.\n Error:{e}")
+        if ok and comment=="":
+            self.dispMsg("Rejection failed: comment field was left blank.")
         
     def release(self):
         try:
@@ -851,7 +857,7 @@ class ECNWindow(QtWidgets.QWidget):
                         self.dispMsg("ECN has been saved!")
                     self.tabwidget.setTabVisible(3, True)
                     self.parent.repopulateTable()
-                    if self.tab_signature.table.rowCount()>0 and self.tab_ecn.line_status.text()!="Out For Approval":
+                    if self.tab_signature.rowCount()>0 and self.tab_ecn.line_status.text()!="Out For Approval":
                         self.button_release.setDisabled(False)
                     self.button_cancel.setDisabled(False)
         else:
