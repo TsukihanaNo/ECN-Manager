@@ -342,8 +342,8 @@ class ECNWindow(QtWidgets.QWidget):
             requestor = self.tab_ecn.box_requestor.currentText()
             status = 'Draft'
             title = self.tab_ecn.line_ecntitle.text()
-            reason =self.tab_ecn.text_reason.toPlainText()
-            summary = self.tab_ecn.text_summary.toPlainText()
+            reason =self.tab_ecn.text_reason.toHtml()
+            summary = self.tab_ecn.text_summary.toHtml()
             modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             dept = self.tab_ecn.combo_dept.currentText()
 
@@ -503,8 +503,8 @@ class ECNWindow(QtWidgets.QWidget):
             dept = self.tab_ecn.combo_dept.currentText()
             requestor = self.tab_ecn.box_requestor.currentText()
             title = self.tab_ecn.line_ecntitle.text()
-            reason =self.tab_ecn.text_reason.toPlainText()
-            summary = self.tab_ecn.text_summary.toPlainText()
+            reason =self.tab_ecn.text_reason.toHtml()
+            summary = self.tab_ecn.text_summary.toHtml()
             modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             data = (dept,ecn_type,requestor,title,reason,summary,modifieddate,self.ecn_id)
 
@@ -543,8 +543,8 @@ class ECNWindow(QtWidgets.QWidget):
         #self.tab_ecn.combo_type.setCurrentIndex(self.typeindex[results['ECN_TYPE']])
         self.tab_ecn.combo_type.setCurrentText(self.ecn_data['ECN_TYPE'])
         self.tab_ecn.line_ecntitle.setText(self.ecn_data['ECN_TITLE'])
-        self.tab_ecn.text_reason.setText(self.ecn_data['ECN_REASON'])
-        self.tab_ecn.text_summary.setText(self.ecn_data['ECN_SUMMARY'])
+        self.tab_ecn.text_reason.setHtml(self.ecn_data['ECN_REASON'])
+        self.tab_ecn.text_summary.setHtml(self.ecn_data['ECN_SUMMARY'])
         self.tab_ecn.line_author.setText(self.ecn_data['AUTHOR'])
         self.tab_ecn.box_requestor.setEditText(self.ecn_data['REQUESTOR'])
         self.tab_ecn.line_status.setText(self.ecn_data['STATUS'])
@@ -754,7 +754,7 @@ class ECNWindow(QtWidgets.QWidget):
         #print('getting values')
         self.now_type = self.tab_ecn.combo_type.currentText()
         self.now_title = self.tab_ecn.line_ecntitle.text()
-        self.now_req_details = self.tab_ecn.text_reason.toPlainText()
+        self.now_req_details = self.tab_ecn.text_reason.toHtml()
         #print(self.now_type)
         #print(self.now_title)
         #print(self.now_req_details)
@@ -784,7 +784,7 @@ class ECNWindow(QtWidgets.QWidget):
                 self.dispMsg("ECN is now completed")
                 self.addNotification(self.ecn_id, "Completed")
                 self.tab_parts.button_add.setDisabled(True)
-                self.tab_attach.button_add_setDisabled(True)
+                self.tab_attach.button_add.setDisabled(True)
                 self.tab_signature.button_add.setDisabled(True)
                 self.tab_notification.button_add.setDisabled(True)
             else:
@@ -1013,7 +1013,7 @@ class ECNWindow(QtWidgets.QWidget):
             self.cursor.execute("INSERT INTO CHANGELOG(ECN_ID, CHANGEDATE, NAME, PREVDATA, NEWDATA) VALUES(?,?,?,?,?)",(data))
             print('adding title change')
         prevdata = self.now_req_details
-        newdata = self.tab_ecn.text_reason.toPlainText()  
+        newdata = self.tab_ecn.text_reason.toHtml()  
         if newdata != prevdata:
             data = (ecn_id,changedate,user,prevdata,newdata)
             self.cursor.execute("INSERT INTO CHANGELOG(ECN_ID, CHANGEDATE, NAME, PREVDATA, NEWDATA) VALUES(?,?,?,?,?)",(data))

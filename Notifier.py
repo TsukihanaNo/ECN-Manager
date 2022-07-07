@@ -252,7 +252,7 @@ class Notifier(QtWidgets.QWidget):
         for result in results:
             receivers.append(self.userList[result[0]])
         from_user = self.emailNameList[self.userList[from_user]]
-        message = f"{ecn_id} has been rejected to the author by {from_user}! All Signatures have been removed and the ECN approval will start from the beginning once the ECN is released again. See comment below.\n\nComment - {from_user}: {msg}"
+        message = f"<p>{ecn_id} has been rejected to the author by {from_user}! All Signatures have been removed and the ECN approval will start from the beginning once the ECN is released again. See comment below.</p><p>Comment - {from_user}: {msg}</p>"
         #print(f"send email to these addresses: {receivers} notifying ecn rejection")
         #print(message)
         attach = []
@@ -267,7 +267,7 @@ class Notifier(QtWidgets.QWidget):
         receivers = []
         for user in users:
             receivers.append(self.userList[user])
-        message = f"{ecn_id} has been rejected to : {users[0]} by {from_user}. Signatures for the following users have also been removed: {users}.See comment below.\nComment: {msg}"
+        message = f"<p>{ecn_id} has been rejected to : {users[0]} by {from_user}. Signatures for the following users have also been removed: {users}.See comment below.</p><p>Comment: {msg}</p>"
         #print(f"send email to these addresses: {receivers} notifying ecn completion")
         #print(message)
         attach = []
@@ -294,13 +294,13 @@ class Notifier(QtWidgets.QWidget):
                 receivers.append(self.userList[result[0]])
             
         from_user = self.emailNameList[self.userList[from_user]]
-        message = f"a comment has been added to {ecn_id} by {from_user}! See comment below.\n\nComment - {from_user}: {msg}"
+        message = f"<p>a comment has been added to {ecn_id} by {from_user}! See comment below.</p><p>Comment - {from_user}: {msg}</p>"
         #print(f"send email to these addresses: {receivers} notifying ecn comment")
         #print(message)
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
-        self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
+        self.sendEmail(ecn_id,receivers, message,"Comment",attach)
         self.log_text.append(f"-user comment Email sent for {ecn_id} to {receivers}")
         
     
@@ -311,7 +311,7 @@ class Notifier(QtWidgets.QWidget):
         receivers.append(self.userList[result[0]])
         self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}'")
         results = self.cursor.fetchall()
-        message = f"{ecn_id} has been completed!\n\n\n You can now view it in the completed section of your viewer."
+        message = f"<p>{ecn_id} has been completed!</p><p>You can now view it in the completed section of your viewer.</p>"
         for result in results:
             receivers.append(self.userList[result[0]])
         #print(f"send email to these addresses: {receivers} notifying ecn completion")
@@ -326,7 +326,7 @@ class Notifier(QtWidgets.QWidget):
         self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing'")
         results = self.cursor.fetchall()
         receivers = []
-        message = f"{ecn_id} has been canceled by the author! See comment below.\n\nComment: {msg}"
+        message = f"<p>{ecn_id} has been canceled by the author! See comment below.</p><p>Comment: {msg}</p>"
         for result in results:
             receivers.append(self.userList[result[0]])
         print(f"send email these addresses: {receivers} notifying ecn cancelation")
@@ -339,7 +339,7 @@ class Notifier(QtWidgets.QWidget):
         self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing'")
         results = self.cursor.fetchall()
         receivers = []
-        message = f"{ecn_id} has been released! You can see it in the queue section once it is your turn for approval.\nYou can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN in the open section in the ECN Manager application."
+        message = f"<p>{ecn_id} has been released! You can see it in the queue section once it is your turn for approval.<\p><p>You can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN in the open section in the ECN Manager application.</p>"
         for result in results:
             receivers.append(self.userList[result[0]])
         print(f"send email these addresses: {receivers} notifying ecn release")
@@ -357,7 +357,7 @@ class Notifier(QtWidgets.QWidget):
         receivers = []
         for user in users:
             receivers.append(self.userList[user])
-        message = f"{ecn_id} has been released and is now awaiting for your approval!\nYou can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN your queue in the ECN Manager application."
+        message = f"<p>{ecn_id} has been released and is now awaiting for your approval!</p><p>You can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN your queue in the ECN Manager application.</p>"
         #print(f"send email these addresses: {receivers} notifying ecn release stage move")
         attach = []
         attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
@@ -553,7 +553,7 @@ class Notifier(QtWidgets.QWidget):
         for email in direct_receivers:
             direct.append(self.emailNameList[email])
         direct = ", ".join(direct)
-        message = f"Hello {direct}:\n{ecn_id} has been out for {total_days} and has not moved for {reminder_days} days or more since the last notification has been sent.\n Please work on it at your earlier availability!\n\n You can view the ECN your queue in the ECN Manager application.\n\nYou can also open the attachment file to launch to be directed to the ECN or the HTML file to see what the ECN is."
+        message = f"<p>Hello {direct}:</p><p>{ecn_id} has been out for {total_days} and has not moved for {reminder_days} days or more since the last notification has been sent.</p><p> Please work on it at your earlier availability!</p><p> You can view the ECN your queue in the ECN Manager application.</p><p>You can also open the attachment file to launch to be directed to the ECN or the HTML file to see what the ECN is.</p>"
         #print(message)
         #print(f"send email these addresses: {receivers} notifying ecn lateness")
         self.generateECNX(ecn_id)
