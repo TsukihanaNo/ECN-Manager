@@ -10,6 +10,7 @@ from LoginWindow import *
 #from MyQueueTab import *
 from datetime import datetime
 from ECNWindow import *
+from PCNWindow import *
 from DataBaseUpdateWindow import *
 from NewDBWindow import *
 from UsersWindow import *
@@ -316,6 +317,8 @@ class Manager(QtWidgets.QWidget):
         #self.button_open.setFixedWidth(25)
         self.button_open.clicked.connect(self.openECN)
         self.button_add = QtWidgets.QPushButton("New")
+        self.button_add2 = QtWidgets.QPushButton("New PCN")
+        self.button_add2.clicked.connect(self.newPCN)
         #self.button_add.setToolTip("New ECN")
         #self.button_add.setFixedWidth(25)
         icon_loc = icon = os.path.join(program_location,"icons","new.png")
@@ -333,6 +336,7 @@ class Manager(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_search)
         self.toolbar.addSeparator()
         self.toolbar.addWidget(self.button_add)
+        self.toolbar.addWidget(self.button_add2)
         self.toolbar.addWidget(self.button_open)
         self.toolbar.addWidget(self.button_refresh)
         self.toolbar.addWidget(self.dropdown_type)
@@ -560,6 +564,9 @@ class Manager(QtWidgets.QWidget):
     
     def newECN(self):
         self.HookEcn()
+        
+    def newPCN(self):
+        self.pcnWindow = PCNWindow(self)
         
     def openECN(self):
         index = self.ecns.currentIndex()

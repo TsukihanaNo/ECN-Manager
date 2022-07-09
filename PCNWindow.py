@@ -1,4 +1,7 @@
 from PySide6 import QtWidgets, QtCore, QtGui
+from PCNTab import *
+from SignatureTab import *
+from NotificationTab import *
 import os, sys
 import sqlite3  
 
@@ -16,8 +19,12 @@ initfile = os.path.join(program_location, "setting.ini")
 class PCNWindow(QtWidgets.QWidget):
     def __init__(self,parent=None):
         super(PCNWindow,self).__init__()
-        self.windowWidth =  int(830*0.9)
-        self.windowHeight = int(580*0.90)
+        self.windowWidth =  950
+        self.windowHeight = 800
+        self.parent = parent
+        self.settings = parent.settings
+        self.db = self.parent.db
+        self.cursor = self.parent.cursor
         self.initAtt()
         self.initUI()
         self.show()
@@ -45,7 +52,21 @@ class PCNWindow(QtWidgets.QWidget):
         
 
     def initUI(self):
-        pass
+        mainLayout = QtWidgets.QVBoxLayout()
+        self.toolbar = QtWidgets.QToolBar()
+        self.button_save = QtWidgets.QPushButton("Save")
+        self.toolbar.addWidget(self.button_save)
+        self.tab_widget = QtWidgets.QTabWidget(self)
+        self.tab_pcn = PCNTab(self)
+        #self.tab_signature = SignatureTab(self)
+        #self.tab_notification = NotificationTab(self)
+        
+        self.tab_widget.addTab(self.tab_pcn,"PCN")
+        #self.tab_widget.addTab(self.tab_signature,"Signatures")
+        #self.tab_widget.addTab(self.tab_notification,"Notifications")
+        mainLayout.addWidget(self.toolbar)
+        mainLayout.addWidget(self.tab_widget)
+        self.setLayout(mainLayout)
 
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()
