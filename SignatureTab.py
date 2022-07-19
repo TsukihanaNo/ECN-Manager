@@ -11,9 +11,11 @@ else:
 
 
 class SignatureTab(QtWidgets.QWidget):
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, doc_type="ECN",doc_data=None):
         super(SignatureTab,self).__init__()
         self.parent = parent
+        self.doc_type = doc_type
+        self.doc_data= doc_data
         self.job_titles =[]
         self.findJobTitles()
         self.initAtt()
@@ -41,7 +43,7 @@ class SignatureTab(QtWidgets.QWidget):
         mainlayout.addWidget(self.signatures)
                 
         self.button_add = QtWidgets.QPushButton("Add Signature")
-        print(self.parent.tab_ecn.line_status.text())
+        #print(self.parent.tab_ecn.line_status.text())
         icon_loc = icon = os.path.join(program_location,"icons","add.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.addRow)
@@ -60,8 +62,8 @@ class SignatureTab(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_edit)
         
         
-        if self.parent.ecn_data is not None:
-            if self.parent.parent.user_info['user']==self.parent.ecn_data["AUTHOR"]:
+        if self.doc_data is not None:
+            if self.parent.parent.user_info['user']==self.doc_data["AUTHOR"]:
                 self.signatures.doubleClicked.connect(self.editSignature)
             else:
                 self.button_add.setDisabled(True)
@@ -78,12 +80,13 @@ class SignatureTab(QtWidgets.QWidget):
         self.setLayout(mainlayout)       
 
     def onRowSelect(self):
-        if self.parent.parent.user_info['role']=="Manager" and self.parent.tab_ecn.line_status.text()!="Completed":
-            row = self.signatures.currentIndex().row()
-            self.button_revoke.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()) and self.model.get_signed_date(row) is not None)
-        if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() and self.parent.tab_ecn.line_status.text()!="Completed":
-            self.button_remove.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
-            self.button_edit.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
+        if self.doc_type=="ECN":
+            if self.parent.parent.user_info['role']=="Manager" and self.parent.tab_ecn.line_status.text()!="Completed":
+                row = self.signatures.currentIndex().row()
+                self.button_revoke.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()) and self.model.get_signed_date(row) is not None)
+            if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() and self.parent.tab_ecn.line_status.text()!="Completed":
+                self.button_remove.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
+                self.button_edit.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
         
     def addRow(self):
         self.signature = SignaturePanel(self)

@@ -12,9 +12,11 @@ else:
     program_location = os.path.dirname(os.path.realpath(__file__))
 
 class NotificationTab(QtWidgets.QWidget):
-    def __init__(self, parent = None):
+    def __init__(self, parent = None,doc_type="ECN",doc_data=None):
         super(NotificationTab,self).__init__()
         self.parent = parent
+        self.doc_type = doc_type
+        self.doc_data = doc_data
         self.job_titles =[]
         self.findJobTitles()
         self.initAtt()
@@ -42,17 +44,17 @@ class NotificationTab(QtWidgets.QWidget):
         
         mainlayout.addWidget(self.signatures)
                 
-        self.button_add = QtWidgets.QPushButton("Add Signature")
-        print(self.parent.tab_ecn.line_status.text())
+        self.button_add = QtWidgets.QPushButton("Add Notifier")
+        #print(self.parent.tab_ecn.line_status.text())
         icon_loc = icon = os.path.join(program_location,"icons","add.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.addRow)
-        self.button_remove = QtWidgets.QPushButton("Remove Signature")
+        self.button_remove = QtWidgets.QPushButton("Remove Notifier")
         self.button_remove.setDisabled(True)
         icon_loc = icon = os.path.join(program_location,"icons","minus.png")
         self.button_remove.setIcon(QtGui.QIcon(icon_loc))
         self.button_remove.clicked.connect(self.removeRow)
-        self.button_edit = QtWidgets.QPushButton("Edit Signature")
+        self.button_edit = QtWidgets.QPushButton("Edit Notifier")
         icon_loc = icon = os.path.join(program_location,"icons","edit.png")
         self.button_edit.setIcon(QtGui.QIcon(icon_loc))
         self.button_edit.setDisabled(True)
@@ -62,20 +64,21 @@ class NotificationTab(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_edit)
         
         
-        if self.parent.ecn_data is not None:
-            if self.parent.parent.user_info['user']==self.parent.ecn_data["AUTHOR"]:
+        if self.doc_data is not None:
+            if self.parent.parent.user_info['user']==self.doc_data["AUTHOR"]:
                 self.signatures.doubleClicked.connect(self.editSignature)
             else:
                 self.button_add.setDisabled(True)
         self.setLayout(mainlayout)       
 
     def onRowSelect(self):
-        if self.parent.parent.user_info['role']=="Manager" and self.parent.tab_ecn.line_status.text()!="Completed":
-            row = self.signatures.currentIndex().row()
-            self.button_revoke.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()) and self.model.get_signed_date(row) is not None)
-        if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() and self.parent.tab_ecn.line_status.text()!="Completed":
-            self.button_remove.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
-            self.button_edit.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
+        if self.doc_type=="ECN":
+            if self.parent.parent.user_info['role']=="Manager" and self.parent.tab_ecn.line_status.text()!="Completed":
+                row = self.signatures.currentIndex().row()
+                self.button_revoke.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()) and self.model.get_signed_date(row) is not None)
+            if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() and self.parent.tab_ecn.line_status.text()!="Completed":
+                self.button_remove.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
+                self.button_edit.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
         
     def addRow(self):
         self.signature = SignaturePanel(self)
