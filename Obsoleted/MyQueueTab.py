@@ -39,11 +39,11 @@ class MyQueueTab(QtWidgets.QWidget):
 
     def openECN(self):
         row = self.table.currentRow()
-        ecn_id=self.table.item(row,0).text()
-        self.parent.HookEcn(ecn_id)
+        doc_id=self.table.item(row,0).text()
+        self.parent.HookEcn(doc_id)
 
     def initiateTable(self):
-        titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified Date']
+        titles = ['DOC ID','Type', 'Title', 'Status', 'Last Modified Date']
         self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
@@ -59,22 +59,22 @@ class MyQueueTab(QtWidgets.QWidget):
         self.table.clearContents()
         self.table.setRowCount(0)
         #command = "Select ECN_ID from SIGNATURE where USER_ID ='" + self.user_info['user'] + "'"
-        self.cursor.execute(f"select ECN_ID from SIGNATURE where USER_ID='{self.user_info['user']}'")
+        self.cursor.execute(f"select DOC_ID from SIGNATURE where USER_ID='{self.user_info['user']}'")
         results = self.cursor.fetchall()
-        ecn_id = []
+        doc_id = []
         for result in results:
-            ecn_id.append(result[0])
+            doc_id.append(result[0])
         #print(ecn_id)
         rowcount=0
-        for ecn in ecn_id:
-            command = f"Select * from ECN where ECN_ID ='{ecn}' and STATUS='Out For Approval' and STAGE>={self.stage}"
+        for doc in doc_id:
+            command = f"Select * from DOCUMENT where DOC_ID ='{doc}' and STATUS='Out For Approval' and STAGE>={self.stage}"
             self.cursor.execute(command)
             test = self.cursor.fetchall()
             for item in test:
                 self.table.insertRow(rowcount)
-                self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
-                self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['ECN_TYPE']))
-                self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['ECN_TITLE']))
+                self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['DOC_ID']))
+                self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['DOC_TYPE']))
+                self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['DOC_TITLE']))
                 self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
                 self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
                 rowcount+=1

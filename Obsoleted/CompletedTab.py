@@ -35,8 +35,8 @@ class CompletedTab(QtWidgets.QWidget):
 
     def openECN(self):
         row = self.table.currentRow()
-        ecn_id=self.table.item(row,0).text()
-        self.parent.HookEcn(ecn_id)
+        doc_id=self.table.item(row,0).text()
+        self.parent.HookEcn(doc_id)
 
     def initiateTable(self):
         titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified Date']
@@ -54,14 +54,14 @@ class CompletedTab(QtWidgets.QWidget):
     def repopulateTable(self):
         self.table.clearContents()
         rowcount=0
-        command = "Select * from ECN where STATUS='Completed'"
+        command = "Select * from DOCUMENT where STATUS='Completed'"
         self.cursor.execute(command)
         results = self.cursor.fetchall()
         self.table.setRowCount(len(results))
         for item in results:
-            self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
-            self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['ECN_TYPE']))
-            self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['ECN_TITLE']))
+            self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['DOC_ID']))
+            self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['DOC_TYPE']))
+            self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['DOC_TITLE']))
             self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
             self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
             rowcount+=1

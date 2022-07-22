@@ -43,14 +43,14 @@ databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT"
                         }
 
 class Manager(QtWidgets.QWidget):
-    def __init__(self,ecn = None):
+    def __init__(self,doc = None):
         super(Manager, self).__init__()
         self.windowWidth = 1000
         self.windowHeight = 600
         self.setFixedSize(self.windowWidth,self.windowHeight)
         self.ecnWindow = None
         self.sorting = (0,QtCore.Qt.DescendingOrder)
-        self.ecn = ecn
+        self.doc = doc
         self.firstInstance = True
         self.checkLockLoc()
         self.checkLockFile()
@@ -151,8 +151,8 @@ class Manager(QtWidgets.QWidget):
             print(e)
             self.dispMsg("Port already in use.")
         
-        if self.ecn is not None:
-            self.HookEcn(self.ecn)
+        if self.doc is not None:
+            self.HookEcn(self.doc)
 
     def startUpCheck(self):
         if not os.path.exists(initfile):
@@ -290,10 +290,10 @@ class Manager(QtWidgets.QWidget):
         #searchLayout.addWidget(self.button_search)
         #mainLayout.addLayout(searchLayout)
         
-        self.label_ecn_count = QtWidgets.QLabel("ECN Count:")
-        self.label_open_ecns = QtWidgets.QLabel("Open - ")
-        self.label_wait_ecns = QtWidgets.QLabel("Waiting - ")
-        self.label_complete_ecns = QtWidgets.QLabel("Completed - ")
+        self.label_doc_count = QtWidgets.QLabel("DOC Count:")
+        self.label_open_docs = QtWidgets.QLabel("Open - ")
+        self.label_wait_docs = QtWidgets.QLabel("Waiting - ")
+        self.label_complete_docs = QtWidgets.QLabel("Completed - ")
         self.dropdown_type = QtWidgets.QComboBox(self)
         self.dropdown_type.setFixedWidth(100)
         self.button_refresh = QtWidgets.QPushButton("Refresh")
@@ -306,7 +306,7 @@ class Manager(QtWidgets.QWidget):
         if self.user_info["role"]!="Engineer" and self.user_info['role']!="Admin":
             items = ["Queue","Open","Completed"]
         else:
-            items = ["My ECNS","Queue","Open","Completed"]
+            items = ["My Docs","Queue","Open","Completed"]
         self.dropdown_type.addItems(items)
         
         self.button_open = QtWidgets.QPushButton("Open")
@@ -327,10 +327,10 @@ class Manager(QtWidgets.QWidget):
         if self.user_info['role']=="Signer":
             self.button_add.setDisabled(True)
             
-        self.statusbar.addPermanentWidget(self.label_ecn_count)
-        self.statusbar.addPermanentWidget(self.label_open_ecns)
-        self.statusbar.addPermanentWidget(self.label_complete_ecns)
-        self.statusbar.addPermanentWidget(self.label_wait_ecns)
+        self.statusbar.addPermanentWidget(self.label_doc_count)
+        self.statusbar.addPermanentWidget(self.label_open_docs)
+        self.statusbar.addPermanentWidget(self.label_complete_docs)
+        self.statusbar.addPermanentWidget(self.label_wait_docs)
 
         self.toolbar.addWidget(self.line_search)
         self.toolbar.addWidget(self.button_search)
@@ -341,49 +341,49 @@ class Manager(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_refresh)
         self.toolbar.addWidget(self.dropdown_type)
         
-        self.ecns = QtWidgets.QListView()
-        self.ecns.setStyleSheet("QListView{background-color:#f0f0f0}")
-        self.ecns.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.ecns.setResizeMode(QtWidgets.QListView.Adjust)
-        self.ecns.setItemDelegate(ECNDelegate())
-        self.ecns.doubleClicked.connect(self.openECN)
+        self.docs = QtWidgets.QListView()
+        self.docs.setStyleSheet("QListView{background-color:#f0f0f0}")
+        self.docs.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.docs.setResizeMode(QtWidgets.QListView.Adjust)
+        self.docs.setItemDelegate(DocDelegate())
+        self.docs.doubleClicked.connect(self.openECN)
         
         
-        self.model = ECNModel()
-        self.ecns.setModel(self.model)
+        self.model = DocModel()
+        self.docs.setModel(self.model)
         
-        self.ecns.selectionModel().selectionChanged.connect(self.onRowSelect)
+        self.docs.selectionModel().selectionChanged.connect(self.onRowSelect)
         
-        mainLayout.addWidget(self.ecns)
+        mainLayout.addWidget(self.docs)
         
         mainLayout.addWidget(self.statusbar)
         
         self.dropdown_type.currentIndexChanged.connect(self.repopulateTable)
         
-        self.ecns.verticalScrollBar().valueChanged.connect(self.loadMoreTable)
+        self.docs.verticalScrollBar().valueChanged.connect(self.loadMoreTable)
         
         mainLayout.setMenuBar(self.menubar)
         
         self.repopulateTable()
     
     def onRowSelect(self):
-        self.button_open.setEnabled(bool(self.ecns.selectionModel().selectedIndexes()))
+        self.button_open.setEnabled(bool(self.docs.selectionModel().selectedIndexes()))
 
         
     def repopulateTable(self):
         self.getECNQty()
-        self.model.clear_ecns()
-        if self.ecns.verticalScrollBar().value()>0:
-            self.ecns.verticalScrollBar().setValue(0)
+        self.model.clear_docs()
+        if self.docs.verticalScrollBar().value()>0:
+            self.docs.verticalScrollBar().setValue(0)
         table_type = self.dropdown_type.currentText()
-        if table_type=="My ECNS":
-            command = "Select * from ECN where AUTHOR ='" + self.user_info['user'] + "' and STATUS !='Completed'"
+        if table_type=="My Docs":
+            command = "Select * from DOCUMENT where AUTHOR ='" + self.user_info['user'] + "' and STATUS !='Completed'"
         elif table_type=="Queue":
-            command =f"Select * from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and ECN.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
+            command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and DOCUMENT.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
         elif table_type=="Open":
-            command = "select * from ECN where STATUS!='Completed'"
+            command = "select * from DOCUMENT where STATUS!='Completed'"
         else:
-            command = "select * from ECN where STATUS='Completed'"
+            command = "select * from DOCUMENT where STATUS='Completed'"
 
         self.cursor.execute(command)
         self.table_data = self.cursor.fetchall()
@@ -394,7 +394,7 @@ class Manager(QtWidgets.QWidget):
             counter = data_size
         for x in range(counter):
             if self.table_data[x]['STAGE']!=0 and self.table_data[x]['STAGE'] is not None:
-                users = self.getWaitingUser(self.table_data[x]['ECN_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
+                users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
             else:
                 users = ""
             if table_type!="Completed":
@@ -407,7 +407,7 @@ class Manager(QtWidgets.QWidget):
             else:
                 elapsed_days = str(self.table_data[x]["COMP_DAYS"])
                 
-            self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where ECN_ID='{self.table_data[x]['ECN_ID']}'")
+            self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where DOC_ID='{self.table_data[x]['DOC_ID']}'")
             comment_count = self.cursor.fetchone()
             if comment_count[0]>0:
                 comment_count = str(comment_count[0])
@@ -417,11 +417,11 @@ class Manager(QtWidgets.QWidget):
                 status = self.table_data[x]['STAGE']
             else:
                 status = ""
-            self.model.add_ecn(self.table_data[x]['ECN_ID'], self.table_data[x]['ECN_TITLE'], self.table_data[x]['ECN_TYPE'], self.table_data[x]['STATUS'],self.table_data[x]['LAST_MODIFIED'], status, users, elapsed_days, comment_count)
+            self.model.add_doc(self.table_data[x]['DOC_ID'], self.table_data[x]['DOC_TITLE'], self.table_data[x]['DOC_TYPE'], self.table_data[x]['STATUS'],self.table_data[x]['LAST_MODIFIED'], status, users, elapsed_days, comment_count)
         self.statusbar.showMessage(f"Showing {counter} of {data_size}")
 
     def loadMoreTable(self):
-        percent = self.ecns.verticalScrollBar().value()/self.ecns.verticalScrollBar().maximum()
+        percent = self.docs.verticalScrollBar().value()/self.docs.verticalScrollBar().maximum()
         rowcount = self.rowCount()
         total_count= len(self.table_data)
         table_type = self.dropdown_type.currentText()
@@ -436,7 +436,7 @@ class Manager(QtWidgets.QWidget):
             for x in range(counter):
                 x = x + offset
                 if self.table_data[x]['STAGE']!=0 and self.table_data[x]['STAGE'] is not None:
-                    users = self.getWaitingUser(self.table_data[x]['ECN_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
+                    users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
                 else:
                     users = ""
                 if table_type!="Completed":
@@ -449,7 +449,7 @@ class Manager(QtWidgets.QWidget):
                 else:
                     elapsed_days = str(self.table_data[x]["COMP_DAYS"])
                     
-                self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where ECN_ID='{self.table_data[x]['ECN_ID']}'")
+                self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where DOC_ID='{self.table_data[x]['DOC_ID']}'")
                 comment_count = self.cursor.fetchone()
                 if comment_count[0]>0:
                     comment_count = str(comment_count[0])
@@ -459,11 +459,11 @@ class Manager(QtWidgets.QWidget):
                     status = self.table_data[x]['STAGE']
                 else:
                     status = ""
-                self.model.add_ecn(self.table_data[x]['ECN_ID'], self.table_data[x]['ECN_TITLE'], self.table_data[x]['ECN_TYPE'], self.table_data[x]['STATUS'],self.table_data[x]['LAST_MODIFIED'], status, users, elapsed_days, comment_count)
+                self.model.add_doc(self.table_data[x]['DOC_ID'], self.table_data[x]['DOC_TITLE'], self.table_data[x]['DOC_TYPE'], self.table_data[x]['STATUS'],self.table_data[x]['LAST_MODIFIED'], status, users, elapsed_days, comment_count)
             self.statusbar.showMessage(f"Showing {rowcount+counter} of {total_count}")
             
     def rowCount(self):
-        return self.model.rowCount(self.ecns)
+        return self.model.rowCount(self.docs)
         
     def setSort(self, index, order):
         self.sorting = (index,order)
@@ -483,7 +483,7 @@ class Manager(QtWidgets.QWidget):
         usr_str = ""
         #print(titles)
         for title in titles:
-            self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn}' and JOB_TITLE='{title}' and SIGNED_DATE is Null and TYPE='Signing'")
+            self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{ecn}' and JOB_TITLE='{title}' and SIGNED_DATE is Null and TYPE='Signing'")
             results = self.cursor.fetchall()
             for result in results:
                 if result is not None:
@@ -497,22 +497,22 @@ class Manager(QtWidgets.QWidget):
         return usr_str
                 
     def getECNQty(self):
-        self.cursor.execute(f"SELECT COUNT(ECN_ID) from ECN where STATUS!='Completed'")
+        self.cursor.execute(f"SELECT COUNT(DOC_ID) from DOCUMENT where STATUS!='Completed'")
         result = self.cursor.fetchone()
         #print("open:",result[0])
-        self.label_open_ecns.setText(f"Open - {result[0]}")
-        self.cursor.execute(f"Select COUNT(ECN.ECN_ID) from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and ECN.STAGE={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL")
+        self.label_open_docs.setText(f"Open - {result[0]}")
+        self.cursor.execute(f"Select COUNT(DOCUMENT.DOC_ID) from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and DOCUMENT.STAGE={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL")
         result = self.cursor.fetchone()
         #print("queue:",result[0])
         if result[0]>0:
-            self.label_wait_ecns.setStyleSheet("Color:red;font-weight:bold")
+            self.label_wait_docs.setStyleSheet("Color:red;font-weight:bold")
         else:
-            self.label_wait_ecns.setStyleSheet("Color:green;font-weight:bold")
-        self.label_wait_ecns.setText(f"Waiting - {result[0]}")
-        self.cursor.execute(f"SELECT COUNT(ECN_ID) from ECN where STATUS='Completed'")
+            self.label_wait_docs.setStyleSheet("Color:green;font-weight:bold")
+        self.label_wait_docs.setText(f"Waiting - {result[0]}")
+        self.cursor.execute(f"SELECT COUNT(DOC_ID) from DOCUMENT where STATUS='Completed'")
         result = self.cursor.fetchone()
         #print("complete:",result[0])
-        self.label_complete_ecns.setText(f"Completed - {result[0]}")
+        self.label_complete_docs.setText(f"Completed - {result[0]}")
 
     def createMenuActions(self):
         filemenu = self.menubar.addMenu("&File")
@@ -551,14 +551,14 @@ class Manager(QtWidgets.QWidget):
         msgbox.setText(msg+"        ")
         msgbox.exec()
         
-    def HookEcn(self,ecn_id=None):
+    def HookEcn(self,doc_id=None):
         #print("info received",ecn_id)
         if self.ecnWindow is None:
-            self.ecnWindow = ECNWindow(self,ecn_id)
+            self.ecnWindow = ECNWindow(self,doc_id)
         else:
-            if self.ecnWindow.ecn_id !=ecn_id:
+            if self.ecnWindow.doc_id !=doc_id:
                 self.ecnWindow.close()
-                self.ecnWindow = ECNWindow(self,ecn_id)
+                self.ecnWindow = ECNWindow(self,doc_id)
             else:
                 self.ecnWindow.activateWindow()
     
@@ -569,18 +569,18 @@ class Manager(QtWidgets.QWidget):
         self.pcnWindow = PCNWindow(self)
         
     def openECN(self):
-        index = self.ecns.currentIndex()
-        ecn_id = index.data(QtCore.Qt.DisplayRole)[0]
-        self.HookEcn(ecn_id)
+        index = self.docs.currentIndex()
+        doc_id = index.data(QtCore.Qt.DisplayRole)[0]
+        self.HookEcn(doc_id)
 
 
     def loadInAnim(self):
-        loc = self.ecns.pos()
-        self.animation = QtCore.QPropertyAnimation(self.ecns, b"pos")
+        loc = self.docs.pos()
+        self.animation = QtCore.QPropertyAnimation(self.docs, b"pos")
         self.animation.setDuration(1000)
         self.animation.setEasingCurve(QtCore.QEasingCurve.OutBack)
         self.animation.setStartValue(QtCore.QPoint(
-            -self.windowWidth, self.ecns.pos().y()))
+            -self.windowWidth, self.docs.pos().y()))
         self.animation.setEndValue(QtCore.QPoint(loc))
 
         self.animation.start()
@@ -648,17 +648,17 @@ class Manager(QtWidgets.QWidget):
         if self.line_search.text()!="":
             search = self.line_search.text()
             matches = []
-            self.cursor.execute(f"Select ECN_ID from ECN where ECN_TITLE like '%{search}%' OR ECN_REASON like '%{search}%' OR ECN_SUMMARY like '%{search}%'")
+            self.cursor.execute(f"Select DOC_ID from DOCUMENT where DOC_TITLE like '%{search}%' OR DOC_REASON like '%{search}%' OR DOC_SUMMARY like '%{search}%'")
             results = self.cursor.fetchall()
             for result in results:
                 if result[0] not in matches:
                     matches.append(result[0])
-            self.cursor.execute(f"Select ECN_ID from ATTACHMENTS where FILENAME like '%{search}%'")
+            self.cursor.execute(f"Select DOC_ID from ATTACHMENTS where FILENAME like '%{search}%'")
             results = self.cursor.fetchall()
             for result in results:
                 if result[0] not in matches:
                     matches.append(result[0])
-            self.cursor.execute(f"Select ECN_ID from PARTS where PART_ID like '%{search}%' OR DESC like '%{search}%'")
+            self.cursor.execute(f"Select DOC_ID from PARTS where PART_ID like '%{search}%' OR DESC like '%{search}%'")
             results = self.cursor.fetchall()
             for result in results:
                 if result[0] not in matches:
@@ -672,11 +672,11 @@ class AlignDelegate(QtWidgets.QStyledItemDelegate):
         
 PADDING = QtCore.QMargins(15, 2, 15, 2)
 
-class ECNDelegate(QtWidgets.QStyledItemDelegate):
+class DocDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         painter.save()
         
-        ecn_id, title, ecn_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count = index.model().data(index, QtCore.Qt.DisplayRole)
+        doc_id, title, doc_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count = index.model().data(index, QtCore.Qt.DisplayRole)
         
         lineMarkedPen = QtGui.QPen(QtGui.QColor("#f0f0f0"),1,QtCore.Qt.SolidLine)
         
@@ -720,7 +720,7 @@ class ECNDelegate(QtWidgets.QStyledItemDelegate):
         font.setBold(True)
         painter.setFont(font)
         painter.setPen(QtCore.Qt.black)
-        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,20),ecn_id)
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,20),doc_id)
         if len(title)>75:
             title = title[:75] + "..."
         font.setBold(False)
@@ -730,7 +730,7 @@ class ECNDelegate(QtWidgets.QStyledItemDelegate):
         font.setBold(False)
         painter.setFont(font)
         #ecn_id, title, ecn_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count
-        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,45),f"Type: {ecn_type}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,45),f"Type: {doc_type}")
         painter.drawText(r.topLeft()+QtCore.QPoint(175,45),f"Last Modified: {last_modified}")
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1+375,45),f"Stage: {stage}")
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1+450,45),f"Elapsed: {elapsed_days}")
@@ -743,34 +743,34 @@ class ECNDelegate(QtWidgets.QStyledItemDelegate):
     def sizeHint(self, option, index):
         return QtCore.QSize(option.rect.width()-50,55)
 
-class ECNModel(QtCore.QAbstractListModel):
+class DocModel(QtCore.QAbstractListModel):
     def __init__(self, *args, **kwargs):
-        super(ECNModel, self).__init__(*args, **kwargs)
-        self.ecns = []
+        super(DocModel, self).__init__(*args, **kwargs)
+        self.docs = []
 
     def data(self, index, role):
         if role == QtCore.Qt.DisplayRole:
-            return self.ecns[index.row()]
+            return self.docs[index.row()]
 
     def setData(self, index, role, value):
         self._size[index.row()]
         
     def rowCount(self, index):
-        return len(self.ecns)
+        return len(self.docs)
     
     def removeRow(self, row):
-        del self.ecns[row]
+        del self.docs[row]
         self.layoutChanged.emit()
         
-    def get_ecn_data(self,row):
-        return self.ecns[row]
+    def get_doc_data(self,row):
+        return self.docs[row]
 
-    def clear_ecns(self):
-        self.ecns = []
+    def clear_docs(self):
+        self.docs = []
     
-    def add_ecn(self, ecn_id, title, ecn_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count):
+    def add_doc(self, doc_id, title, doc_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count):
         # Access the list via the model.
-        self.ecns.append((ecn_id, title, ecn_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count))
+        self.docs.append((doc_id, title, doc_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count))
         # Trigger refresh.
         self.layoutChanged.emit()
 

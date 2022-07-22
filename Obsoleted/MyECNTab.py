@@ -45,8 +45,8 @@ class MyECNTab(QtWidgets.QWidget):
 
     def openECN(self):
         row = self.table.currentRow()
-        ecn_id=self.table.item(row,0).text()
-        self.parent.HookEcn(ecn_id)
+        doc_id=self.table.item(row,0).text()
+        self.parent.HookEcn(doc_id)
 
     def initiateTable(self):
         titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified']
@@ -68,15 +68,15 @@ class MyECNTab(QtWidgets.QWidget):
 
     def repopulateTable(self):
         self.table.clearContents()
-        command = "Select * from ECN where AUTHOR ='" + self.user_info['user'] + "' and STATUS !='Completed'"
+        command = "Select * from DOCUMENT where AUTHOR ='" + self.user_info['user'] + "' and STATUS !='Completed'"
         self.cursor.execute(command)
         test = self.cursor.fetchall()
         rowcount=0
         self.table.setRowCount(len(test))
         for item in test:
-            self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
-            self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['ECN_TYPE']))
-            self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['ECN_TITLE']))
+            self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['DOC_ID']))
+            self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['DOC_TYPE']))
+            self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['DOC_TITLE']))
             self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
             self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
             if item["STATUS"]=="Rejected":

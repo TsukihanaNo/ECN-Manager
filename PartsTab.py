@@ -52,8 +52,8 @@ class PartsTab(QtWidgets.QWidget):
         self.parts.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.parts.setResizeMode(QtWidgets.QListView.Adjust)
         self.parts.setItemDelegate(PartsDelegate())
-        if self.parent.ecn_data is not None:
-            if self.parent.parent.user_info['user']==self.parent.ecn_data["AUTHOR"]:
+        if self.parent.doc_data is not None:
+            if self.parent.parent.user_info['user']==self.parent.doc_data["AUTHOR"]:
                 self.parts.doubleClicked.connect(self.editPart)
             else:
                 self.button_add.setDisabled(True)
@@ -110,7 +110,7 @@ class PartsTab(QtWidgets.QWidget):
         self.menu.exec_(event.globalPos())
         
     def onRowSelect(self):
-        if self.parent.parent.user_info['user']==self.parent.ecn_data["AUTHOR"]:
+        if self.parent.parent.user_info['user']==self.parent.doc_data["AUTHOR"]:
             self.button_remove.setEnabled(bool(self.parts.selectionModel().selectedIndexes()))
             self.button_edit.setEnabled(bool(self.parts.selectionModel().selectedIndexes()))
         
@@ -131,7 +131,7 @@ class PartsTab(QtWidgets.QWidget):
         
             
     def repopulateTable(self):
-        self.parent.cursor.execute(f"select * from PARTS where ECN_ID='{self.parent.tab_ecn.line_id.text()}'")
+        self.parent.cursor.execute(f"select * from PARTS where DOC_ID='{self.parent.tab_ecn.line_id.text()}'")
         results = self.parent.cursor.fetchall()
         for result in results:
             if self.parent.parent.visual is not None:

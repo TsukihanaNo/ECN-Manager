@@ -153,7 +153,7 @@ class UsersWindow(QtWidgets.QWidget):
     def checkRemovable(self,user,status):
         if status=="Active":
             return False
-        self.cursor.execute(f"Select * from ECN where AUTHOR='{user}'")
+        self.cursor.execute(f"Select * from DOCUMENT where AUTHOR='{user}'")
         result = self.cursor.fetchone()
         if result is not None:
             return False

@@ -3,13 +3,13 @@ from ECNWindow import *
 import sqlite3  
 
 class ChangeLogTab(QtWidgets.QWidget):
-    def __init__(self,parent=None, ecn_id = None):
+    def __init__(self,parent=None, doc_id = None):
         super(ChangeLogTab,self).__init__()
         self.parent = parent
         self.db = self.parent.db
         self.cursor = self.parent.cursor
         self.user_info = self.parent.user_info
-        self.ecn_id = ecn_id
+        self.doc_id = doc_id
         self.initAtt()
         self.initUI()
 
@@ -42,14 +42,14 @@ class ChangeLogTab(QtWidgets.QWidget):
 
     def repopulateTable(self):
         self.table.clearContents()
-        if self.ecn_id is not None:
-            self.cursor.execute(f"Select * from CHANGELOG where ECN_ID ='{self.ecn_id}'")
+        if self.doc_id is not None:
+            self.cursor.execute(f"Select * from CHANGELOG where DOC_ID ='{self.doc_id}'")
             results = self.cursor.fetchall()
             if results is not None:
                 rowcount=0
                 self.table.setRowCount(len(results))
                 for item in results:
-                    self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
+                    self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['DOC_ID']))
                     self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['CHANGEDATE']))
                     self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['NAME']))
                     self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['PREVDATA']))

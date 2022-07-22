@@ -52,7 +52,7 @@ class CommentTab(QtWidgets.QWidget):
         
     def loadComments(self):
         self.model.clear_message()
-        command = "Select * from COMMENTS where ECN_ID = '" + self.parent.ecn_id+"'"
+        command = "Select * from COMMENTS where DOC_ID = '" + self.parent.doc_id+"'"
         self.parent.cursor.execute(command)
         results = self.parent.cursor.fetchall()
         for result in results:

@@ -59,7 +59,7 @@ class Notifier(QtWidgets.QWidget):
     def initUI(self):
         mainLayout = QtWidgets.QVBoxLayout(self)
         
-        titles = ['ECN_ID','STATUS','TYPE']
+        titles = ['DOC_ID','STATUS','TYPE']
         self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
@@ -170,7 +170,7 @@ class Notifier(QtWidgets.QWidget):
         rowcount=0
         self.table.setRowCount(len(test))
         for item in test:
-            self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
+            self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['DOC_ID']))
             self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['STATUS']))
             self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['TYPE']))
 
@@ -180,7 +180,7 @@ class Notifier(QtWidgets.QWidget):
         users = []
         usr_str = ""
         for title in titles:
-            self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn}' and JOB_TITLE='{title}' and SIGNED_DATE is Null and TYPE='Signing'")
+            self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{ecn}' and JOB_TITLE='{title}' and SIGNED_DATE is Null and TYPE='Signing'")
             results = self.cursor.fetchall()
             for result in results:
                 if result is not None:
@@ -231,150 +231,150 @@ class Notifier(QtWidgets.QWidget):
             self.log_text.append("-No notifications found to be sent")
         self.repopulateTable()
                 
-    def updateStatus(self,ecn_id):
+    def updateStatus(self,doc_id):
         self.log_text.append("-updating status")
-        data = ("Sent",ecn_id)
-        self.cursor.execute("UPDATE NOTIFICATION SET STATUS = ? WHERE ECN_ID = ?",(data))
+        data = ("Sent",doc_id)
+        self.cursor.execute("UPDATE NOTIFICATION SET STATUS = ? WHERE DOC_ID = ?",(data))
         self.db.commit()
         now  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        data = (now,ecn_id)
-        self.cursor.execute("UPDATE ECN SET LAST_NOTIFIED = ? WHERE ECN_ID = ?",(data))
+        data = (now,doc_id)
+        self.cursor.execute("UPDATE DOCUMENT SET LAST_NOTIFIED = ? WHERE DOC_ID = ?",(data))
         self.db.commit()
         self.log_text.append("-status updated")
         
-    def rejectNotification(self,ecn_id,from_user,msg):
+    def rejectNotification(self,doc_id,from_user,msg):
         receivers = []
-        self.cursor.execute(f"select Author from ECN where ECN_ID='{ecn_id}'")
+        self.cursor.execute(f"select Author from DOCUMENT where DOC_ID='{doc_id}'")
         result = self.cursor.fetchone()
         receivers.append(self.userList[result[0]])
-        self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing'")
+        self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing'")
         results = self.cursor.fetchall()
         for result in results:
             receivers.append(self.userList[result[0]])
         from_user = self.emailNameList[self.userList[from_user]]
-        message = f"<p>{ecn_id} has been rejected to the author by {from_user}! All Signatures have been removed and the ECN approval will start from the beginning once the ECN is released again. See comment below.</p><p>Comment - {from_user}: {msg}</p>"
+        message = f"<p>{doc_id} has been rejected to the author by {from_user}! All Signatures have been removed and the ECN approval will start from the beginning once the ECN is released again. See comment below.</p><p>Comment - {from_user}: {msg}</p>"
         #print(f"send email to these addresses: {receivers} notifying ecn rejection")
         #print(message)
         attach = []
-        attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
+        attach.append(os.path.join(program_location,doc_id+'.ecnx'))
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
-        self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
-        self.log_text.append(f"-Rejection Email sent for {ecn_id} to {receivers}")
+        self.sendEmail(doc_id,receivers, message,"Rejection",attach)
+        self.log_text.append(f"-Rejection Email sent for {doc_id} to {receivers}")
         
     
-    def rejectSignerNotification(self,ecn_id,from_user,users,msg):
+    def rejectSignerNotification(self,doc_id,from_user,users,msg):
         users = users.split(',')
         receivers = []
         for user in users:
             receivers.append(self.userList[user])
-        message = f"<p>{ecn_id} has been rejected to : {users[0]} by {from_user}. Signatures for the following users have also been removed: {users}.See comment below.</p><p>Comment: {msg}</p>"
+        message = f"<p>{doc_id} has been rejected to : {users[0]} by {from_user}. Signatures for the following users have also been removed: {users}.See comment below.</p><p>Comment: {msg}</p>"
         #print(f"send email to these addresses: {receivers} notifying ecn completion")
         #print(message)
         attach = []
-        attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
+        attach.append(os.path.join(program_location,doc_id+'.ecnx'))
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
-        self.sendEmail(ecn_id,receivers, message,"Rejection",attach)
-        self.log_text.append(f"-Rejection to Signer Email sent for {ecn_id} to {receivers}")
+        self.sendEmail(doc_id,receivers, message,"Rejection",attach)
+        self.log_text.append(f"-Rejection to Signer Email sent for {doc_id} to {receivers}")
         
-    def commentNotification(self,ecn_id,from_user,msg):
+    def commentNotification(self,doc_id,from_user,msg):
         receivers = []
-        self.cursor.execute(f"select Author from ECN where ECN_ID='{ecn_id}'")
+        self.cursor.execute(f"select Author from DOCUMENT where DOC_ID='{doc_id}'")
         result = self.cursor.fetchone()
         if result[0]!=from_user:
             receivers.append(self.userList[result[0]])
-        self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing' and SIGNED_DATE!=''")
+        self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing' and SIGNED_DATE!=''")
         results = self.cursor.fetchall()
         for result in results:
             if result[0]!=from_user:
                 receivers.append(self.userList[result[0]])
-        self.cursor.execute(f"select distinct USER from COMMENTS where ECN_ID='{ecn_id}'")
+        self.cursor.execute(f"select distinct USER from COMMENTS where DOC_ID='{doc_id}'")
         results = self.cursor.fetchall()
         for result in results:
             if self.userList[result[0]] not in receivers and result[0]!=from_user:
                 receivers.append(self.userList[result[0]])
             
         from_user = self.emailNameList[self.userList[from_user]]
-        message = f"<p>a comment has been added to {ecn_id} by {from_user}! See comment below.</p><p>Comment - {from_user}: {msg}</p>"
+        message = f"<p>a comment has been added to {doc_id} by {from_user}! See comment below.</p><p>Comment - {from_user}: {msg}</p>"
         #print(f"send email to these addresses: {receivers} notifying ecn comment")
         #print(message)
         attach = []
-        attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
+        attach.append(os.path.join(program_location,doc_id+'.ecnx'))
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
-        self.sendEmail(ecn_id,receivers, message,"Comment",attach)
-        self.log_text.append(f"-user comment Email sent for {ecn_id} to {receivers}")
+        self.sendEmail(doc_id,receivers, message,"Comment",attach)
+        self.log_text.append(f"-user comment Email sent for {doc_id} to {receivers}")
         
     
-    def completionNotification(self,ecn_id):
+    def completionNotification(self,doc_id):
         receivers = []
-        self.cursor.execute(f"select Author from ECN where ECN_ID='{ecn_id}'")
+        self.cursor.execute(f"select Author from DOCUMENT where DOC_ID='{doc_id}'")
         result = self.cursor.fetchone()
         receivers.append(self.userList[result[0]])
-        self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}'")
+        self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{doc_id}'")
         results = self.cursor.fetchall()
-        message = f"<p>{ecn_id} has been completed!</p><p>You can now view it in the completed section of your viewer.</p>"
+        message = f"<p>{doc_id} has been completed!</p><p>You can now view it in the completed section of your viewer.</p>"
         for result in results:
             receivers.append(self.userList[result[0]])
         #print(f"send email to these addresses: {receivers} notifying ecn completion")
         attach = []
-        attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
+        attach.append(os.path.join(program_location,doc_id+'.ecnx'))
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
-        self.sendEmail(ecn_id,receivers, message,"Completion",attach)
-        self.log_text.append(f"-Completion Email sent for {ecn_id} to {receivers}")
+        self.sendEmail(doc_id,receivers, message,"Completion",attach)
+        self.log_text.append(f"-Completion Email sent for {doc_id} to {receivers}")
         
         
-    def cancelNotification(self,ecn_id,msg):
-        self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing'")
+    def cancelNotification(self,doc_id,msg):
+        self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing'")
         results = self.cursor.fetchall()
         receivers = []
-        message = f"<p>{ecn_id} has been canceled by the author! See comment below.</p><p>Comment: {msg}</p>"
+        message = f"<p>{doc_id} has been canceled by the author! See comment below.</p><p>Comment: {msg}</p>"
         for result in results:
             receivers.append(self.userList[result[0]])
         print(f"send email these addresses: {receivers} notifying ecn cancelation")
         attach = []
-        attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
-        self.sendEmail(ecn_id,receivers, message,"Cancelation",attach)
-        self.log_text.append(f"-Rejection Email sent for {ecn_id} to {receivers}")
+        attach.append(os.path.join(program_location,doc_id+'.ecnx'))
+        self.sendEmail(doc_id,receivers, message,"Cancelation",attach)
+        self.log_text.append(f"-Rejection Email sent for {doc_id} to {receivers}")
         
-    def releaseNotification(self,ecn_id):
-        self.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing'")
+    def releaseNotification(self,doc_id):
+        self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing'")
         results = self.cursor.fetchall()
         receivers = []
-        message = f"<p>{ecn_id} has been released! You can see it in the queue section once it is your turn for approval.<\p><p>You can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN in the open section in the ECN Manager application.</p>"
+        message = f"<p>{doc_id} has been released! You can see it in the queue section once it is your turn for approval.<\p><p>You can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN in the open section in the ECN Manager application.</p>"
         for result in results:
             receivers.append(self.userList[result[0]])
         print(f"send email these addresses: {receivers} notifying ecn release")
         attach = []
-        attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
-        self.sendEmail(ecn_id,receivers, message,attach)
-        self.log_text.append(f"-Release Email sent for {ecn_id} to {receivers}")
+        attach.append(os.path.join(program_location,doc_id+'.ecnx'))
+        self.sendEmail(doc_id,receivers, message,attach)
+        self.log_text.append(f"-Release Email sent for {doc_id} to {receivers}")
         
-    def stageReleaseNotification(self,ecn_id):
+    def stageReleaseNotification(self,doc_id):
         #get stage
-        self.cursor.execute(f"Select Stage from ECN where ECN_ID='{ecn_id}'")
+        self.cursor.execute(f"Select Stage from DOCUMENT where DOC_ID='{doc_id}'")
         result = self.cursor.fetchone()
         stage = result[0]
-        users = self.getWaitingUser(ecn_id, self.titleStageDict[str(stage)])
+        users = self.getWaitingUser(doc_id, self.titleStageDict[str(stage)])
         receivers = []
         for user in users:
             receivers.append(self.userList[user])
-        message = f"<p>{ecn_id} has been released and is now awaiting for your approval!</p><p>You can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN your queue in the ECN Manager application.</p>"
+        message = f"<p>{doc_id} has been released and is now awaiting for your approval!</p><p>You can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN your queue in the ECN Manager application.</p>"
         #print(f"send email these addresses: {receivers} notifying ecn release stage move")
         attach = []
-        attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
-        self.sendEmail(ecn_id,receivers, message,"Awaiting Approval",attach)
-        self.log_text.append(f"-Stage Release Email sent for {ecn_id} to {receivers}")
+        attach.append(os.path.join(program_location,doc_id+'.ecnx'))
+        self.sendEmail(doc_id,receivers, message,"Awaiting Approval",attach)
+        self.log_text.append(f"-Stage Release Email sent for {doc_id} to {receivers}")
             
-    def sendEmail(self,ecn_id,receivers,message,subject,attach):
+    def sendEmail(self,doc_id,receivers,message,subject,attach):
         if not isinstance(attach, list):
             attach = [attach]
         with smtplib.SMTP(self.settings["SMTP"],self.settings["Port"]) as server:
             msg = MIMEMultipart()
             msg['From'] = self.settings["From_Address"]
             msg['To'] = ", ".join(receivers)
-            msg['Subject']=f"{subject} Notification for ECN: {ecn_id}"
+            msg['Subject']=f"{subject} Notification for ECN: {doc_id}"
             
             message +="\n\n"
-            html = self.generateHTML(ecn_id)
+            html = self.generateHTML(doc_id)
             message+=html
             
             msg.attach(MIMEText(message,'html'))
@@ -391,21 +391,21 @@ class Notifier(QtWidgets.QWidget):
             server.sendmail(self.settings["From_Address"], receivers, msg.as_string())
             #print(f"Successfully sent email to {receivers}")
             
-    def generateECNX(self,ecn_id):
+    def generateECNX(self,doc_id):
         self.log_text.append("-generating ecnx file")
-        ecnx = os.path.join(program_location,ecn_id+'.ecnx')
+        ecnx = os.path.join(program_location,doc_id+'.ecnx')
         f = open(ecnx,"w+")
-        f.write(f"{ecn_id}")
+        f.write(f"{doc_id}")
         f.close()
         self.log_text.append("-ecnx file generated")
         
-    def removeECNX(self,ecn_id):
+    def removeECNX(self,doc_id):
         self.log_text.append("-removing ecnx file")
-        ecnx = os.path.join(program_location,ecn_id+'.ecnx')
+        ecnx = os.path.join(program_location,doc_id+'.ecnx')
         os.remove(ecnx)
         self.log_text.append("-ecnx file removed")
         
-    def generateHTML(self,ecn_id):
+    def generateHTML(self,doc_id):
         try:
             foldername = program_location
             template_loc = os.path.join(program_location,'templates','template.html')
@@ -415,21 +415,21 @@ class Notifier(QtWidgets.QWidget):
                 f.close()
 
                 t = Template(lines)
-                self.cursor.execute(f"SELECT * from ECN where ECN_ID='{ecn_id}'")
+                self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
                 result = self.cursor.fetchone()
-                title = result['ECN_TITLE']
+                title = result['DOC_TITLE']
                 author = result['AUTHOR']
                 dept = result['DEPARTMENT']
                 requestor = result['REQUESTOR']
-                reason = result['ECN_REASON']
-                summary = result['ECN_SUMMARY']
+                reason = result['DOC_REASON']
+                summary = result['DOC_SUMMARY']
                 signature = "<tr>"
                 attachment ="<tr>"
                 parts = ""
                 
                 #parts
                 #print('exporting parts')
-                self.cursor.execute(f"SELECT * from PARTS where ECN_ID='{ecn_id}'")
+                self.cursor.execute(f"SELECT * from PARTS where DOC_ID='{doc_id}'")
                 results = self.cursor.fetchall()
                 if results is not None:
                     for result in results:
@@ -448,7 +448,7 @@ class Notifier(QtWidgets.QWidget):
 
                 #attachments
                 #print('exporting attachments')
-                self.cursor.execute(f"SELECT * FROM ATTACHMENTS where ECN_ID='{ecn_id}'")
+                self.cursor.execute(f"SELECT * FROM ATTACHMENTS where DOC_ID='{doc_id}'")
                 results = self.cursor.fetchall()
                 if results is not None:
                     for result in results:
@@ -459,7 +459,7 @@ class Notifier(QtWidgets.QWidget):
 
                 
                 #print('exporting signatures')
-                self.cursor.execute(f"SELECT * from SIGNATURE where ECN_ID='{ecn_id}' and TYPE='Signing'")
+                self.cursor.execute(f"SELECT * from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing'")
                 results = self.cursor.fetchall()
                 if results is not None:
                     for result in results:
@@ -473,7 +473,7 @@ class Notifier(QtWidgets.QWidget):
                     signature="<tr><td></td><td></td><td></td></tr>"
                     
                 
-                export = t.substitute(ECNID=ecn_id,ECNTitle=title,Requestor=requestor,Department=dept,Author=author, Reason=reason,Summary=summary,Parts=parts,Attachment=attachment,Signature=signature)
+                export = t.substitute(ECNID=doc_id,ECNTitle=title,Requestor=requestor,Department=dept,Author=author, Reason=reason,Summary=summary,Parts=parts,Attachment=attachment,Signature=signature)
             
                 # with open(foldername+'\\'+ecn_id+'.html', 'w') as f:
                 #     f.write(export)
@@ -485,9 +485,9 @@ class Notifier(QtWidgets.QWidget):
             print(e)
             self.log_text.append(f"Error Occured during ecn export.\n Error: {e}")
         
-    def removeHTML(self,ecn_id):
+    def removeHTML(self,doc_id):
         self.log_text.append("-removing HTML file")
-        ecnx = os.path.join(program_location,ecn_id+'.html')
+        ecnx = os.path.join(program_location,doc_id+'.html')
         os.remove(ecnx)
         self.log_text.append("-HTML file removed")
         
@@ -505,7 +505,7 @@ class Notifier(QtWidgets.QWidget):
         return elapsed
     
     def checkForReminder(self):
-        self.cursor.execute("SELECT ECN_ID, LAST_NOTIFIED, FIRST_RELEASE, LAST_MODIFIED FROM ECN WHERE STATUS !='Completed' and STATUS!='Draft' and STAGE!='0'")
+        self.cursor.execute("SELECT DOC_ID, LAST_NOTIFIED, FIRST_RELEASE, LAST_MODIFIED FROM DOCUMENT WHERE STATUS !='Completed' and STATUS!='Draft' and STAGE!='0'")
         results = self.cursor.fetchall()
         today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         for result in results:
@@ -516,47 +516,47 @@ class Notifier(QtWidgets.QWidget):
                 elapsed = self.getElapsedDays(today, result["FIRST_RELEASE"])
                 print(elapsed.days)
             if elapsed.days >= int(self.settings['Reminder_Days']):
-                ecn_id = result["ECN_ID"]
+                doc_id = result["DOC_ID"]
                 first_release = result["FIRST_RELEASE"]
                 direct_receivers = []
                 secondary_receivers = []
-                self.cursor.execute(f"Select Stage from ECN where ECN_ID='{ecn_id}'")
+                self.cursor.execute(f"Select Stage from DOCUMENT where DOC_ID='{doc_id}'")
                 result = self.cursor.fetchone()
                 stage = result[0]
-                users = self.getWaitingUser(ecn_id, self.titleStageDict[str(stage)])
+                users = self.getWaitingUser(doc_id, self.titleStageDict[str(stage)])
                 for user in users:
                     direct_receivers.append(self.userList[user])
-                users = self.getWaitingUser(ecn_id, self.titleStageDict[str(self.settings['Reminder_Stages'])])
+                users = self.getWaitingUser(doc_id, self.titleStageDict[str(self.settings['Reminder_Stages'])])
                 for user in users:
                     secondary_receivers.append(self.userList[user])
                 total_days = self.getElapsedDays(today, first_release)
-                self.lateReminder(ecn_id,direct_receivers,secondary_receivers, total_days)
+                self.lateReminder(doc_id,direct_receivers,secondary_receivers, total_days)
 
 
     def setElapsedDays(self):
-        self.cursor.execute(f"Select ECN_ID, FIRST_RELEASE, LAST_STATUS from ECN where STATUS!='Completed'")
+        self.cursor.execute(f"Select DOC_ID, FIRST_RELEASE, LAST_STATUS from DOCUMENT where STATUS!='Completed'")
         results = self.cursor.fetchall()
         for result in results:
             today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            ecn = result[0]
+            doc_id = result[0]
             first_release = datetime.strptime(result[1],'%Y-%m-%d %H:%M:%S')
             last_status = datetime.strptime(result[2],'%Y-%m-%d %H:%M:%S')
             release_elapse = today - first_release
             status_elapse = today - last_status
-            self.cursor.execute(f"UPDATE ECN SET RELEASE_ELAPSE ='{release_elapse.day}', STATUS_ELAPSE='{status_elapse.day}' WHERE ECN_ID='{ecn}'")
+            self.cursor.execute(f"UPDATE DOCUMENT SET RELEASE_ELAPSE ='{release_elapse.day}', STATUS_ELAPSE='{status_elapse.day}' WHERE DOC_ID='{doc_id}'")
         self.db.commit()
 
-    def lateReminder(self,ecn_id,direct_receivers,secondary_receivers,total_days):
+    def lateReminder(self,doc_id,direct_receivers,secondary_receivers,total_days):
         today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         reminder_days = self.settings['Reminder_Days']
         direct = []
         for email in direct_receivers:
             direct.append(self.emailNameList[email])
         direct = ", ".join(direct)
-        message = f"<p>Hello {direct}:</p><p>{ecn_id} has been out for {total_days} and has not moved for {reminder_days} days or more since the last notification has been sent.</p><p> Please work on it at your earlier availability!</p><p> You can view the ECN your queue in the ECN Manager application.</p><p>You can also open the attachment file to launch to be directed to the ECN or the HTML file to see what the ECN is.</p>"
+        message = f"<p>Hello {direct}:</p><p>{doc_id} has been out for {total_days} and has not moved for {reminder_days} days or more since the last notification has been sent.</p><p> Please work on it at your earlier availability!</p><p> You can view the ECN your queue in the ECN Manager application.</p><p>You can also open the attachment file to launch to be directed to the ECN or the HTML file to see what the ECN is.</p>"
         #print(message)
         #print(f"send email these addresses: {receivers} notifying ecn lateness")
-        self.generateECNX(ecn_id)
+        self.generateECNX(doc_id)
         #self.generateHTML(ecn_id)
         receivers = []
         for user in direct_receivers:
@@ -564,15 +564,15 @@ class Notifier(QtWidgets.QWidget):
         for user in secondary_receivers:
             receivers.append(user)
         attach = []
-        attach.append(os.path.join(program_location,ecn_id+'.ecnx'))
+        attach.append(os.path.join(program_location,doc_id+'.ecnx'))
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
-        self.sendEmail(ecn_id,receivers, message,"Reminder",attach)
-        data = (ecn_id,"Sent","Reminder")
-        self.cursor.execute("INSERT INTO NOTIFICATION(ECN_ID, STATUS, TYPE) VALUES(?,?,?)",(data))
-        self.cursor.execute(f"UPDATE ECN SET LAST_NOTIFIED='{today}' WHERE ECN_ID='{ecn_id}'")
+        self.sendEmail(doc_id,receivers, message,"Reminder",attach)
+        data = (doc_id,"Sent","Reminder")
+        self.cursor.execute("INSERT INTO NOTIFICATION(DOC_ID, STATUS, TYPE) VALUES(?,?,?)",(data))
+        self.cursor.execute(f"UPDATE DOCUMENT SET LAST_NOTIFIED='{today}' WHERE DOC_ID='{doc_id}'")
         self.db.commit()
-        self.log_text.append(f"-lateness Email sent for {ecn_id} to {receivers}")
-        self.removeECNX(ecn_id)
+        self.log_text.append(f"-lateness Email sent for {doc_id} to {receivers}")
+        self.removeECNX(doc_id)
         #self.removeHTML(ecn_id)
 
     def getReminderUsers(self):

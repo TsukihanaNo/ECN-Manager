@@ -138,7 +138,7 @@ class NewRequestForm(QtGui.QWidget):
     def updateData(self):
         try:
             data = (self.combo_type.currentText(),self.line_requestor.text(),self.date_request.date().toString("yyyy-MM-dd"),'Unassigned',self.line_ecntitle.text(),self.text_detail.toPlainText(),self.line_id.text())
-            self.cursor.execute("UPDATE ECN SET ECN_TYPE = ?, REQUESTOR = ?, REQ_DATE = ?, STATUS = ?, ECN_TITLE = ?, REQ_DETAILS = ? WHERE ECN_ID = ?",(data))
+            self.cursor.execute("UPDATE DOCUMENT SET ECN_TYPE = ?, REQUESTOR = ?, REQ_DATE = ?, STATUS = ?, ECN_TITLE = ?, REQ_DETAILS = ? WHERE DOC_ID = ?",(data))
             self.db.commit()
             print('data updated')    
         except Exception as e:
@@ -159,7 +159,7 @@ class NewRequestForm(QtGui.QWidget):
 
 
     def checkEcnID(self):
-        command = "select ECN_ID from ECN where ECN_ID = '" + self.line_id.text() + "'"
+        command = "select ECN_ID from DOCUMENT where ECN_ID = '" + self.line_id.text() + "'"
         self.cursor.execute(command)
         results = self.cursor.fetchall()
         if len(results)!=0:

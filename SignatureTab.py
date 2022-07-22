@@ -105,19 +105,19 @@ class SignatureTab(QtWidgets.QWidget):
                 table_dict = self.getTableDict()
                 for key in table_dict.keys():
                     if table_dict[key]>=table_dict[user] and key != self.parent.parent.user_info['user']:
-                        self.parent.cursor.execute(f"UPDATE SIGNATURE SET SIGNED_DATE = Null where ECN_ID='{self.parent.ecn_id}' and USER_ID='{key}'")
+                        self.parent.cursor.execute(f"UPDATE SIGNATURE SET SIGNED_DATE = Null where DOC_ID='{self.parent.doc_id}' and USER_ID='{key}'")
                         users.append(key)
                 if len(users)>1:
                     users = ",".join(users)
                 else:
                     users = users[0]
                 comment = f'For user: {user} - additionally the approval for the following users have also been resetted: {users}\n  --Reason: ' + comment
-                self.parent.addComment(self.parent.ecn_id, comment, f"Rejecting to signer")
+                self.parent.addComment(self.parent.doc_id, comment, f"Rejecting to signer")
                 self.parent.db.commit()
                 self.parent.setECNStage(table_dict[user])
                 self.dispMsg(f"Rejection successful. ECN stage has been set to {table_dict[user]}")
                 # users = user+','+users
-                self.parent.addNotification(self.parent.ecn_id,"Rejected To Signer",from_user=self.parent.parent.user_info['user'],userslist=users,msg=comment)
+                self.parent.addNotification(self.parent.doc_id,"Rejected To Signer",from_user=self.parent.parent.user_info['user'],userslist=users,msg=comment)
             if ok and comment=="":
                 self.dispMsg("Rejection failed. Comment field was left blank.")
         else:
@@ -180,7 +180,7 @@ class SignatureTab(QtWidgets.QWidget):
         
     def repopulateTable(self):
         self.model.clear_signatures()
-        command = f"Select * from SIGNATURE where ECN_ID='{self.parent.ecn_id}' and TYPE='Signing'"
+        command = f"Select * from SIGNATURE where DOC_ID='{self.parent.doc_id}' and TYPE='Signing'"
         self.parent.cursor.execute(command)
         results = self.parent.cursor.fetchall()
         for result in results:

@@ -101,13 +101,13 @@ class SearchResults(QtWidgets.QWidget):
         self.table.setRowCount(0)
         rowcount=0
         for match in self.matches:
-            self.parent.cursor.execute(f"Select * FROM ECN where ECN_ID ='{match}'")
+            self.parent.cursor.execute(f"Select * FROM DOCUMENT where DOC_ID ='{match}'")
             results = self.parent.cursor.fetchall()
             self.table.insertRow(rowcount)
             for item in results: #['ECN ID','ECN Title','Status','Author']
-                self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['ECN_ID']))
-                self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['ECN_TYPE']))
-                self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['ECN_TITLE']))
+                self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['DOC_ID']))
+                self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['DOC_TYPE']))
+                self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['DOC_TITLE']))
                 self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
                 self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
                 if item['STATUS']!='Draft':
@@ -120,7 +120,7 @@ class SearchResults(QtWidgets.QWidget):
                     else:
                         self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(item["COMP_DAYS"])))
                     if item['STAGE']!=0:
-                        users = self.getWaitingUser(item['ECN_ID'], self.titleStageDict[str(item['STAGE'])])
+                        users = self.getWaitingUser(item['DOC_ID'], self.titleStageDict[str(item['STAGE'])])
                         self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(users))
                 if item["STATUS"]=="Rejected":
                     self.table.item(rowcount, 3).setBackground(QtGui.QColor("#FFADAD")) #red
@@ -132,8 +132,8 @@ class SearchResults(QtWidgets.QWidget):
             
     def openECN(self):
         row = self.table.currentRow()
-        ecn_id =self.table.item(row,0).text()
-        self.parent.HookEcn(ecn_id)
+        doc_id =self.table.item(row,0).text()
+        self.parent.HookEcn(doc_id)
         
     def getElapsedDays(self,day1,day2):
         today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -154,11 +154,11 @@ class SearchResults(QtWidgets.QWidget):
             else:
                 self.titleStageDict[value].append(key)
                 
-    def getWaitingUser(self,ecn,titles):
+    def getWaitingUser(self,doc,titles):
         users = []
         usr_str = ""
         for title in titles:
-            self.parent.cursor.execute(f"select USER_ID from SIGNATURE where ECN_ID='{ecn}' and JOB_TITLE='{title}' and SIGNED_DATE is Null")
+            self.parent.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{doc}' and JOB_TITLE='{title}' and SIGNED_DATE is Null")
             result = self.parent.cursor.fetchone()
             if result is not None:
                 users.append(result[0])
@@ -174,17 +174,17 @@ class SearchResults(QtWidgets.QWidget):
         if self.line_search.text()!="":
             search = self.line_search.text()
             self.matches = []
-            self.parent.cursor.execute(f"Select ECN_ID from ECN where ECN_TITLE like '%{search}%' OR ECN_REASON like '%{search}%' OR ECN_SUMMARY like '%{search}%'")
+            self.parent.cursor.execute(f"Select DOC_ID from DOCUMENT where DOC_TITLE like '%{search}%' OR DOC_REASON like '%{search}%' OR DOC_SUMMARY like '%{search}%'")
             results = self.parent.cursor.fetchall()
             for result in results:
                 if result[0] not in self.matches:
                     self.matches.append(result[0])
-            self.parent.cursor.execute(f"Select ECN_ID from ATTACHMENTS where FILENAME like '%{search}%'")
+            self.parent.cursor.execute(f"Select DOC_ID from ATTACHMENTS where FILENAME like '%{search}%'")
             results = self.parent.cursor.fetchall()
             for result in results:
                 if result[0] not in self.matches:
                     self.matches.append(result[0])
-            self.parent.cursor.execute(f"Select ECN_ID from PARTS where PART_ID like '%{search}%' OR DESC like '%{search}%'")
+            self.parent.cursor.execute(f"Select DOC_ID from PARTS where PART_ID like '%{search}%' OR DESC like '%{search}%'")
             results = self.parent.cursor.fetchall()
             for result in results:
                 if result[0] not in self.matches:

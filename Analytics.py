@@ -71,7 +71,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
         main_layout = QtWidgets.QHBoxLayout(self)
         table_layout = QtWidgets.QVBoxLayout()
         self.box = QtWidgets.QComboBox(self)
-        self.box.addItems(["ECN By Status","ECN By Author","ECN By Stage","ECN By Days","ECN By Months","ECN Waiting On User"])
+        self.box.addItems(["DOC By Status","DOC By Author","DOC By Stage","DOC By Days","DOC By Months","DOC Waiting On User"])
         self.box.currentIndexChanged.connect(self.setChartType)
         
         titles = ['Label','Value']
@@ -96,28 +96,28 @@ class AnalyticsWindow(QtWidgets.QWidget):
         self.showECNStatusDistribution()
         
     def setChartType(self):
-        if self.box.currentText()=="ECN By Status":
+        if self.box.currentText()=="DOC By Status":
             self.showECNStatusDistribution()
-        if self.box.currentText()=="ECN By Author":
+        if self.box.currentText()=="DOC By Author":
             self.showECNAuthorDistribution()
-        if self.box.currentText()=="ECN By Stage":
+        if self.box.currentText()=="DOC By Stage":
             self.showECNStageDistribution()
-        if self.box.currentText()=="ECN By Days":
+        if self.box.currentText()=="DOC By Days":
             self.showECNDayDistribution()
-        if self.box.currentText()=="ECN By Months":
+        if self.box.currentText()=="DOC By Months":
             self.showECNMonthDistribution()
-        if self.box.currentText()=="ECN Waiting On User":
+        if self.box.currentText()=="DOC Waiting On User":
             self.showECNWaitUserDistribution()
             
     def launchSearch(self):
-        if self.box.currentText()=="ECN Waiting On User":
+        if self.box.currentText()=="DOC Waiting On User":
             row = self.table.currentRow()
             user = self.table.item(row, 0).text()
             matches = []
             self.cursor.execute(f"select JOB_TITLE from USER where USER_ID='{user}'")
             result = self.cursor.fetchone()
             title = result[0]
-            command = f"Select SIGNATURE.ECN_ID from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{user}' and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing' and ECN.STAGE='{self.stageDict[title]}'"
+            command = f"Select SIGNATURE.DOC_ID from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{user}' and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing' and DOCUMENT.STAGE='{self.stageDict[title]}'"
             #self.cursor.execute(f"select ECN_ID from SIGNATURE where USER_ID='{user}' and TYPE='Signing' and SIGNED_DATE is Null")
             self.cursor.execute(command)
             results = self.cursor.fetchall()
@@ -127,7 +127,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
         
     def showECNWaitUserDistribution(self):
         users = {}
-        self.cursor.execute("Select DISTINCT(SIGNATURE.USER_ID) from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID where SIGNATURE.TYPE='Signing' and SIGNATURE.SIGNED_DATE is Null and ECN.STATUS='Out For Approval'")
+        self.cursor.execute("Select DISTINCT(SIGNATURE.USER_ID) from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID where SIGNATURE.TYPE='Signing' and SIGNATURE.SIGNED_DATE is Null and DOCUMENT.STATUS='Out For Approval'")
         results = self.cursor.fetchall()
         for result in results:
             users[result[0]]=0
@@ -136,7 +136,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
             self.cursor.execute(f"select JOB_TITLE from USER where USER_ID='{key}'")
             result = self.cursor.fetchone()
             title = result[0]
-            command = f"Select COUNT(SIGNATURE.ECN_ID) from SIGNATURE INNER JOIN ECN ON SIGNATURE.ECN_ID=ECN.ECN_ID WHERE ECN.STATUS='Out For Approval' and SIGNATURE.USER_ID='{key}' and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing' and ECN.STAGE='{self.stageDict[title]}'"
+            command = f"Select COUNT(SIGNATURE.DOC_ID) from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{key}' and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing' and DOCUMENT.STAGE='{self.stageDict[title]}'"
             self.cursor.execute(command)
             #self.cursor.execute(f"Select COUNT(ECN_ID) from SIGNATURE where TYPE='Signing' and SIGNED_DATE is Null and USER_ID='{key}'")
             result = self.cursor.fetchone()
@@ -149,7 +149,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
             del users[item]
 
         
-        set0 = QtCharts.QBarSet("ECN Count")
+        set0 = QtCharts.QBarSet("DOC Count")
         for value in users.values():
             set0.append(value)
         
@@ -184,7 +184,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
         
         chart = QtCharts.QChart()
         chart.addSeries(series)
-        chart.setTitle("ECNs Waiting On User")
+        chart.setTitle("DOCs Waiting On User")
         chart.addAxis(axisX, QtCore.Qt.AlignBottom)
         series.attachAxis(axisX)
         chart.setAnimationOptions(QtCharts.QChart.SeriesAnimations)
@@ -204,14 +204,14 @@ class AnalyticsWindow(QtWidgets.QWidget):
         for year in years:
             for month in months.keys():
                 check_date = f"{year}-{month}"
-                self.cursor.execute(f"select COUNT(ECN_ID) from ECN where STATUS!='Draft' and STATUS!='Completed' and FIRST_RELEASE like '{check_date}%'")
+                self.cursor.execute(f"select COUNT(DOC_ID) from DOCUMENT where STATUS!='Draft' and STATUS!='Completed' and FIRST_RELEASE like '{check_date}%'")
                 result = self.cursor.fetchone()
                 #print(date,result[0])
                 if year in data_release.keys():
                     data_release[year].append((month,result[0]))
                 else:
                     data_release[year]=[(month,result[0])]
-                self.cursor.execute(f"select COUNT(ECN_ID) from ECN where STATUS='Completed' and COMP_DATE like '{check_date}%'")
+                self.cursor.execute(f"select COUNT(DOC_ID) from DOCUMENT where STATUS='Completed' and COMP_DATE like '{check_date}%'")
                 result = self.cursor.fetchone()
                 #print(date,result[0])
                 if year in data_complete.keys():
@@ -227,7 +227,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
         axisX.append(categories)
         
         chart = QtCharts.QChart()
-        chart.setTitle("ECN By Month")
+        chart.setTitle("DOC By Month")
         chart.addAxis(axisX, QtCore.Qt.AlignBottom)
         chart.setAnimationOptions(QtCharts.QChart.SeriesAnimations)
         
@@ -281,10 +281,10 @@ class AnalyticsWindow(QtWidgets.QWidget):
             days.append(datetime.strftime(today-timedelta(days=x),'%Y-%m-%d'))
         days = sorted(days)
         for day in days:
-            self.cursor.execute(f"select COUNT(ECN_ID) from ECN where date(FIRST_RELEASE) = '{day}'")
+            self.cursor.execute(f"select COUNT(DOC_ID) from DOCUMENT where date(FIRST_RELEASE) = '{day}'")
             result = self.cursor.fetchone()
             release_counts[day]=result[0]
-            self.cursor.execute(f"select COUNT(ECN_ID) from ECN where date(COMP_DATE)='{day}'")
+            self.cursor.execute(f"select COUNT(DOC_ID) from DOCUMENT where date(COMP_DATE)='{day}'")
             result = self.cursor.fetchone()
             complete_counts[day]=result[0]
             
@@ -322,7 +322,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
         
         chart = QtCharts.QChart()
         chart.addSeries(series)
-        chart.setTitle("ECN By Day")
+        chart.setTitle("DOC By Day")
         chart.addAxis(axisX, QtCore.Qt.AlignBottom)
         series.attachAxis(axisX)
         chart.setAnimationOptions(QtCharts.QChart.SeriesAnimations)
@@ -342,7 +342,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
         stages = sorted(set(stages))
         #print(stages)
         for stage in stages:
-            self.cursor.execute(f"select COUNT(ECN_ID) from ECN where STAGE='{stage}' and STATUS!='Completed' and STATUS!='Draft' and STATUS!='Canceled'")
+            self.cursor.execute(f"select COUNT(DOC_ID) from DOCUMENT where STAGE='{stage}' and STATUS!='Completed' and STATUS!='Draft' and STATUS!='Canceled'")
             result = self.cursor.fetchone()
             current_stages[stage]=result[0]
         set0 = QtCharts.QBarSet("stage")
@@ -380,7 +380,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
         
         chart = QtCharts.QChart()
         chart.addSeries(series)
-        chart.setTitle("ECN By Stage")
+        chart.setTitle("DOC By Stage")
         chart.addAxis(axisX, QtCore.Qt.AlignBottom)
         series.attachAxis(axisX)
         chart.setAnimationOptions(QtCharts.QChart.SeriesAnimations)
@@ -388,14 +388,14 @@ class AnalyticsWindow(QtWidgets.QWidget):
         self.chartview.setChart(chart)
             
     def showECNAuthorDistribution(self):
-        self.cursor.execute("Select DISTINCT(AUTHOR) from ECN")
+        self.cursor.execute("Select DISTINCT(AUTHOR) from DOCUMENT")
         results = self.cursor.fetchall()
         authors = []
         for result in results:
             authors.append(result[0])
         counts = {}
         for author in authors:
-            self.cursor.execute(f"select COUNT(ECN_ID) from ECN where AUTHOR='{author}' and STATUS!='Draft'")
+            self.cursor.execute(f"select COUNT(DOC_ID) from DOCUMENT where AUTHOR='{author}' and STATUS!='Draft'")
             result = self.cursor.fetchone()
             counts[author]=result[0]
         row = 0 
@@ -423,7 +423,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
         
         chart = QtCharts.QChart()
         chart.addSeries(series)
-        chart.setTitle("ECN By Author")
+        chart.setTitle("DOC By Author")
         chart.legend().hide()
         chart.setAnimationOptions(QtCharts.QChart.SeriesAnimations)
         self.chartview.setChart(chart)
@@ -456,26 +456,26 @@ class AnalyticsWindow(QtWidgets.QWidget):
         
         chart = QtCharts.QChart()
         chart.addSeries(series)
-        chart.setTitle("ECN Distribution")
+        chart.setTitle("DOC Distribution")
         chart.legend().hide()
         chart.setAnimationOptions(QtCharts.QChart.SeriesAnimations)
         self.chartview.setChart(chart)
         
         
     def ECNDistribution(self):
-        self.cursor.execute("select COUNT(STATUS) from ECN")
+        self.cursor.execute("select COUNT(STATUS) from DOCUMENT")
         result = self.cursor.fetchone()
         total = result[0]
-        self.cursor.execute("select COUNT(ECN_ID) from ECN where STATUS='Rejected'")
+        self.cursor.execute("select COUNT(DOC_ID) from DOCUMENT where STATUS='Rejected'")
         result = self.cursor.fetchone()
         count_RJ = result[0]
-        self.cursor.execute("select COUNT(ECN_ID) from ECN where STATUS='Out For Approval'")
+        self.cursor.execute("select COUNT(DOC_ID) from DOCUMENT where STATUS='Out For Approval'")
         result = self.cursor.fetchone()
         count_OFA = result[0]
-        self.cursor.execute("select COUNT(ECN_ID) from ECN where STATUS='Completed'")
+        self.cursor.execute("select COUNT(DOC_ID) from DOCUMENT where STATUS='Completed'")
         result = self.cursor.fetchone()
         count_C = result[0]
-        self.cursor.execute("select COUNT(ECN_ID) from ecn where STATUS='Canceled'")
+        self.cursor.execute("select COUNT(DOC_ID) from DOCUMENT where STATUS='Canceled'")
         result = self.cursor.fetchone()
         count_cl = result[0]
         return {"Out For Approval":count_OFA,"Rejected":count_RJ,"Completed":count_C,"Canceled":count_cl}

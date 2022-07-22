@@ -76,7 +76,7 @@ class AttachmentTab(QtWidgets.QWidget):
         self.setLayout(mainlayout)
         
     def onRowSelect(self):
-        if self.parent.parent.user_info['user']==self.parent.ecn_data["AUTHOR"] and self.parent.ecn_data["STATUS"]!="Completed":
+        if self.parent.parent.user_info['user']==self.parent.doc_data["AUTHOR"] and self.parent.doc_data["STATUS"]!="Completed":
             self.button_remove.setEnabled(bool(self.attachments.selectionModel().selectedIndexes()))
         self.button_open.setEnabled(bool(self.attachments.selectionModel().selectedIndexes()))
         self.button_open_loc.setEnabled(bool(self.attachments.selectionModel().selectedIndexes()))
@@ -165,7 +165,7 @@ class AttachmentTab(QtWidgets.QWidget):
         self.dispMsg("Parts have been generated in the parts tab")
         
     def repopulateTable(self):
-        command = "Select * from ATTACHMENTS where ECN_ID= '"+self.parent.ecn_id +"'"
+        command = "Select * from ATTACHMENTS where DOC_ID= '"+self.parent.doc_id +"'"
         self.parent.cursor.execute(command)
         results = self.parent.cursor.fetchall()
         for result in results:

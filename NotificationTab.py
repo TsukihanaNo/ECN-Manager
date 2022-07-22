@@ -110,7 +110,7 @@ class NotificationTab(QtWidgets.QWidget):
         
     def repopulateTable(self):
         self.model.clear_signatures()
-        command = f"Select * from SIGNATURE where ECN_ID='{self.parent.ecn_id}' and TYPE='Notify'"
+        command = f"Select * from SIGNATURE where DOC_ID='{self.parent.doc_id}' and TYPE='Notify'"
         self.parent.cursor.execute(command)
         results = self.parent.cursor.fetchall()
         for result in results:
