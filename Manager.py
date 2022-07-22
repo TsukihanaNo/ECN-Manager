@@ -49,6 +49,7 @@ class Manager(QtWidgets.QWidget):
         self.windowHeight = 600
         self.setFixedSize(self.windowWidth,self.windowHeight)
         self.ecnWindow = None
+        self.pcnWindow = None
         self.sorting = (0,QtCore.Qt.DescendingOrder)
         self.doc = doc
         self.firstInstance = True
@@ -315,7 +316,7 @@ class Manager(QtWidgets.QWidget):
         icon_loc = icon = os.path.join(program_location,"icons","open.png")
         self.button_open.setIcon(QtGui.QIcon(icon_loc))
         #self.button_open.setFixedWidth(25)
-        self.button_open.clicked.connect(self.openECN)
+        self.button_open.clicked.connect(self.openDoc)
         self.button_add = QtWidgets.QPushButton("New")
         self.button_add2 = QtWidgets.QPushButton("New PCN")
         self.button_add2.clicked.connect(self.newPCN)
@@ -346,7 +347,7 @@ class Manager(QtWidgets.QWidget):
         self.docs.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.docs.setResizeMode(QtWidgets.QListView.Adjust)
         self.docs.setItemDelegate(DocDelegate())
-        self.docs.doubleClicked.connect(self.openECN)
+        self.docs.doubleClicked.connect(self.openDoc)
         
         
         self.model = DocModel()
@@ -562,16 +563,30 @@ class Manager(QtWidgets.QWidget):
             else:
                 self.ecnWindow.activateWindow()
     
+    def HookPCN(self,doc_id=None):
+        if self.pcnWindow is None:
+            self.pcnWindow = PCNWindow(self,doc_id)
+        else:
+            if self.pcnWindow.doc_id !=doc_id:
+                self.pcnWindow.close()
+                self.pcnWindow = PCNWindow(self,doc_id)
+            else:
+                self.pcnWindow.activateWindow()
+            
+    
     def newECN(self):
         self.HookEcn()
         
     def newPCN(self):
-        self.pcnWindow = PCNWindow(self)
+        self.HookPCN()
         
-    def openECN(self):
+    def openDoc(self):
         index = self.docs.currentIndex()
         doc_id = index.data(QtCore.Qt.DisplayRole)[0]
-        self.HookEcn(doc_id)
+        if doc_id[:3]=="ECN":
+            self.HookEcn(doc_id)
+        else:
+            self.HookPCN(doc_id)
 
 
     def loadInAnim(self):
