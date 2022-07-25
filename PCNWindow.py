@@ -29,6 +29,8 @@ class PCNWindow(QtWidgets.QWidget):
         self.settings = parent.settings
         self.db = self.parent.db
         self.cursor = self.parent.cursor
+        #self.getPCNCounter()
+        #self.generatePCNID()
         self.initAtt()
         self.initUI()
         self.show()
@@ -144,6 +146,7 @@ class PCNWindow(QtWidgets.QWidget):
                 self.cursor.execute("UPDATE DOCUMENT SET DOC_TITLE = ?, DOC_TEXT_1 = ?, DOC_REASON = ?, DOC_SUMMARY = ?, DOC_TEXT_2 = ?, DOC_TEXT_3 = ?, DOC_TEXT_4 = ?, DOC_TEXT_5 = ?, LAST_MODIFIED = ? WHERE DOC_ID = ?",(data))
                 self.dispMsg("PCN Updated!")
             self.db.commit()
+            self.parent.repopulateTable()
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data saving!\n Error: {e}")
@@ -164,9 +167,41 @@ class PCNWindow(QtWidgets.QWidget):
         self.tab_pcn.text_response.setHtml(result["DOC_TEXT_5"])
     
     def generatePCNID(self):
-        date_time = datetime.now().strftime('%Y%m-%d')
-        self.doc_id = 'PCN-'+date_time[2:]
+        month,counter = self.getPCNCounter()
+        date_time = datetime.now().strftime('%Y%m')
+        old_month = f"{month:02d}"
+        #print(date_time[4:],old_month)
+        if old_month == date_time[4:]:
+            #print("month match")
+            self.setPCNCounter(old_month, old_month, counter+1)
+            self.doc_id = 'PCN'+date_time[2:]+ f"-{counter+1:02d}"
+        else:
+            #print("month not match")
+            self.setPCNCounter(old_month, date_time[4:], 1)
+            self.doc_id = 'PCN'+date_time[2:]+"-01"
+        #print(self.doc_id)
         self.tab_pcn.line_id.setText(self.doc_id)
+        
+    def getPCNCounter(self):
+        self.cursor.execute("select * from PCNCOUNTER")
+        result = self.cursor.fetchone()
+        if result is not None:
+            return (result[0],result[1])
+        else:
+            #print("no results")
+            return (0,0)
+            
+    def setPCNCounter(self,old_month,new_month,counter):
+        #print(old_month,new_month,counter)
+        if old_month == "00":
+            data = (new_month,counter)
+            self.cursor.execute(f"INSERT INTO PCNCOUNTER(MONTH,COUNTER) VALUES(?,?)",(data))
+            #print("inserting data")
+        else:
+            data = (new_month,counter,old_month)
+            self.cursor.execute(f"UPDATE PCNCOUNTER SET MONTH = ?, COUNTER=? where MONTH = ?",(data))
+        self.db.commit()
+        
 
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()

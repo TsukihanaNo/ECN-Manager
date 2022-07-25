@@ -19,7 +19,7 @@ class PCNTab(QtWidgets.QWidget):
         headerLayout = QtWidgets.QHBoxLayout()
         self.label_id = QtWidgets.QLabel("PCN ID:")
         self.line_id = QtWidgets.QLineEdit()
-        self.line_id.setFixedWidth(100)
+        self.line_id.setFixedWidth(80)
         self.line_id.setReadOnly(True)
         self.label_title = QtWidgets.QLabel("Title:")
         self.line_title = QtWidgets.QLineEdit()

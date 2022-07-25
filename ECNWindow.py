@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore, QtWebEngineCore
 from datetime import datetime
 from AttachmentTab import *
 from ECNTab import *
@@ -289,6 +289,11 @@ class ECNWindow(QtWidgets.QWidget):
         self.button_exportHTML.clicked.connect(self.exportHTML)
         self.toolbar.addSeparator()
         self.toolbar.addWidget(self.button_exportHTML)
+        
+        self.button_preview = QtWidgets.QPushButton("Preview")
+        self.button_preview.clicked.connect(self.previewHTML)
+        self.toolbar.addWidget(self.button_preview)
+        
         mainlayout.addWidget(self.toolbar)
         mainlayout.addWidget(self.tabwidget)
         
@@ -878,86 +883,100 @@ class ECNWindow(QtWidgets.QWidget):
     def saveAndClose(self):
         self.save()
         self.close()
+        
+    def generateHTML(self):
+        template_loc = os.path.join(self.parent.programLoc,'templates','template.html')
+        with open(template_loc) as f:
+            lines = f.read() 
+            f.close()
+
+            t = Template(lines)
+            id = self.doc_id
+            self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{self.doc_id}'")
+            result = self.cursor.fetchone()
+            title = result['DOC_TITLE']
+            author = result['AUTHOR']
+            dept = result['DEPARTMENT']
+            requestor = result['REQUESTOR']
+            reason = result['DOC_REASON']
+            summary = result['DOC_SUMMARY']
+            signature = "<tr>"
+            attachment ="<tr>"
+            parts = ""
+            
+            #parts
+            #print('exporting parts')
+            self.cursor.execute(f"SELECT * from PARTS where DOC_ID='{self.doc_id}'")
+            results = self.cursor.fetchall()
+            if results is not None:
+                for result in results:
+                    text = f"<p> {result['PART_ID']}</p>"
+                    text += "<ul>"
+                    text += f"<li>Desc: {result['DESC']}</li>"
+                    text += f"<li>Type: {result['TYPE']}</li>"
+                    text += f"<li>Disposition: {result['DISPOSITION']}</li>"
+                    text += f"<li>Inspection Req.: {result['INSPEC']}</li>"
+                    text += f"<li>Mfg.: {result['MFG']}</li>"
+                    text += f"<li>Mfg.#: {result['MFG_PART']}</li>"
+                    text += f"<li>Replacing: {result['REPLACING']}</li>"
+                    text += "</ul>"
+                    parts += text
+            
+
+            #attachments
+            #print('exporting attachments')
+            self.cursor.execute(f"SELECT * FROM ATTACHMENTS where DOC_ID='{self.doc_id}'")
+            results = self.cursor.fetchall()
+            if results is not None:
+                for result in results:
+                    attachment += "<td>"+result['FILENAME']+"</td>"
+                    attachment += "<td>"+result['FILEPATH']+"</td></tr>"
+            else:
+                attachment="<tr><td></td><td></td></tr>"
+
+            
+            #print('exporting signatures')
+            self.cursor.execute(f"SELECT * from SIGNATURE where DOC_ID='{self.doc_id}' and TYPE='Signing'")
+            results = self.cursor.fetchall()
+            if results is not None:
+                for result in results:
+                    signature += "<td>"+result['JOB_TITLE']+"</td>"
+                    signature += "<td>"+result['NAME']+"</td>"
+                    if result['SIGNED_DATE'] is not None:
+                        signature += "<td>"+str(result['SIGNED_DATE'])+"</td></tr>"
+                    else:
+                        signature += "<td></td></tr>"
+            else:
+                signature="<tr><td></td><td></td><td></td></tr>"
+                
+            
+            #print('substituting text')
+            
+            html = t.substitute(ECNID=id,ECNTitle=title,Requestor=requestor,Department=dept,Author=author, Reason=reason,Summary=summary,Parts=parts,Attachment=attachment,Signature=signature)
+
+            return html
+
+    def previewHTML(self):
+        html = self.generateHTML()
+        self.textbrowser = QtWidgets.QTextBrowser(self)
+        self.textbrowser.setFixedSize(800,1150)
+        self.textbrowser.setHtml(html)
+        self.textbrowser.show()
+        self.textbrowser.raise_()
 
     def exportHTML(self):
         try:
             foldername = QtWidgets.QFileDialog().getExistingDirectory()
             if foldername:
-                template_loc = os.path.join(self.parent.programLoc,'templates','template.html')
-                with open(template_loc) as f:
-                    lines = f.read() 
+                export = self.generateHTML()
+                doc_loc = foldername+'\\'+self.doc_id+'.pdf'
+                with open(doc_loc, 'w') as f:
+                    f.write(export)
                     f.close()
-
-                    t = Template(lines)
-                    id = self.doc_id
-                    self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{self.doc_id}'")
-                    result = self.cursor.fetchone()
-                    title = result['DOC_TITLE']
-                    author = result['AUTHOR']
-                    dept = result['DEPARTMENT']
-                    requestor = result['REQUESTOR']
-                    reason = result['DOC_REASON']
-                    summary = result['DOC_SUMMARY']
-                    signature = "<tr>"
-                    attachment ="<tr>"
-                    parts = ""
-                    
-                    #parts
-                    #print('exporting parts')
-                    self.cursor.execute(f"SELECT * from PARTS where DOC_ID='{self.doc_id}'")
-                    results = self.cursor.fetchall()
-                    if results is not None:
-                        for result in results:
-                            text = f"<p> {result['PART_ID']}</p>"
-                            text += "<ul>"
-                            text += f"<li>Desc: {result['DESC']}</li>"
-                            text += f"<li>Type: {result['TYPE']}</li>"
-                            text += f"<li>Disposition: {result['DISPOSITION']}</li>"
-                            text += f"<li>Inspection Req.: {result['INSPEC']}</li>"
-                            text += f"<li>Mfg.: {result['MFG']}</li>"
-                            text += f"<li>Mfg.#: {result['MFG_PART']}</li>"
-                            text += f"<li>Replacing: {result['REPLACING']}</li>"
-                            text += "</ul>"
-                            parts += text
-                    
-
-                    #attachments
-                    #print('exporting attachments')
-                    self.cursor.execute(f"SELECT * FROM ATTACHMENTS where DOC_ID='{self.doc_id}'")
-                    results = self.cursor.fetchall()
-                    if results is not None:
-                        for result in results:
-                            attachment += "<td>"+result['FILENAME']+"</td>"
-                            attachment += "<td>"+result['FILEPATH']+"</td></tr>"
-                    else:
-                        attachment="<tr><td></td><td></td></tr>"
-
-                    
-                    #print('exporting signatures')
-                    self.cursor.execute(f"SELECT * from SIGNATURE where DOC_ID='{self.doc_id}' and TYPE='Signing'")
-                    results = self.cursor.fetchall()
-                    if results is not None:
-                        for result in results:
-                            signature += "<td>"+result['JOB_TITLE']+"</td>"
-                            signature += "<td>"+result['NAME']+"</td>"
-                            if result['SIGNED_DATE'] is not None:
-                                signature += "<td>"+str(result['SIGNED_DATE'])+"</td></tr>"
-                            else:
-                                signature += "<td></td></tr>"
-                    else:
-                        signature="<tr><td></td><td></td><td></td></tr>"
-                        
-                    
-                    #print('substituting text')
-                    
-                    export = t.substitute(ECNID=id,ECNTitle=title,Requestor=requestor,Department=dept,Author=author, Reason=reason,Summary=summary,Parts=parts,Attachment=attachment,Signature=signature)
+                # webpage = QtWebEngineCore.QWebEnginePage()
+                # webpage.setHtml(export)
                 
-                    with open(foldername+'\\'+id+'.html', 'w') as f:
-                        f.write(export)
-                        f.close()
-                        
-                    
-                    self.dispMsg("Export Completed!")
+                self.dispMsg("Export Completed!")
         except Exception as e:
             print(e)
             self.dispMsg(f"Error Occured during ecn export.\n Error: {e}")
