@@ -38,3 +38,10 @@
 
 - fix bug for moving stages with notification people added  (fixed)
 - fix bug where ecn.lock file isn't getting removed when you close out of the login screen (fixed)
+
+for pcns
+- add .txt export that includes the html for inserting to website
+- add input field for the website discription (use format: sales name/model action date)
+    - limit to 65-75 characters
+- auto export pcn data to defined server location
+    - add pcn export location to settings

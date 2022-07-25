@@ -290,9 +290,9 @@ class ECNWindow(QtWidgets.QWidget):
         self.toolbar.addSeparator()
         self.toolbar.addWidget(self.button_exportHTML)
         
-        self.button_preview = QtWidgets.QPushButton("Preview")
-        self.button_preview.clicked.connect(self.previewHTML)
-        self.toolbar.addWidget(self.button_preview)
+        # self.button_preview = QtWidgets.QPushButton("Preview")
+        # self.button_preview.clicked.connect(self.previewHTML)
+        # self.toolbar.addWidget(self.button_preview)
         
         mainlayout.addWidget(self.toolbar)
         mainlayout.addWidget(self.tabwidget)
