@@ -202,6 +202,30 @@ class PCNWindow(QtWidgets.QWidget):
             self.cursor.execute(f"UPDATE PCNCOUNTER SET MONTH = ?, COUNTER=? where MONTH = ?",(data))
         self.db.commit()
         
+    def release(self):
+        try:
+            self.save(1)
+            modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            
+            self.cursor.execute(f"SELECT FIRST_RELEASE from DOCUMENT where DOC_ID='{self.doc_id}'")
+            result = self.cursor.fetchone()
+            if result[0] is None:
+                self.cursor.execute(f"UPDATE DOCUMENT SET FIRST_RELEASE = '{modifieddate}' where DOC_ID='{self.doc_id}'")
+            data = (modifieddate, "Out For Approval",self.doc_id)
+            self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?, STATUS = ? WHERE DOC_ID = ?",(data))
+            self.db.commit()
+            self.addNotification(self.doc_id, "Released")
+            self.tab_ecn.line_status.setText("Out For Approval")
+            self.parent.repopulateTable()
+            self.dispMsg("ECN has been saved and sent out for signing!")
+            #self.addNotification(self.ecn_id, "Released")
+            self.button_release.setDisabled(True)
+            self.button_cancel.setText("Cancel")
+            self.button_cancel.setDisabled(True)
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error occured during data update (release)!\n Error: {e}")
+        
 
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()
