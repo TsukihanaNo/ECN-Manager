@@ -37,7 +37,6 @@ class SettingsWindow(QtWidgets.QWidget):
             self.cursor = self.parent.cursor
         self.initAtt()
         self.initUI()
-        self.getStageDict()
         self.loadSettings()
         self.show()
 
@@ -138,12 +137,21 @@ class SettingsWindow(QtWidgets.QWidget):
         layout_rd.addWidget(self.line_reminder_days)
         self.label_reminder_stages = QtWidgets.QLabel("Reminder Stages:")
         self.line_reminder_stages = QtWidgets.QLineEdit(self)
+        self.label_PCN_export = QtWidgets.QLabel("PCN Export Loc:")
+        self.line_PCN_export = QtWidgets.QLineEdit(self)
+        self.button_pcn = QtWidgets.QPushButton("Browse")
+        layout_pcn = QtWidgets.QHBoxLayout()
+        layout_pcn.addWidget(self.line_PCN_export)
+        layout_pcn.addWidget(self.button_pcn)
         layout_rs = QtWidgets.QHBoxLayout()
         layout_rs.addWidget(self.label_reminder_stages)
         layout_rs.addWidget(self.line_reminder_stages)
         layout_left.addWidget(self.label_reminders)
         layout_left.addLayout(layout_rd)
         layout_left.addLayout(layout_rs)
+        layout_left.addWidget(self.label_PCN_export)
+        layout_left.addLayout(layout_pcn)
+        
         
         layout_left.addStretch()
                         
@@ -174,7 +182,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.button_dept_remove = QtWidgets.QPushButton("Remove")
         self.button_dept_remove.clicked.connect(self.removeDept)
         self.label_jobs = QtWidgets.QLabel("Job Titles and stages:")
-        headers = ['Job Title','Stage']
+        headers = ['Job Title','ECN Stage','PCN Stage']
         self.table_jobs = QtWidgets.QTableWidget(0,len(headers),self)
         self.table_jobs.setHorizontalHeaderLabels(headers)
         self.table_jobs.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -214,9 +222,21 @@ class SettingsWindow(QtWidgets.QWidget):
             key,value = stage.split("-")
             self.stageDict[key.strip()] = value.strip()
         #print(self.stageDict)
+        
+    def getPCNStageDict(self):
+        if "PCN_Stage" in self.settings.keys():
+            self.PCNstageDict = {}
+            stages = self.settings["PCN_Stage"].split(",")
+            for stage in stages:
+                key,value = stage.split("-")
+                self.PCNstageDict[key.strip()] = value.strip()
+        else:
+            self.PCNstageDict = None
 
 
     def loadSettings(self):
+        self.getStageDict()
+        self.getPCNStageDict()
         self.line_db.setText(self.settings["DB_LOC"])
         if "Visual" in self.settings.keys():
             user,pw,db = self.settings["Visual"].split(",")
@@ -231,6 +251,8 @@ class SettingsWindow(QtWidgets.QWidget):
             self.line_smtp_email.setText(self.settings["From_Address"])
         if "Instant_Client" in self.settings.keys():
             self.line_instant_client.setText(self.settings["Instant_Client"])
+        if "PCN_Export_Loc" in self.settings.keys():
+            self.line_PCN_export.setText(self.settings["PCN_Export_Loc"])
         if "Reminder_Days" in self.settings.keys():
             self.line_reminder_days.setText(self.settings["Reminder_Days"])
         if "Reminder_Stages" in self.settings.keys():
@@ -259,6 +281,8 @@ class SettingsWindow(QtWidgets.QWidget):
             for item in temp:
                 self.table_jobs.setItem(row, 0, QtWidgets.QTableWidgetItem(item))
                 self.table_jobs.setItem(row,1,QtWidgets.QTableWidgetItem(self.stageDict[item]))
+                if self.PCNstageDict is not None:
+                    self.table_jobs.setItem(row,2,QtWidgets.QTableWidgetItem(self.PCNstageDict[item]))
                 row+=1
 
     def saveSettings(self):
@@ -294,16 +318,21 @@ class SettingsWindow(QtWidgets.QWidget):
                 data += self.list_dept.item(x).text()+"\n"
         jobs = ""
         stages = ""
+        pcn_stages = ""
         for x in range(self.table_jobs.rowCount()):
             #print(x,self.table_jobs.item(x, 0).text(),self.table_jobs.item(x, 1).text())
             if x < self.table_jobs.rowCount()-1:
                 jobs += self.table_jobs.item(x, 0).text()+","
                 stages += self.table_jobs.item(x, 0).text() + "-" + self.table_jobs.item(x, 1).text() + ","
+                pcn_stages += self.table_jobs.item(x, 0).text() + "-" + self.table_jobs.item(x, 2).text() + ","
             else:
                 jobs += self.table_jobs.item(x, 0).text()+"\n"
                 stages += self.table_jobs.item(x, 0).text() + "-" + self.table_jobs.item(x, 1).text() + "\n"
+                pcn_stages += self.table_jobs.item(x, 0).text() + "-" + self.table_jobs.item(x, 2).text() + "\n"
         data += "Job_Titles : " + jobs
         data += "Stage : " + stages
+        data += "PCN_Stage : " + pcn_stages
+        data += "PCN_Export_Loc : " + self.line_PCN_export.text()+"\n"
         try:
             f = open(initfile,'w')
             f.write(data)

@@ -114,7 +114,7 @@ class PCNWindow(QtWidgets.QWidget):
         else:
             self.loadData()
         
-    def save(self):
+    def save(self,msg=None):
         try:
             save_type = "update"
             if self.doc_id is None:
@@ -144,7 +144,8 @@ class PCNWindow(QtWidgets.QWidget):
             else:
                 data = (title,overview,reason,change,products,replacement,reference,response,modifieddate,doc_id)
                 self.cursor.execute("UPDATE DOCUMENT SET DOC_TITLE = ?, DOC_TEXT_1 = ?, DOC_REASON = ?, DOC_SUMMARY = ?, DOC_TEXT_2 = ?, DOC_TEXT_3 = ?, DOC_TEXT_4 = ?, DOC_TEXT_5 = ?, LAST_MODIFIED = ? WHERE DOC_ID = ?",(data))
-                self.dispMsg("PCN Updated!")
+                if not msg:
+                    self.dispMsg("PCN Updated!")
             self.db.commit()
             self.parent.repopulateTable()
         except Exception as e:
@@ -202,6 +203,26 @@ class PCNWindow(QtWidgets.QWidget):
             self.cursor.execute(f"UPDATE PCNCOUNTER SET MONTH = ?, COUNTER=? where MONTH = ?",(data))
         self.db.commit()
         
+    def getPCNStage(self):
+        try:
+            self.cursor.execute(f"Select TEMPSTAGE from DOCUMENT where DOC_ID='{self.doc_id}'")
+            result = self.cursor.fetchone()
+            #print("current stage",result[0])
+            if result[0] is None:
+                return 0
+            else:
+                return result[0]
+        except Exception as e:
+            self.dispMsg(f"Error trying to get PCN stage. Error: {e}")
+            
+    def setPCNStage(self,stage):
+        try:
+            #print('setting ecn to ', stage)
+            self.cursor.execute(f"UPDATE DOCUMENT SET STAGE ='{stage}', TEMPSTAGE = '{stage}' where DOC_ID='{self.doc_id}'")
+            self.db.commit()
+        except Exception as e:
+            self.dispMsg(f"Error trying to set PCN stage. Error: {e}")
+        
     def release(self):
         try:
             self.save(1)
@@ -214,7 +235,10 @@ class PCNWindow(QtWidgets.QWidget):
             data = (modifieddate, "Out For Approval",self.doc_id)
             self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?, STATUS = ? WHERE DOC_ID = ?",(data))
             self.db.commit()
-            self.addNotification(self.doc_id, "Released")
+            currentStage = self.getECNStage()
+            if currentStage==0:
+                self.setECNStage(self.getNextStage()[0])
+                self.addNotification(self.doc_id, "Stage Moved")
             self.tab_ecn.line_status.setText("Out For Approval")
             self.parent.repopulateTable()
             self.dispMsg("ECN has been saved and sent out for signing!")
@@ -225,6 +249,78 @@ class PCNWindow(QtWidgets.QWidget):
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data update (release)!\n Error: {e}")
+            
+    def approve(self):
+        try:
+            approvedate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            data = (approvedate,self.doc_id,self.parent.user_info['user'])
+            self.cursor.execute("UPDATE SIGNATURE SET SIGNED_DATE = ? WHERE DOC_ID = ? and USER_ID = ?",(data))
+            self.cursor.execute(f"UPDATE DOCUMENT SET LAST_MODIFIED = '{approvedate}' where DOC_ID='{self.doc_id}'")
+            self.tab_signature.repopulateTable()
+            self.dispMsg("PCN has been signed!")
+            self.button_approve.setDisabled(True)
+            self.checkComplete()
+            self.db.commit()
+            print("moving pcn stage check")
+            self.moveECNStage()
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error occured during data insertion (approve)!\n Error: {e}")
+    
+    def reject(self):
+        comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Comment", "")
+        if ok and comment!="":
+            self.addComment(self.doc_id, comment,"Rejecting to author")
+            try:
+                modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                data = (modifieddate, "Rejected",self.doc_id)
+                self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?, STATUS = ? WHERE DOC_ID = ?",(data))
+                self.cursor.execute(f"UPDATE SIGNATURE SET SIGNED_DATE=Null where DOC_ID='{self.doc_id}'")
+                self.db.commit()
+                self.setECNStage(0)
+                self.parent.repopulateTable()
+                self.dispMsg("Rejection successful. Setting PCN stage to 0 and all signatures have been removed.")
+                self.tab_ecn.line_status.setText("Rejected")
+                self.addNotification(self.doc_id, "Rejected To Author",from_user=self.parent.user_info['user'],msg=comment)
+                self.button_reject.setDisabled(True)
+                self.button_approve.setDisabled(True)
+            except Exception as e:
+                print(e)
+                self.dispMsg(f"Error occured during data update (reject)!\n Error: {e}")
+        if ok and comment=="":
+            self.dispMsg("Rejection failed: comment field was left blank.")
+    
+    def checkComplete(self):
+        try:
+            command = f"Select * from SIGNATURE where DOC_ID ='{self.doc_id}' and TYPE='Signing'"
+            self.cursor.execute(command)
+            results = self.cursor.fetchall()
+            completed = True
+            for result in results:
+                if result['SIGNED_DATE'] == None or result['SIGNED_DATE']== "":
+                    completed = False
+            if completed:
+                completeddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                self.cursor.execute(f"select FIRST_RELEASE from DOCUMENT where DOC_ID='{self.doc_id}'")
+                result = self.cursor.fetchone()
+                #print(result[0])
+                #first_release = datetime.strptime(str(result[0]),'%Y-%m-%d %H:%M:%S')
+                elapsed = self.getElapsedDays(result[0], completeddate)
+                #print(elapsed)
+                #elapsed = self.getElapsedDays(first_release, completeddate)
+                data = (completeddate,completeddate,elapsed, "Completed",self.doc_id)
+                self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?,COMP_DATE = ?, COMP_DAYS = ?, STATUS = ? WHERE DOC_ID = ?",(data))
+                #self.db.commit()
+                self.parent.repopulateTable()
+                self.dispMsg("PCN is now completed")
+                self.addNotification(self.doc_id, "Completed")
+                self.tab_signature.button_add.setDisabled(True)
+                self.tab_notification.button_add.setDisabled(True)
+            else:
+                self.parent.repopulateTable()
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error Occured during check Complete.\n Error: {e}")
         
 
     def dispMsg(self,msg):

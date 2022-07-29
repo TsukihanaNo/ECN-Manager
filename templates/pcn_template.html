@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+    <header>
+        <title>Product Change Notice</title>
+        <style>
+
+            *{
+                box-sizing: border-box;
+            }
+
+            .container {
+                width: 8in;
+                min-height:10.5in;
+                margin: .25in auto;
+                padding: 0;
+                text-align: center;
+                border: 1px solid black;
+            }
+
+            #title-block > h1 {
+                font-size:36px;
+                margin: 0;
+            }
+
+            .header-block {
+                display: flex;
+                text-align: right;
+            }
+
+            .header-item{
+                padding: 2px;
+            }
+
+            #title {
+                padding: 10px;
+                font-size: 36px;
+                font-weight: bold;
+            }
+
+
+            #pcn-id{
+                width: 95%;
+                font-size: 18px;
+                font-weight:bold;
+            }
+
+            #author{
+                width: 50%;
+            }
+
+            .text-block{
+                padding: 10px;
+            }
+
+            .text-block > h2{
+                font-size: 20px;
+                text-align: left;
+            }
+
+            .text-box{
+                text-align: left;
+            }
+
+        </style>
+    </header>
+    <body>
+        <div class="container">
+            <div id="title-block">
+                
+                <div class="header-block">
+                    <div id = "pcn-id" class="header-item">
+                        $PCNID
+                    </div>
+                </div>
+                <div class="header-block">
+                    <div id = "title" class="header-item">
+                        Product Change Notice
+                    </div>
+                </div>
+            </div>
+            <div id="overview-block" class="text-block">
+                <h2>Overview:</h2>
+                <div id="overview-text" class="text-box">
+                    $Overview
+                </div>
+            </div>
+            <div id="product-block" class="text-block">
+                <h2>Products Affected:</h2>
+                <div id="summary-text" class="text-box">
+                    $Products
+                </div>
+            </div>
+            <div id="change-block" class="text-block">
+                <h2>Change Description:</h2>
+                <div id="summary-text" class="text-box">
+                    $ChangeDescription
+                </div>
+            </div>
+            <div id="reason-block" class="text-block">
+                <h2>Reason for Change</h2>
+                <div id="summary-text" class="text-box">
+                    $Reason
+                </div>
+            </div>
+
+            <div id="replacement-block" class="text-block">
+                <h2>Replacement Product:</h2>
+                <div id="summary-text" class="text-box">
+                    $Replacement
+                </div>
+            </div>
+
+            <div id="response-block" class="text-block">
+                <h2>Response:</h2>
+                <div id="summary-text" class="text-box">
+                    $Response
+                </div>
+            </div>
+
+        </div>
+    </body>
+</html>
