@@ -24,7 +24,15 @@ cursor.execute('CREATE TABLE CHANGELOG(DOC_ID TEXT, CHANGEDATE TEXT, NAME TEXT,D
 cursor.execute('CREATE TABLE NOTIFICATION(DOC_ID TEXT, STATUS TEXT, TYPE TEXT, USERS TEXT, MSG TEXT, FROM_USER TEXT)')
 cursor.execute('CREATE TABLE TASKS(DOC_ID TEXT, DESC TEXT, STATUS TEXT, COMPLETED_BY TEXT, COMP_DATE TEXT)')
 cursor.execute('CREATE TABLE WINDOWSLOG(USER TEXT, STATUS TEXT, DATETIME TEXT)')
+cursor.execute('CREATE TABLE PERMISSIONS(USER TEXT, CREATE_ECN TEXT, CREATE_PCN TEXT, CREATE_USER TEXT, REJECT_SIGNER TEXT, ACCESS_SETTINGS TEXT, VIEW_ANALYTICS TEXT)')
+
 cursor.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE, STATUS) VALUES(?,?,?,?,?,?)',('admin','admin','admin','Admin','Admin','Active'))
+
+# create ecn, pcn
+# view analytics
+# create users
+# access settings
+# reject to signer
 
 # results = cursor.execute("Select * from ECN")
 # for result in results:
