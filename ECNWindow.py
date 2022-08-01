@@ -283,13 +283,13 @@ class ECNWindow(QtWidgets.QWidget):
         else:
             self.tab_parts.button_add.setDisabled(True)
             self.tab_notification.button_add.setDisabled(True)
-        self.button_exportHTML = QtWidgets.QPushButton("Export")
-        #self.button_exportHTML.setToolTip("Export ECN")
+        self.button_export = QtWidgets.QPushButton("Export")
+        #self.button_export.setToolTip("Export ECN")
         icon_loc = icon = os.path.join(program_location,"icons","export.png")
-        self.button_exportHTML.setIcon(QtGui.QIcon(icon_loc))
-        self.button_exportHTML.clicked.connect(self.exportHTML)
+        self.button_export.setIcon(QtGui.QIcon(icon_loc))
+        self.button_export.clicked.connect(self.exportPDF)
         self.toolbar.addSeparator()
-        self.toolbar.addWidget(self.button_exportHTML)
+        self.toolbar.addWidget(self.button_export)
         
         self.button_preview = QtWidgets.QPushButton("Preview")
         self.button_preview.clicked.connect(self.previewHTML)
@@ -300,7 +300,7 @@ class ECNWindow(QtWidgets.QWidget):
         
         # self.button_move_stage = QtWidgets.QPushButton("Move Stage")
         # self.button_move_stage.clicked.connect(self.moveECNStage)
-        #buttonlayout.addWidget(self.button_exportHTML)
+        #buttonlayout.addWidget(self.button_export)
         # buttonlayout.addWidget(self.button_move_stage)
             
         #mainlayout.addLayout(buttonlayout)
@@ -961,7 +961,6 @@ class ECNWindow(QtWidgets.QWidget):
         html = self.generateHTML()
         self.webview = WebView()
         self.webview.loadHtml(html)
-        #self.webview.loadAndPrint(html)
 
     def exportHTML(self):
         try:
@@ -972,10 +971,20 @@ class ECNWindow(QtWidgets.QWidget):
                 with open(doc_loc, 'w') as f:
                     f.write(export)
                     f.close()
-                # webpage = QtWebEngineCore.QWebEnginePage()
-                # webpage.setHtml(export)
                 
                 self.dispMsg("Export Completed!")
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error Occured during ecn export.\n Error: {e}")
+            
+    def exportPDF(self):
+        try:
+            foldername = QtWidgets.QFileDialog().getExistingDirectory()
+            if foldername:
+                export = self.generateHTML()
+                doc_loc = foldername+'\\'+self.doc_id+'.pdf'
+                self.webview = WebView()
+                self.webview.loadAndPrint(export,doc_loc)
         except Exception as e:
             print(e)
             self.dispMsg(f"Error Occured during ecn export.\n Error: {e}")

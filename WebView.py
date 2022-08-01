@@ -18,11 +18,12 @@ initfile = os.path.join(program_location, "setting.ini")
 class WebView(QtWidgets.QWidget):
     def __init__(self,parent=None):
         super(WebView,self).__init__()
-        self.windowWidth =  int(830)
-        self.windowHeight = int(580)
+        self.windowWidth =  900
+        self.windowHeight = 600
+        self.filepath = None
         self.initAtt()
         self.initUI()
-        self.show()
+        #self.show()
 
     def center(self):
         window = self.window()
@@ -58,22 +59,25 @@ class WebView(QtWidgets.QWidget):
         main_layout.addWidget(self.web)
         
     def load(self,url):
+        self.show()
         self.web.load(url)
         
     def loadHtml(self,html):
+        self.show()
         self.web.setHtml(html)
         
-    def loadAndPrint(self,html):
+    def loadAndPrint(self,html,filepath):
+        self.filepath = filepath
         self.web.setHtml(html)
-        self.web.printToPdf(r"D:\Programming Projects\ecn-manager\test2.pdf")
-        self.web.pdfPrintingFinished.connect(self.printComplete)
+        self.web.loadFinished.connect(self.print)
+        #self.web.printToPdf(r"D:\Programming Projects\ecn-manager\test2.pdf")
         
     def print(self):
         # printer = QtPrintSupport.QPrinter(QtPrintSupport.QPrinter.HighResolution)
         # dialog = QtPrintSupport.QPrintDialog(printer,self)
         # dialog.exec_()
         # self.web.print(printer)
-        self.web.printToPdf(r"D:\Programming Projects\ecn-manager\test.pdf")
+        self.web.printToPdf(self.filepath)
         self.web.pdfPrintingFinished.connect(self.printComplete)
         
     def printComplete(self):
