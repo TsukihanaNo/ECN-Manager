@@ -11,6 +11,7 @@ from SignatureTab import *
 from PartsTab import *
 from CommentTab import *
 from NotificationTab import *
+from WebView import *
 from string import Template
 import sys
 
@@ -290,9 +291,9 @@ class ECNWindow(QtWidgets.QWidget):
         self.toolbar.addSeparator()
         self.toolbar.addWidget(self.button_exportHTML)
         
-        # self.button_preview = QtWidgets.QPushButton("Preview")
-        # self.button_preview.clicked.connect(self.previewHTML)
-        # self.toolbar.addWidget(self.button_preview)
+        self.button_preview = QtWidgets.QPushButton("Preview")
+        self.button_preview.clicked.connect(self.previewHTML)
+        self.toolbar.addWidget(self.button_preview)
         
         mainlayout.addWidget(self.toolbar)
         mainlayout.addWidget(self.tabwidget)
@@ -958,18 +959,16 @@ class ECNWindow(QtWidgets.QWidget):
 
     def previewHTML(self):
         html = self.generateHTML()
-        self.textbrowser = QtWidgets.QTextBrowser(self)
-        self.textbrowser.setFixedSize(800,1150)
-        self.textbrowser.setHtml(html)
-        self.textbrowser.show()
-        self.textbrowser.raise_()
+        self.webview = WebView()
+        self.webview.loadHtml(html)
+        #self.webview.loadAndPrint(html)
 
     def exportHTML(self):
         try:
             foldername = QtWidgets.QFileDialog().getExistingDirectory()
             if foldername:
                 export = self.generateHTML()
-                doc_loc = foldername+'\\'+self.doc_id+'.pdf'
+                doc_loc = foldername+'\\'+self.doc_id+'.html'
                 with open(doc_loc, 'w') as f:
                     f.write(export)
                     f.close()

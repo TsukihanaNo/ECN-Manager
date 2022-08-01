@@ -80,7 +80,7 @@ class LoginWindow(QtWidgets.QWidget):
 
     def checkUserPass(self):
         #print("initiating check")
-        self.cursor.execute("SELECT USER_ID, PASSWORD, NAME, ROLE, JOB_TITLE  FROM USER WHERE USER_ID=:id",{"id":self.text_user.text()})
+        self.cursor.execute("SELECT USER_ID, PASSWORD, NAME, JOB_TITLE  FROM USER WHERE USER_ID=:id",{"id":self.text_user.text()})
         info = self.cursor.fetchone()
         # print(len(info))
         # for item in info:
@@ -89,7 +89,6 @@ class LoginWindow(QtWidgets.QWidget):
             if self.text_pass.text()==info['PASSWORD']:
                 self.parent.user_info['user'] = info['USER_ID']
                 self.parent.user_info['name'] = info['NAME']
-                self.parent.user_info['role'] = info['ROLE']
                 self.parent.user_info['title'] = info['JOB_TITLE']
                 self.parent.user_info['stage'] = self.parent.stageDict[info['JOB_TITLE']]
                 self.cursor.execute(f"Select * from PERMISSIONS where USER_ID='{self.text_user.text()}'")

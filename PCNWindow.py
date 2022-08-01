@@ -321,6 +321,48 @@ class PCNWindow(QtWidgets.QWidget):
         except Exception as e:
             print(e)
             self.dispMsg(f"Error Occured during check Complete.\n Error: {e}")
+            
+    def generateHTML(self):
+        template_loc = os.path.join(self.parent.programLoc,'templates','pcn_template.html')
+        with open(template_loc) as f:
+            lines = f.read() 
+            f.close()
+
+            t = Template(lines)
+            id = self.doc_id
+            self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{self.doc_id}'")
+            result = self.cursor.fetchone()
+            title = result['DOC_TITLE']
+            author = result['AUTHOR']
+            dept = result['DEPARTMENT']
+            requestor = result['REQUESTOR']
+            reason = result['DOC_REASON']
+            summary = result['DOC_SUMMARY']
+            signature = "<tr>"
+            attachment ="<tr>"
+            parts = ""
+            #print('substituting text')
+            
+            html = t.substitute(ECNID=id,ECNTitle=title,Requestor=requestor,Department=dept,Author=author, Reason=reason,Summary=summary,Parts=parts,Attachment=attachment,Signature=signature)
+
+            return html
+        
+    def exportHTML(self):
+        try:
+            foldername = QtWidgets.QFileDialog().getExistingDirectory()
+            if foldername:
+                export = self.generateHTML()
+                doc_loc = foldername+'\\'+self.doc_id+'.html'
+                with open(doc_loc, 'w') as f:
+                    f.write(export)
+                    f.close()
+                # webpage = QtWebEngineCore.QWebEnginePage()
+                # webpage.setHtml(export)
+                
+                self.dispMsg("Export Completed!")
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error Occured during ecn export.\n Error: {e}")
         
 
     def dispMsg(self,msg):
