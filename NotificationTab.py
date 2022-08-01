@@ -73,9 +73,6 @@ class NotificationTab(QtWidgets.QWidget):
 
     def onRowSelect(self):
         if self.doc_type=="ECN":
-            if self.parent.parent.user_info['role']=="Manager" and self.parent.tab_ecn.line_status.text()!="Completed":
-                row = self.signatures.currentIndex().row()
-                self.button_revoke.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()) and self.model.get_signed_date(row) is not None)
             if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() and self.parent.tab_ecn.line_status.text()!="Completed":
                 self.button_remove.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
                 self.button_edit.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))

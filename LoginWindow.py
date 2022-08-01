@@ -92,6 +92,22 @@ class LoginWindow(QtWidgets.QWidget):
                 self.parent.user_info['role'] = info['ROLE']
                 self.parent.user_info['title'] = info['JOB_TITLE']
                 self.parent.user_info['stage'] = self.parent.stageDict[info['JOB_TITLE']]
+                self.cursor.execute(f"Select * from PERMISSIONS where USER_ID='{self.text_user.text()}'")
+                permissions = self.cursor.fetchone()
+                if permissions is None:
+                    self.parent.user_permissions["create_ecn"] = "n"
+                    self.parent.user_permissions["create_pcn"] = "n"
+                    self.parent.user_permissions["create_user"] = "n"
+                    self.parent.user_permissions["reject_signer"] = "n"
+                    self.parent.user_permissions["access_settings"] = "n"
+                    self.parent.user_permissions["view_analytics"] = "n"
+                else:
+                    self.parent.user_permissions["create_ecn"] = permissions["CREATE_ECN"]
+                    self.parent.user_permissions["create_pcn"] = permissions["CREATE_PCN"]
+                    self.parent.user_permissions["create_user"] = permissions["CREATE_USER"]
+                    self.parent.user_permissions["reject_signer"] = permissions["REJECT_SIGNER"]
+                    self.parent.user_permissions["access_settings"] = permissions["ACCESS_SETTINGS"]
+                    self.parent.user_permissions["view_analytics"] = permissions["VIEW_ANALYTICS"]
                 self.parent.loginDone()
                 self.logged = True
                 self.setUserOnline()
@@ -100,6 +116,7 @@ class LoginWindow(QtWidgets.QWidget):
                 self.dispMsg("Incorrect password")
         else:
             self.dispMsg("User does not exist")
+            
             
     def setUserOnline(self):
         self.cursor.execute(f"UPDATE USER SET SIGNED_IN ='Y' where USER_ID='{self.parent.user_info['user']}'")

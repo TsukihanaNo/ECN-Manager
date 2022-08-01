@@ -68,7 +68,7 @@ class SignatureTab(QtWidgets.QWidget):
             else:
                 self.button_add.setDisabled(True)
         
-        if self.parent.parent.user_info['role']=="Manager":
+        if self.parent.parent.user_permissions["reject_signer"]=="y":
             self.signatures.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
             self.button_revoke = QtWidgets.QPushButton("Reject to selected")
             icon_loc = icon = os.path.join(program_location,"icons","reject.png")
@@ -81,7 +81,7 @@ class SignatureTab(QtWidgets.QWidget):
 
     def onRowSelect(self):
         if self.doc_type=="ECN":
-            if self.parent.parent.user_info['role']=="Manager" and self.parent.tab_ecn.line_status.text()!="Completed":
+            if self.parent.parent.user_permissions["reject_signer"]=="y" and self.parent.tab_ecn.line_status.text()!="Completed":
                 row = self.signatures.currentIndex().row()
                 self.button_revoke.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()) and self.model.get_signed_date(row) is not None)
             if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() and self.parent.tab_ecn.line_status.text()!="Completed":

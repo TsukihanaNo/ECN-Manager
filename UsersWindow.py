@@ -77,7 +77,7 @@ class UsersWindow(QtWidgets.QWidget):
         button_layout.addWidget(self.button_remove)
         button_layout.addWidget(self.button_edit)
         #USER(USER_ID TEXT, PASSWORD TEXT, NAME TEXT, ROLE TEXT, JOB_TITLE TEXT, DEPT TEXT, STATUS TEXT, EMAIL TEXT)
-        titles = ['User ID','Name','Job Title','Role','Status','Email','Signed In']
+        titles = ['User ID','Name','Job Title','Status','Email','Signed In']
         self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.horizontalHeader().setSortIndicatorShown(True)
@@ -122,10 +122,9 @@ class UsersWindow(QtWidgets.QWidget):
             self.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['USER_ID']))
             self.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['NAME']))
             self.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['JOB_TITLE']))
-            self.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['ROLE']))
-            self.table.setItem(rowcount, 4, QtWidgets.QTableWidgetItem(result['STATUS']))
-            self.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(result['EMAIL']))
-            self.table.setItem(rowcount,6,QtWidgets.QTableWidgetItem(result['SIGNED_IN']))
+            self.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['STATUS']))
+            self.table.setItem(rowcount, 4, QtWidgets.QTableWidgetItem(result['EMAIL']))
+            self.table.setItem(rowcount,5,QtWidgets.QTableWidgetItem(result['SIGNED_IN']))
             rowcount+=1
         self.table.sortItems(self.sorting[0],self.sorting[1])
             

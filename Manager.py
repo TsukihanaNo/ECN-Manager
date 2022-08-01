@@ -62,6 +62,7 @@ class Manager(QtWidgets.QWidget):
         self.getStageDict()
         self.getTitleStageDict()
         self.user_info = {}
+        self.user_permissions = {}
         self.programLoc = program_location
         self.nameList = []
         #print("Visual" in self.settings.keys())
@@ -304,7 +305,7 @@ class Manager(QtWidgets.QWidget):
         #self.button_refresh.setFixedWidth(25)
         self.button_refresh.clicked.connect(self.repopulateTable)
         
-        if self.user_info["role"]!="Engineer" and self.user_info['role']!="Admin":
+        if self.user_permissions["create_ecn"]=="n" and self.user_permissions["create_pcn"]=="n":
             items = ["Queue","Open","Completed"]
         else:
             items = ["My Docs","Queue","Open","Completed"]
@@ -317,16 +318,19 @@ class Manager(QtWidgets.QWidget):
         self.button_open.setIcon(QtGui.QIcon(icon_loc))
         #self.button_open.setFixedWidth(25)
         self.button_open.clicked.connect(self.openDoc)
-        self.button_add = QtWidgets.QPushButton("New")
+        self.button_add = QtWidgets.QPushButton("New ECN")
         self.button_add2 = QtWidgets.QPushButton("New PCN")
         self.button_add2.clicked.connect(self.newPCN)
         #self.button_add.setToolTip("New ECN")
         #self.button_add.setFixedWidth(25)
         icon_loc = icon = os.path.join(program_location,"icons","new.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
+        self.button_add2.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.newECN)
-        if self.user_info['role']=="Signer":
-            self.button_add.setDisabled(True)
+        if self.user_permissions["create_ecn"]=="n":
+            self.button_add.hide()
+        if self.user_permissions["create_pcn"]=="n":
+            self.button_add2.hide()
             
         self.statusbar.addPermanentWidget(self.label_doc_count)
         self.statusbar.addPermanentWidget(self.label_open_docs)
@@ -517,14 +521,14 @@ class Manager(QtWidgets.QWidget):
 
     def createMenuActions(self):
         filemenu = self.menubar.addMenu("&File")
-        if self.user_info['role'] == "Admin":
-            newDBAction = QtGui.QAction("&New Database", self)
-            newDBAction.triggered.connect(self.newDB)
-            connectDBAction = QtGui.QAction(
-                "&Connect to existing Database", self)
-            filemenu.addAction(newDBAction)
-            filemenu.addAction(connectDBAction)
-        if self.user_info['role']=="Admin" or self.user_info['role']=='Manager':
+        # if self.user_info['role'] == "Admin":
+        #     newDBAction = QtGui.QAction("&New Database", self)
+        #     newDBAction.triggered.connect(self.newDB)
+        #     connectDBAction = QtGui.QAction(
+        #         "&Connect to existing Database", self)
+        #     filemenu.addAction(newDBAction)
+        #     filemenu.addAction(connectDBAction)
+        if self.user_permissions["view_analytics"]=="y":
             filemenu.addSeparator()
             analyticsAction = QtGui.QAction("&Launch Analytics",self)
             analyticsAction.triggered.connect(self.launchAnalytics)
@@ -534,10 +538,11 @@ class Manager(QtWidgets.QWidget):
         exitAction.setShortcut("CTRL+Q")
         filemenu.addAction(exitAction)
         setting_menu=self.menubar.addMenu("&Setting")
-        if self.user_info['role']=='Admin':
+        if self.user_permissions["access_settings"]=="y":
             settingAction = QtGui.QAction("&Settings",self)
             settingAction.triggered.connect(self.launchSettings)
             setting_menu.addAction(settingAction)
+        if self.user_permissions["create_user"]=="y":
             userAction = QtGui.QAction("&Users Window",self)
             userAction.triggered.connect(self.launchUsers)
             setting_menu.addAction(userAction)
