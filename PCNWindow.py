@@ -68,6 +68,7 @@ class PCNWindow(QtWidgets.QWidget):
         icon_loc = icon = os.path.join(program_location,"icons","release.png")
         self.button_release = QtWidgets.QPushButton("Release")
         self.button_release.setIcon(QtGui.QIcon(icon_loc))
+        self.button_release.clicked.connect(self.release)
         
         icon_loc = icon = os.path.join(program_location,"icons","add_comment.png")
         self.button_comment = QtWidgets.QPushButton("Add Comment")
@@ -76,21 +77,30 @@ class PCNWindow(QtWidgets.QWidget):
         icon_loc = icon = os.path.join(program_location,"icons","approve.png")
         self.button_approve = QtWidgets.QPushButton("Approve")
         self.button_approve.setIcon(QtGui.QIcon(icon_loc))
+        self.button_approve.clicked.connect(self.approve)
         
         icon_loc = icon = os.path.join(program_location,"icons","reject.png")
         self.button_reject = QtWidgets.QPushButton("Reject")
         self.button_reject.setIcon(QtGui.QIcon(icon_loc))
+        self.button_reject.clicked.connect(self.reject)
         
         icon_loc = icon = os.path.join(program_location,"icons","export.png")
         self.button_export = QtWidgets.QPushButton("Export")
         self.button_export.setIcon(QtGui.QIcon(icon_loc))
-
+        #self.button_export.clicked.connect(self.export)
+        
+        icon_loc = icon = os.path.join(program_location,"icons","export.png")
+        self.button_preview = QtWidgets.QPushButton("Preview")
+        self.button_preview.setIcon(QtGui.QIcon(icon_loc))
+        #self.button_preview.clicked.connect(self.export)
+        
         self.toolbar.addWidget(self.button_save)
         self.toolbar.addWidget(self.button_release)
         self.toolbar.addWidget(self.button_comment)
         self.toolbar.addWidget(self.button_approve)
         self.toolbar.addWidget(self.button_reject)
         self.toolbar.addWidget(self.button_export)
+        self.toolbar.addWidget(self.button_preview)
         
         self.tab_widget = QtWidgets.QTabWidget(self)
         self.tab_pcn = PCNTab(self)
@@ -140,6 +150,10 @@ class PCNWindow(QtWidgets.QWidget):
             if save_type == "insert":
                 data = (doc_id,doc_type,author,status,title,overview,reason,change,products,replacement,reference,response,modifieddate)
                 self.cursor.execute("INSERT INTO DOCUMENT(DOC_ID,DOC_TYPE,AUTHOR,STATUS,DOC_TITLE,DOC_TEXT_1,DOC_REASON,DOC_SUMMARY,DOC_TEXT_2,DOC_TEXT_3,DOC_TEXT_4,DOC_TEXT_5,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",(data))
+                if self.checkSigNotiDuplicate():
+                    self.dispMsg("duplicates found in signature and notification tab")
+                else:
+                    self.AddSignatures()
                 self.dispMsg("PCN Saved!")
             else:
                 data = (title,overview,reason,change,products,replacement,reference,response,modifieddate,doc_id)
@@ -222,6 +236,17 @@ class PCNWindow(QtWidgets.QWidget):
             self.db.commit()
         except Exception as e:
             self.dispMsg(f"Error trying to set PCN stage. Error: {e}")
+            
+    def getNextStage(self):
+        self.cursor.execute(f"Select JOB_TITLE from SIGNATURE where DOC_ID='{self.doc_id}' and SIGNED_DATE is NULL and TYPE='Signing'")
+        results = self.cursor.fetchall()
+        stage = []
+        for result in results:
+            #print(result[0])
+            stage.append(self.parent.stageDictPCN[result[0]])
+        stage = sorted(stage)
+        #print(stage)
+        return stage
         
     def release(self):
         try:
@@ -235,9 +260,9 @@ class PCNWindow(QtWidgets.QWidget):
             data = (modifieddate, "Out For Approval",self.doc_id)
             self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?, STATUS = ? WHERE DOC_ID = ?",(data))
             self.db.commit()
-            currentStage = self.getECNStage()
+            currentStage = self.getPCNStage()
             if currentStage==0:
-                self.setECNStage(self.getNextStage()[0])
+                self.setPCNStage(self.getNextStage()[0])
                 self.addNotification(self.doc_id, "Stage Moved")
             self.tab_ecn.line_status.setText("Out For Approval")
             self.parent.repopulateTable()
@@ -321,6 +346,91 @@ class PCNWindow(QtWidgets.QWidget):
         except Exception as e:
             print(e)
             self.dispMsg(f"Error Occured during check Complete.\n Error: {e}")
+            
+    def AddSignatures(self):
+        #inserting to signature table
+        #SIGNATURE(ECN_ID TEXT, NAME TEXT, USER_ID TEXT, HAS_SIGNED TEXT, SIGNED_DATE TEXT)
+        try:
+            #get current values in db
+            current_list = []
+            self.cursor.execute(f"SELECT USER_ID FROM SIGNATURE WHERE DOC_ID='{self.doc_id}' and TYPE='Signing'")
+            results = self.cursor.fetchall()
+            for result in results:
+                current_list.append(result[0])
+            #print('current list',current_list)
+            #get new values
+            new_list = []
+            for x in range(self.tab_signature.rowCount()):
+                job_title = self.tab_signature.model.get_job_title(x)
+                name = self.tab_signature.model.get_name(x)
+                user_id = self.tab_signature.model.get_user(x)
+                new_list.append((self.doc_id,job_title,name,user_id,"Signing"))
+            #print('new list',new_list)
+            
+            for element in new_list:
+                if element[3] not in current_list:
+                    #print(f'insert {element[3]} into signature db')
+                    self.cursor.execute("INSERT INTO SIGNATURE(DOC_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(element))
+            for element in current_list:
+                no_match = True
+                for elements in new_list:
+                    if element == elements[3]:
+                        no_match = False
+                if no_match:
+                    #print(f"remove {element} from signature db")
+                    self.cursor.execute(f"DELETE FROM SIGNATURE WHERE DOC_ID = '{self.doc_id}' and USER_ID='{element}'")
+                    
+                    
+            current_list = []
+            self.cursor.execute(f"SELECT USER_ID FROM SIGNATURE WHERE DOC_ID='{self.doc_id}' and TYPE='Notify'")
+            results = self.cursor.fetchall()
+            for result in results:
+                current_list.append(result[0])
+            
+            new_list = []
+            for x in range(self.tab_notification.rowCount()):
+                job_title = self.tab_notification.model.get_job_title(x)
+                name = self.tab_notification.model.get_name(x)
+                user_id = self.tab_notification.model.get_user(x)
+                new_list.append((self.doc_id,job_title,name,user_id,"Notify"))
+                
+            for element in new_list:
+                if element[3] not in current_list:
+                    #print(f'insert {element[3]} into notify db')
+                    self.cursor.execute("INSERT INTO SIGNATURE(DOC_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(element))
+            for element in current_list:
+                no_match = True
+                for elements in new_list:
+                    if element == elements[3]:
+                        no_match = False
+                if no_match:
+                    #print(f"remove {element} from notify db")
+                    self.cursor.execute(f"DELETE FROM SIGNATURE WHERE DOC_ID = '{self.doc_id}' and USER_ID='{element}'")
+            
+            self.db.commit()
+            #print('data updated')
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error occured during data update (signature)!\n Error: {e}")
+            
+    def notificationSave(self):
+        if self.checkSigNotiDuplicate():
+            self.dispMsg("Error: Duplicate user found in Signature and Notifications. Please remove the duplicate before trying again.")
+        else:
+            self.AddSignatures()
+            self.dispMsg("ECN has been updated!")
+            
+    def checkSigNotiDuplicate(self):
+        sigs = []
+        for row in range(self.tab_signature.rowCount()):
+            sigs.append(self.tab_signature.model.get_user(row))
+        for row in range(self.tab_notification.rowCount()):
+            sigs.append(self.tab_notification.model.get_user(row))
+        #print(sigs)
+        if len(sigs)==len(set(sigs)):
+            return False
+        else:
+            return True
             
     def generateHTML(self):
         template_loc = os.path.join(self.parent.programLoc,'templates','pcn_template.html')

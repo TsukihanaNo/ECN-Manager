@@ -960,6 +960,7 @@ class ECNWindow(QtWidgets.QWidget):
     def previewHTML(self):
         html = self.generateHTML()
         self.webview = WebView()
+        self.webview.setDocID(self.doc_id)
         self.webview.loadHtml(html)
 
     def exportHTML(self):

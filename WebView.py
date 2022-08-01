@@ -21,6 +21,7 @@ class WebView(QtWidgets.QWidget):
         self.windowWidth =  900
         self.windowHeight = 600
         self.filepath = None
+        self.doc_id = None
         self.initAtt()
         self.initUI()
         #self.show()
@@ -50,13 +51,16 @@ class WebView(QtWidgets.QWidget):
     def initUI(self):
         main_layout = QtWidgets.QVBoxLayout(self)
         self.toolbar = QtWidgets.QToolBar(self)
-        self.button_print = QtWidgets.QPushButton("Print")
-        self.button_print.clicked.connect(self.print)
+        self.button_print = QtWidgets.QPushButton("Export")
+        self.button_print.clicked.connect(self.exportPDF)
         self.toolbar.addWidget(self.button_print)
         self.web = QtWebEngineWidgets.QWebEngineView()
-        self.web.load("http://qt-project.org/")
+        #self.web.load("http://qt-project.org/")
         main_layout.addWidget(self.toolbar)
         main_layout.addWidget(self.web)
+        
+    def setDocID(self,doc_id):
+        self.doc_id = doc_id
         
     def load(self,url):
         self.show()
@@ -69,19 +73,32 @@ class WebView(QtWidgets.QWidget):
     def loadAndPrint(self,html,filepath):
         self.filepath = filepath
         self.web.setHtml(html)
-        self.web.loadFinished.connect(self.print)
+        self.web.loadFinished.connect(self.printPDF)
         #self.web.printToPdf(r"D:\Programming Projects\ecn-manager\test2.pdf")
         
-    def print(self):
-        # printer = QtPrintSupport.QPrinter(QtPrintSupport.QPrinter.HighResolution)
-        # dialog = QtPrintSupport.QPrintDialog(printer,self)
-        # dialog.exec_()
-        # self.web.print(printer)
+    # def print(self):
+    #     printer = QtPrintSupport.QPrinter(QtPrintSupport.QPrinter.HighResolution)
+    #     dialog = QtPrintSupport.QPrintDialog(printer,self)
+    #     if dialog.exec()==QtWidgets.QDialog.Accepted:
+    #         print(printer.printerName())
+    #         self.web.page.print(printer)
+        
+    def printPDF(self):
         self.web.printToPdf(self.filepath)
-        self.web.pdfPrintingFinished.connect(self.printComplete)
+        self.web.pdfPrintingFinished.connect(self.printComplete) 
         
     def printComplete(self):
         self.dispMsg("pdf exporting done")
+        
+    def exportPDF(self):
+        try:
+            foldername = QtWidgets.QFileDialog().getExistingDirectory()
+            if foldername:
+                self.filepath = foldername+'\\'+self.doc_id+'.pdf'
+                self.printPDF()
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error Occured during ecn export.\n Error: {e}")
         
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()

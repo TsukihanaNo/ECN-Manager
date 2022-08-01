@@ -60,7 +60,9 @@ class Manager(QtWidgets.QWidget):
         self.ico = QtGui.QIcon(icon)
         self.startUpCheck()
         self.getStageDict()
+        self.getStageDictPCN()
         self.getTitleStageDict()
+        self.getTitleStageDictPCN()
         self.user_info = {}
         self.user_permissions = {}
         self.programLoc = program_location
@@ -268,6 +270,8 @@ class Manager(QtWidgets.QWidget):
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         self.getNameList()
         self.stage = self.stageDict[self.user_info["title"]]
+        self.stage_pcn = self.stageDictPCN[self.user_info["title"]]
+        #print(self.stage_pcn)
 
     def initUI(self):
         self.menubar = QtWidgets.QMenuBar(self)
@@ -483,6 +487,15 @@ class Manager(QtWidgets.QWidget):
             else:
                 self.titleStageDict[value].append(key)
                 
+    def getTitleStageDictPCN(self):
+        self.titleStageDictPCN = {}
+        for key, value in self.stageDictPCN.items():
+            if value not in self.titleStageDictPCN.keys():
+                self.titleStageDictPCN[value]=[key]
+            else:
+                self.titleStageDictPCN[value].append(key)
+        #print("title stage dict pcn",self.titleStageDictPCN)
+                
     def getWaitingUser(self,ecn,titles):
         users = []
         usr_str = ""
@@ -642,6 +655,14 @@ class Manager(QtWidgets.QWidget):
             key,value = stage.split("-")
             self.stageDict[key.strip()] = value.strip()
         #print(self.stageDict)
+        
+    def getStageDictPCN(self):
+        self.stageDictPCN = {}
+        stages = self.settings["PCN_Stage"].split(",")
+        for stage in stages:
+            key,value = stage.split("-")
+            self.stageDictPCN[key.strip()] = value.strip()
+        #print("stage dict pcn",self.stageDictPCN)
         
     def getNameList(self):
         command = "Select NAME from USER where STATUS ='Active'"

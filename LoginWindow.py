@@ -32,8 +32,10 @@ class LoginWindow(QtWidgets.QWidget):
         self.text_user = MyLineEdit(self)
         self.text_pass = MyLineEdit(self)
         self.button_login = QtWidgets.QPushButton("Login",self)
+        self.button_forgot = QtWidgets.QPushButton("Forgot User?")
 
         self.button_login.setFixedWidth(100)
+        self.button_forgot.setFixedWidth(100)
         textLayout = QtWidgets.QVBoxLayout(self)
         textLayout.setAlignment(QtCore.Qt.AlignCenter)
         buttonLayout = QtWidgets.QHBoxLayout(self)
@@ -50,6 +52,7 @@ class LoginWindow(QtWidgets.QWidget):
         textLayout.addWidget(label_pass)
         textLayout.addWidget(self.text_pass)
         buttonLayout.addWidget(self.button_login)
+        buttonLayout.addWidget(self.button_forgot)
         textLayout.addLayout(buttonLayout)
 
     def initAtt(self):
@@ -63,6 +66,7 @@ class LoginWindow(QtWidgets.QWidget):
         self.loginMenu()
 
         self.button_login.clicked.connect(self.checkUserPass)
+        self.button_forgot.clicked.connect(self.forgotInfo)
         self.text_pass.returnPressed.connect(self.checkUserPass)
 
         self.center()
@@ -77,6 +81,19 @@ class LoginWindow(QtWidgets.QWidget):
         self.parent.user = self.text_user.text()
         self.parent.loginDone()
         self.close()
+        
+    def forgotInfo(self):
+        ok = bool()
+        dialog, ok = QtWidgets.QInputDialog().getText(self, "Forgot User/Pass", "Email", QtWidgets.QLineEdit.Normal)
+        if ok and dialog!="":
+            print(dialog)
+            self.cursor.execute(f"Select * from USER where EMAIL='{dialog}'")
+            result = self.cursor.fetchone()
+            if result is not None:
+                print(result["USER_ID"],result["PASSWORD"])
+            else:
+                self.dispMsg(f"No account found with that email [{dialog}]. Try contacting your admin.")
+
 
     def checkUserPass(self):
         #print("initiating check")

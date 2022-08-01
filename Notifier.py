@@ -363,6 +363,7 @@ class Notifier(QtWidgets.QWidget):
         attach.append(os.path.join(program_location,doc_id+'.ecnx'))
         self.sendEmail(doc_id,receivers, message,"Awaiting Approval",attach)
         self.log_text.append(f"-Stage Release Email sent for {doc_id} to {receivers}")
+        
             
     def sendEmail(self,doc_id,receivers,message,subject,attach):
         if not isinstance(attach, list):
