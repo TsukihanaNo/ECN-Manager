@@ -208,7 +208,8 @@ class Notifier(QtWidgets.QWidget):
         
         if len(results)>0:
             for result in results:
-                self.generateECNX(result[0])
+                if result["DOC_ID"] is not None:
+                    self.generateECNX(result[0])
                 #self.generateHTML(result[0])
                 if result['TYPE']=="Rejected To Author":
                     self.rejectNotification(result[0],result['FROM_USER'],result['MSG'])
@@ -222,11 +223,14 @@ class Notifier(QtWidgets.QWidget):
                     self.commentNotification(result[0],result['FROM_USER'],result['MSG'])
                 elif result['TYPE']=="Canceling":
                     self.cancelNotification(result[0],result['MSG'])
+                elif result['TYPE']=="User Info":
+                    self.userInfoNotification(result['MSG'])
                 else:
                     self.releaseNotification(result[0])
-                self.removeECNX(result[0])
-                #self.removeHTML(result[0])
-                self.updateStatus(result[0])
+                if result["DOC_ID"] is not None:
+                    self.removeECNX(result[0])
+                    #self.removeHTML(result[0])
+                    self.updateStatus(result[0])
         else:
             self.log_text.append("-No notifications found to be sent")
         self.repopulateTable()
@@ -364,6 +368,19 @@ class Notifier(QtWidgets.QWidget):
         self.sendEmail(doc_id,receivers, message,"Awaiting Approval",attach)
         self.log_text.append(f"-Stage Release Email sent for {doc_id} to {receivers}")
         
+    def userInfoNotification(self,email):
+        self.cursor.execute(f"Select USER_ID, PASSWORD from USER where EMAIL='{email}'")
+        result = self.cursor.fetchone()
+        attach = []
+        receivers = [email]
+        message = f"Here is your log in information for the ECN Manager. User: {result[0]} | password: {result[1]}"
+        print(f"send email to {email} with user info: {result[0]} | {result[1]}")
+        self.sendEmail("", receivers, message, "User Info", attach)
+        self.log_text.append(f"- user info email has been sent to {receivers}")
+        self.cursor.execute(f"DELETE FROM NOTIFICATION WHERE MSG = '{email}' ")
+        self.db.commit()
+        self.log_text.append(f"- entry has been deleted from notifications table")
+        
             
     def sendEmail(self,doc_id,receivers,message,subject,attach):
         if not isinstance(attach, list):
@@ -373,7 +390,10 @@ class Notifier(QtWidgets.QWidget):
                 msg = MIMEMultipart()
                 msg['From'] = self.settings["From_Address"]
                 msg['To'] = ", ".join(receivers)
-                msg['Subject']=f"{subject} Notification for ECN: {doc_id}"
+                if subject=="User Info":
+                    msg['Subject']=f"{subject} Notification for ECN Manager"
+                else:
+                    msg['Subject']=f"{subject} Notification for ECN: {doc_id}"
                 
                 message +="\n\n"
                 html = self.generateHTML(doc_id)

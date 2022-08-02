@@ -91,6 +91,7 @@ class LoginWindow(QtWidgets.QWidget):
             result = self.cursor.fetchone()
             if result is not None:
                 print(result["USER_ID"],result["PASSWORD"])
+                self.addNotification("User Info", msg=dialog)
             else:
                 self.dispMsg(f"No account found with that email [{dialog}]. Try contacting your admin.")
 
@@ -132,6 +133,12 @@ class LoginWindow(QtWidgets.QWidget):
                 self.dispMsg("Incorrect password")
         else:
             self.dispMsg("User does not exist")
+            
+    def addNotification(self,notificationType,msg=""):
+        print('adding notification')
+        data = ("Not Sent",notificationType,msg)
+        self.cursor.execute("INSERT INTO NOTIFICATION(STATUS, TYPE, MSG) VALUES(?,?,?)",(data))
+        self.db.commit()
             
             
     def setUserOnline(self):
