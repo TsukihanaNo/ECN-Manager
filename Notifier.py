@@ -555,11 +555,14 @@ class Notifier(QtWidgets.QWidget):
             self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
             result = self.cursor.fetchone()
             date = result['COMP_DATE']
+            date = datetime.strptime(date,'%Y-%m-%d %H:%M:%S')
+            date = date.strftime("%b %d, %Y")
             web_desc = result['DOC_TEXT_6']
+            pcn_link = self.settings["PCN_Web_Href"]+doc_id+".pdf"
 
             #print('substituting text')
             
-            html = t.substitute(PCNID=doc_id,Date=date,WebDescription=web_desc)
+            html = t.substitute(PCNLink=pcn_link,PCNID=doc_id,Date=date,WebDescription=web_desc)
 
             return html
         

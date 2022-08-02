@@ -140,6 +140,8 @@ class SettingsWindow(QtWidgets.QWidget):
         self.label_PCN_export = QtWidgets.QLabel("PCN Export Loc:")
         self.line_PCN_export = QtWidgets.QLineEdit(self)
         self.button_pcn = QtWidgets.QPushButton("Browse")
+        self.label_PCN_web = QtWidgets.QLabel("PCN Web HRef Path:")
+        self.line_PCN_web = QtWidgets.QLineEdit()
         layout_pcn = QtWidgets.QHBoxLayout()
         layout_pcn.addWidget(self.line_PCN_export)
         layout_pcn.addWidget(self.button_pcn)
@@ -151,6 +153,8 @@ class SettingsWindow(QtWidgets.QWidget):
         layout_left.addLayout(layout_rs)
         layout_left.addWidget(self.label_PCN_export)
         layout_left.addLayout(layout_pcn)
+        layout_left.addWidget(self.label_PCN_web)
+        layout_left.addWidget(self.line_PCN_web)
         
         
         layout_left.addStretch()
@@ -253,6 +257,8 @@ class SettingsWindow(QtWidgets.QWidget):
             self.line_instant_client.setText(self.settings["Instant_Client"])
         if "PCN_Export_Loc" in self.settings.keys():
             self.line_PCN_export.setText(self.settings["PCN_Export_Loc"])
+        if "PCN_Web_Href" in self.settings.keys():
+            self.line_PCN_web.setText(self.settings["PCN_Web_Href"])
         if "Reminder_Days" in self.settings.keys():
             self.line_reminder_days.setText(self.settings["Reminder_Days"])
         if "Reminder_Stages" in self.settings.keys():
@@ -333,6 +339,7 @@ class SettingsWindow(QtWidgets.QWidget):
         data += "Stage : " + stages
         data += "PCN_Stage : " + pcn_stages
         data += "PCN_Export_Loc : " + self.line_PCN_export.text()+"\n"
+        data += "PCN_Web_Href : " + self.line_PCN_web.text()+"\n"
         try:
             f = open(initfile,'w')
             f.write(data)

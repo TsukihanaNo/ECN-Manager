@@ -47,7 +47,7 @@ class PCNTab(QtWidgets.QWidget):
         self.text_response = QtWidgets.QTextEdit(self)
         self.label_web = QtWidgets.QLabel("Web Description:")
         self.line_web = QtWidgets.QLineEdit()
-        self.line_web.setPlaceholderText("Format: sales name/model action date")
+        self.line_web.setPlaceholderText("Format: [sales name/model] [action] [date (MM DD, YYYY)]")
         self.line_web.setMaxLength(75)
         
         headerLayout.addWidget(self.label_id)
