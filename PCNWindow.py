@@ -3,6 +3,7 @@ from PCNTab import *
 from SignatureTab import *
 from NotificationTab import *
 from CommentTab import *
+from WebView import *
 from datetime import datetime
 from string import Template
 import os, sys
@@ -29,6 +30,12 @@ class PCNWindow(QtWidgets.QWidget):
         self.settings = parent.settings
         self.db = self.parent.db
         self.cursor = self.parent.cursor
+        if self.doc_id is None:
+            self.doc_data = None
+        else:
+            command = "Select * from DOCUMENT where DOC_ID = '"+self.doc_id +"'"
+            self.cursor.execute(command)
+            self.doc_data = self.cursor.fetchone()
         #self.getPCNCounter()
         #self.generatePCNID()
         self.initAtt()
@@ -65,6 +72,13 @@ class PCNWindow(QtWidgets.QWidget):
         self.button_save.setIcon(QtGui.QIcon(icon_loc))
         self.button_save.clicked.connect(self.save)
         
+        self.button_cancel = QtWidgets.QPushButton("Delete")
+        self.button_cancel.setToolTip("Delete")
+        icon_loc = icon = os.path.join(program_location,"icons","cancel.png")
+        self.button_cancel.setIcon(QtGui.QIcon(icon_loc))
+        self.button_cancel.setDisabled(True)
+        self.button_cancel.clicked.connect(self.cancel)
+        
         icon_loc = icon = os.path.join(program_location,"icons","release.png")
         self.button_release = QtWidgets.QPushButton("Release")
         self.button_release.setIcon(QtGui.QIcon(icon_loc))
@@ -73,6 +87,7 @@ class PCNWindow(QtWidgets.QWidget):
         icon_loc = icon = os.path.join(program_location,"icons","add_comment.png")
         self.button_comment = QtWidgets.QPushButton("Add Comment")
         self.button_comment.setIcon(QtGui.QIcon(icon_loc))
+        self.button_comment.clicked.connect(self.addUserComment)
         
         icon_loc = icon = os.path.join(program_location,"icons","approve.png")
         self.button_approve = QtWidgets.QPushButton("Approve")
@@ -87,14 +102,15 @@ class PCNWindow(QtWidgets.QWidget):
         icon_loc = icon = os.path.join(program_location,"icons","export.png")
         self.button_export = QtWidgets.QPushButton("Export")
         self.button_export.setIcon(QtGui.QIcon(icon_loc))
-        #self.button_export.clicked.connect(self.export)
+        self.button_export.clicked.connect(self.exportPDF)
         
         icon_loc = icon = os.path.join(program_location,"icons","export.png")
         self.button_preview = QtWidgets.QPushButton("Preview")
         self.button_preview.setIcon(QtGui.QIcon(icon_loc))
-        #self.button_preview.clicked.connect(self.export)
+        self.button_preview.clicked.connect(self.previewHTML)
         
         self.toolbar.addWidget(self.button_save)
+        self.toolbar.addWidget(self.button_cancel)
         self.toolbar.addWidget(self.button_release)
         self.toolbar.addWidget(self.button_comment)
         self.toolbar.addWidget(self.button_approve)
@@ -104,12 +120,12 @@ class PCNWindow(QtWidgets.QWidget):
         
         self.tab_widget = QtWidgets.QTabWidget(self)
         self.tab_pcn = PCNTab(self)
-        self.tab_comment = CommentTab(self)
+        self.tab_comments = CommentTab(self)
         self.tab_signature = SignatureTab(self,"PCN")
         self.tab_notification = NotificationTab(self)
         
         self.tab_widget.addTab(self.tab_pcn,"PCN")
-        self.tab_widget.addTab(self.tab_comment, "Comments")
+        self.tab_widget.addTab(self.tab_comments, "Comments")
         self.tab_widget.addTab(self.tab_signature,"Signatures")
         self.tab_widget.addTab(self.tab_notification,"Notifications")
         mainLayout.addWidget(self.toolbar)
@@ -148,18 +164,22 @@ class PCNWindow(QtWidgets.QWidget):
             
             #overview - text 1, products - text 2, replacement - text 3, reference - text 4, response - text 5
             if save_type == "insert":
-                data = (doc_id,doc_type,author,status,title,overview,reason,change,products,replacement,reference,response,modifieddate)
-                self.cursor.execute("INSERT INTO DOCUMENT(DOC_ID,DOC_TYPE,AUTHOR,STATUS,DOC_TITLE,DOC_TEXT_1,DOC_REASON,DOC_SUMMARY,DOC_TEXT_2,DOC_TEXT_3,DOC_TEXT_4,DOC_TEXT_5,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",(data))
                 if self.checkSigNotiDuplicate():
                     self.dispMsg("duplicates found in signature and notification tab")
                 else:
+                    data = (doc_id,doc_type,author,status,title,overview,reason,change,products,replacement,reference,response,modifieddate)
+                    self.cursor.execute("INSERT INTO DOCUMENT(DOC_ID,DOC_TYPE,AUTHOR,STATUS,DOC_TITLE,DOC_TEXT_1,DOC_REASON,DOC_SUMMARY,DOC_TEXT_2,DOC_TEXT_3,DOC_TEXT_4,DOC_TEXT_5,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",(data))
                     self.AddSignatures()
-                self.dispMsg("PCN Saved!")
+                    self.dispMsg("PCN Saved!")
             else:
-                data = (title,overview,reason,change,products,replacement,reference,response,modifieddate,doc_id)
-                self.cursor.execute("UPDATE DOCUMENT SET DOC_TITLE = ?, DOC_TEXT_1 = ?, DOC_REASON = ?, DOC_SUMMARY = ?, DOC_TEXT_2 = ?, DOC_TEXT_3 = ?, DOC_TEXT_4 = ?, DOC_TEXT_5 = ?, LAST_MODIFIED = ? WHERE DOC_ID = ?",(data))
-                if not msg:
-                    self.dispMsg("PCN Updated!")
+                if self.checkSigNotiDuplicate():
+                    self.dispMsg("duplicates found in signature and notification tab")
+                else:
+                    data = (title,overview,reason,change,products,replacement,reference,response,modifieddate,doc_id)
+                    self.cursor.execute("UPDATE DOCUMENT SET DOC_TITLE = ?, DOC_TEXT_1 = ?, DOC_REASON = ?, DOC_SUMMARY = ?, DOC_TEXT_2 = ?, DOC_TEXT_3 = ?, DOC_TEXT_4 = ?, DOC_TEXT_5 = ?, LAST_MODIFIED = ? WHERE DOC_ID = ?",(data))
+                    self.AddSignatures()
+                    if not msg:
+                        self.dispMsg("PCN Updated!")
             self.db.commit()
             self.parent.repopulateTable()
         except Exception as e:
@@ -180,6 +200,11 @@ class PCNWindow(QtWidgets.QWidget):
         self.tab_pcn.text_replacement.setHtml(result["DOC_TEXT_3"])
         self.tab_pcn.text_reference.setHtml(result["DOC_TEXT_4"])
         self.tab_pcn.text_response.setHtml(result["DOC_TEXT_5"])
+        
+        self.tab_signature.repopulateTable()
+        self.tab_notification.repopulateTable()
+        self.tab_comments.loadComments()
+        self.setCommentCount()
     
     def generatePCNID(self):
         month,counter = self.getPCNCounter()
@@ -196,6 +221,71 @@ class PCNWindow(QtWidgets.QWidget):
             self.doc_id = 'PCN'+date_time[2:]+"-01"
         #print(self.doc_id)
         self.tab_pcn.line_id.setText(self.doc_id)
+        
+    def cancel(self):
+        if self.tab_ecn.line_status.text()=="Draft":
+            self.deleteECN(self.doc_id)
+            self.close()
+        else:
+            self.cancelECN(self.doc_id)
+        
+    def addUserComment(self):
+        comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Comment", "")
+        if ok and comment!="":
+            self.addComment(self.doc_id, comment,"User Comment")
+            self.addNotification(self.doc_id, "User Comment",from_user=self.parent.user_info['user'], msg=comment)
+            #self.dispMsg("Comment has been added!")
+
+    def addComment(self,doc_id,comment,commentType):
+        #COMMENTS(ECN_ID TEXT, NAME TEXT, USER TEXT, COMM_DATE DATE, COMMENT TEXT
+        data = (doc_id, self.parent.user_info['user'],datetime.now().strftime('%Y-%m-%d %H:%M:%S'),comment,commentType)
+        self.cursor.execute("INSERT INTO COMMENTS(DOC_ID, USER, COMM_DATE, COMMENT,TYPE) VALUES(?,?,?,?,?)",(data))
+        self.db.commit()
+        # self.tab_comments.enterText.clear()
+        #self.tab_comments.mainText.clear()
+        self.tab_comments.addComment(data[1], data[2], data[4], data[3])
+        self.setCommentCount()
+        #self.tab_widget.setCurrentIndex(3)
+        
+    def setCommentCount(self):
+        self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where DOC_ID='{self.doc_id}'")
+        result = self.cursor.fetchone()
+        self.tab_widget.setTabText(1, "Comments ("+str(result[0])+")")
+    
+    def existNotification(self,doc_id):
+        self.cursor.execute(f"Select * from NOTIFICATION where DOC_ID='{doc_id}' and STATUS='Not Sent'")
+        result = self.cursor.fetchone()
+        if result is not None:
+            return True
+        else:
+            return False
+        
+    def addNotification(self,doc_id,notificationType,from_user=None,userslist=None,msg=""):
+        print('adding notification')
+        if userslist is not None:
+            if type(userslist)==type([]):
+                users = ""
+                count = 0
+                for user in usersList:
+                    users +=","
+                    if count<len(usersList)-1:
+                        users +=","
+                    count+=1
+            else:
+                users = userslist
+        else:
+            users = ""
+        if from_user is None:
+            from_user = ""
+                
+        if self.existNotification(doc_id) and notificationType!="User Comment":
+            data = (notificationType,from_user,users,msg, doc_id)
+            self.cursor.execute("UPDATE NOTIFICATION SET TYPE = ?, FROM_USER = ?, USERS = ?, MSG = ? WHERE DOC_ID = ?",(data))
+        else:
+            data = (doc_id,"Not Sent",notificationType,from_user, users, msg)
+            self.cursor.execute("INSERT INTO NOTIFICATION(DOC_ID, STATUS, TYPE,FROM_USER, USERS, MSG) VALUES(?,?,?,?,?,?)",(data))
+        self.db.commit()
+        
         
     def getPCNCounter(self):
         self.cursor.execute("select * from PCNCOUNTER")
@@ -237,6 +327,30 @@ class PCNWindow(QtWidgets.QWidget):
         except Exception as e:
             self.dispMsg(f"Error trying to set PCN stage. Error: {e}")
             
+    def movePCNStage(self):
+        curStage = self.getPCNStage()
+        titles = self.getTitlesForStage()
+        titles = titles[str(curStage)]
+        #print("here are the titles",titles)
+        move = True
+        for title in titles:
+            self.cursor.execute(f"Select SIGNED_DATE from SIGNATURE where DOC_ID = '{self.doc_id}' and JOB_TITLE='{title}' and TYPE='Signing'")
+            results = self.cursor.fetchall()
+            for result in results:
+                #print(result['SIGNED_DATE'])
+                if result['SIGNED_DATE'] is None:
+                    move = False
+                    #print("not moving to next stage")
+                    break
+        if move:
+            nextStages = self.getNextStage()
+            if len(nextStages)>0:
+                #print("moving to stage:", nextStages[0])
+                self.setPCNStage(nextStages[0])
+                self.addNotification(self.doc_id, "Stage Moved")
+            # else:
+            #     print("this is the last stage")
+            
     def getNextStage(self):
         self.cursor.execute(f"Select JOB_TITLE from SIGNATURE where DOC_ID='{self.doc_id}' and SIGNED_DATE is NULL and TYPE='Signing'")
         results = self.cursor.fetchall()
@@ -247,6 +361,16 @@ class PCNWindow(QtWidgets.QWidget):
         stage = sorted(stage)
         #print(stage)
         return stage
+    
+    def getTitlesForStage(self):
+        titles = {}
+        for key, value in self.parent.stageDictPCN.items():
+            if value not in titles:
+                titles[value] = [key]
+            else:
+                titles[value].append(key)
+        #print("titles generated", titles)
+        return titles
         
     def release(self):
         try:
@@ -264,9 +388,9 @@ class PCNWindow(QtWidgets.QWidget):
             if currentStage==0:
                 self.setPCNStage(self.getNextStage()[0])
                 self.addNotification(self.doc_id, "Stage Moved")
-            self.tab_ecn.line_status.setText("Out For Approval")
+            self.tab_pcn.line_status.setText("Out For Approval")
             self.parent.repopulateTable()
-            self.dispMsg("ECN has been saved and sent out for signing!")
+            self.dispMsg("PCN has been saved and sent out for signing!")
             #self.addNotification(self.ecn_id, "Released")
             self.button_release.setDisabled(True)
             self.button_cancel.setText("Cancel")
@@ -287,7 +411,7 @@ class PCNWindow(QtWidgets.QWidget):
             self.checkComplete()
             self.db.commit()
             print("moving pcn stage check")
-            self.moveECNStage()
+            self.movePCNStage()
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data insertion (approve)!\n Error: {e}")
@@ -302,10 +426,10 @@ class PCNWindow(QtWidgets.QWidget):
                 self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?, STATUS = ? WHERE DOC_ID = ?",(data))
                 self.cursor.execute(f"UPDATE SIGNATURE SET SIGNED_DATE=Null where DOC_ID='{self.doc_id}'")
                 self.db.commit()
-                self.setECNStage(0)
+                self.setPCNStage(0)
                 self.parent.repopulateTable()
                 self.dispMsg("Rejection successful. Setting PCN stage to 0 and all signatures have been removed.")
-                self.tab_ecn.line_status.setText("Rejected")
+                self.tab_pcn.line_status.setText("Rejected")
                 self.addNotification(self.doc_id, "Rejected To Author",from_user=self.parent.user_info['user'],msg=comment)
                 self.button_reject.setDisabled(True)
                 self.button_approve.setDisabled(True)
@@ -418,7 +542,7 @@ class PCNWindow(QtWidgets.QWidget):
             self.dispMsg("Error: Duplicate user found in Signature and Notifications. Please remove the duplicate before trying again.")
         else:
             self.AddSignatures()
-            self.dispMsg("ECN has been updated!")
+            self.dispMsg("PCN has been updated!")
             
     def checkSigNotiDuplicate(self):
         sigs = []
@@ -431,31 +555,47 @@ class PCNWindow(QtWidgets.QWidget):
             return False
         else:
             return True
+        
+    def previewHTML(self):
+        html = self.generateHTML()
+        self.webview = WebView()
+        self.webview.setDocID(self.doc_id)
+        self.webview.loadHtml(html)
             
     def generateHTML(self):
         template_loc = os.path.join(self.parent.programLoc,'templates','pcn_template.html')
         with open(template_loc) as f:
             lines = f.read() 
             f.close()
-
             t = Template(lines)
-            id = self.doc_id
+            
             self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{self.doc_id}'")
             result = self.cursor.fetchone()
-            title = result['DOC_TITLE']
-            author = result['AUTHOR']
-            dept = result['DEPARTMENT']
-            requestor = result['REQUESTOR']
+            overview = result['DOC_TEXT_1']
+            products = result['DOC_TEXT_2']
+            change = result['DOC_SUMMARY']
             reason = result['DOC_REASON']
-            summary = result['DOC_SUMMARY']
-            signature = "<tr>"
-            attachment ="<tr>"
-            parts = ""
+            replacement = result['DOC_TEXT_3']
+            reference = result['DOC_TEXT_4']
+            response = result['DOC_TEXT_5']
+
             #print('substituting text')
             
-            html = t.substitute(ECNID=id,ECNTitle=title,Requestor=requestor,Department=dept,Author=author, Reason=reason,Summary=summary,Parts=parts,Attachment=attachment,Signature=signature)
+            html = t.substitute(PCNID=self.doc_id,Overview=overview,Products=products,ChangeDescription=change,Reason=reason,Replacement=replacement,Reference=reference,Response=response)
 
             return html
+        
+    def exportPDF(self):
+        try:
+            foldername = QtWidgets.QFileDialog().getExistingDirectory()
+            if foldername:
+                export = self.generateHTML()
+                doc_loc = foldername+'\\'+self.doc_id+'.pdf'
+                self.webview = WebView()
+                self.webview.loadAndPrint(export,doc_loc)
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error Occured during pcn export.\n Error: {e}")
         
     def exportHTML(self):
         try:
@@ -466,8 +606,6 @@ class PCNWindow(QtWidgets.QWidget):
                 with open(doc_loc, 'w') as f:
                     f.write(export)
                     f.close()
-                # webpage = QtWebEngineCore.QWebEnginePage()
-                # webpage.setHtml(export)
                 
                 self.dispMsg("Export Completed!")
         except Exception as e:

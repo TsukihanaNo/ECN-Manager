@@ -368,30 +368,33 @@ class Notifier(QtWidgets.QWidget):
     def sendEmail(self,doc_id,receivers,message,subject,attach):
         if not isinstance(attach, list):
             attach = [attach]
-        with smtplib.SMTP(self.settings["SMTP"],self.settings["Port"]) as server:
-            msg = MIMEMultipart()
-            msg['From'] = self.settings["From_Address"]
-            msg['To'] = ", ".join(receivers)
-            msg['Subject']=f"{subject} Notification for ECN: {doc_id}"
-            
-            message +="\n\n"
-            html = self.generateHTML(doc_id)
-            message+=html
-            
-            msg.attach(MIMEText(message,'html'))
-            #ecnx = os.path.join(program_location,ecn_id+'.ecnx')
-            #filename = f'{ecn_id}.ecnx'
-            for file in attach:
-                attach_file = open(file,'rb')
-                payload = MIMEBase('application', 'octet-stream')
-                payload.set_payload(attach_file.read())
-                encoders.encode_base64(payload)
-                #print(ecnx, filename)
-                payload.add_header('Content-Disposition','attachment',filename = os.path.basename(file))
-                msg.attach(payload)
-            server.sendmail(self.settings["From_Address"], receivers, msg.as_string())
-            #print(f"Successfully sent email to {receivers}")
-            
+        try:
+            with smtplib.SMTP(self.settings["SMTP"],self.settings["Port"]) as server:
+                msg = MIMEMultipart()
+                msg['From'] = self.settings["From_Address"]
+                msg['To'] = ", ".join(receivers)
+                msg['Subject']=f"{subject} Notification for ECN: {doc_id}"
+                
+                message +="\n\n"
+                html = self.generateHTML(doc_id)
+                message+=html
+                
+                msg.attach(MIMEText(message,'html'))
+                #ecnx = os.path.join(program_location,ecn_id+'.ecnx')
+                #filename = f'{ecn_id}.ecnx'
+                for file in attach:
+                    attach_file = open(file,'rb')
+                    payload = MIMEBase('application', 'octet-stream')
+                    payload.set_payload(attach_file.read())
+                    encoders.encode_base64(payload)
+                    #print(ecnx, filename)
+                    payload.add_header('Content-Disposition','attachment',filename = os.path.basename(file))
+                    msg.attach(payload)
+                server.sendmail(self.settings["From_Address"], receivers, msg.as_string())
+                #print(f"Successfully sent email to {receivers}")
+        except Exception as e:
+            print(e)
+                
     def generateECNX(self,doc_id):
         self.log_text.append("-generating ecnx file")
         ecnx = os.path.join(program_location,doc_id+'.ecnx')

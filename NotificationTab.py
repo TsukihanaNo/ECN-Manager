@@ -73,7 +73,7 @@ class NotificationTab(QtWidgets.QWidget):
 
     def onRowSelect(self):
         if self.doc_type=="ECN":
-            if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() and self.parent.tab_ecn.line_status.text()!="Completed":
+            if self.parent.parent.user_info['user']==self.parent.doc_data["AUTHOR"] and self.parent.doc_data["STATUS"]!="Completed":
                 self.button_remove.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
                 self.button_edit.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
         

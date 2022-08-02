@@ -403,7 +403,10 @@ class Manager(QtWidgets.QWidget):
             counter = data_size
         for x in range(counter):
             if self.table_data[x]['STAGE']!=0 and self.table_data[x]['STAGE'] is not None:
-                users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
+                if self.table_data[x]['DOC_ID'][:3]=="PCN":
+                    users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDictPCN[str(self.table_data[x]['STAGE'])])
+                else:
+                    users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
             else:
                 users = ""
             if table_type!="Completed":
@@ -445,7 +448,10 @@ class Manager(QtWidgets.QWidget):
             for x in range(counter):
                 x = x + offset
                 if self.table_data[x]['STAGE']!=0 and self.table_data[x]['STAGE'] is not None:
-                    users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
+                    if self.table_data[x]['DOC_ID'][:3]=="PCN":
+                        users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDictPCN[str(self.table_data[x]['STAGE'])])
+                    else:
+                        users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
                 else:
                     users = ""
                 if table_type!="Completed":
@@ -658,10 +664,13 @@ class Manager(QtWidgets.QWidget):
         
     def getStageDictPCN(self):
         self.stageDictPCN = {}
-        stages = self.settings["PCN_Stage"].split(",")
-        for stage in stages:
-            key,value = stage.split("-")
-            self.stageDictPCN[key.strip()] = value.strip()
+        if "PCN_Stage" not in self.settings.keys():
+            self.dispMsg("PCN_Stage not defined, please update your settings.")
+        else:
+            stages = self.settings["PCN_Stage"].split(",")
+            for stage in stages:
+                key,value = stage.split("-")
+                self.stageDictPCN[key.strip()] = value.strip()
         #print("stage dict pcn",self.stageDictPCN)
         
     def getNameList(self):

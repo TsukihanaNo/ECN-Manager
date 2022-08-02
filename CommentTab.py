@@ -59,7 +59,7 @@ class CommentTab(QtWidgets.QWidget):
             comment_type = ""
             if "Reject" in result["TYPE"]:
                 comment_type="Reject"
-            if self.parent.tab_ecn.line_author.text() == result['USER']:
+            if self.parent.doc_data["AUTHOR"] == result['USER']:
                 self.model.add_message(USER_ME,f"{self.user_name[result['USER']]} ({result['USER']})  -  {result['COMM_DATE']}  [{result['TYPE']}]:",result['COMMENT'],comment_type)
             else:
                 self.model.add_message(USER_THEM,f"{self.user_name[result['USER']]} ({result['USER']})  -  {result['COMM_DATE']}  [{result['TYPE']}]:",result['COMMENT'],comment_type)
@@ -68,7 +68,7 @@ class CommentTab(QtWidgets.QWidget):
         comment_type = ""
         if "Reject" in comm_type:
             comment_type="Reject"
-        if self.parent.tab_ecn.line_author.text() == user:
+        if self.parent.doc_data["AUTHOR"] == user:
             self.model.add_message(USER_ME,f"{self.user_name[user]} ({user})  -  {comm_date}  [{comm_type}]:",comment,comment_type)
         else:
             self.model.add_message(USER_THEM,f"{self.user_name[user]} ({user})  -  {comm_date}  [{comm_type}]:",comment,comment_type)
