@@ -67,37 +67,6 @@ class PCNWindow(QtWidgets.QWidget):
     def initUI(self):
         mainLayout = QtWidgets.QVBoxLayout()
         self.toolbar = QtWidgets.QToolBar()
-        icon_loc = icon = os.path.join(program_location,"icons","save.png")
-        self.button_save = QtWidgets.QPushButton("Save")
-        self.button_save.setIcon(QtGui.QIcon(icon_loc))
-        self.button_save.clicked.connect(self.save)
-        
-        self.button_cancel = QtWidgets.QPushButton("Delete")
-        self.button_cancel.setToolTip("Delete")
-        icon_loc = icon = os.path.join(program_location,"icons","cancel.png")
-        self.button_cancel.setIcon(QtGui.QIcon(icon_loc))
-        self.button_cancel.setDisabled(True)
-        self.button_cancel.clicked.connect(self.cancel)
-        
-        icon_loc = icon = os.path.join(program_location,"icons","release.png")
-        self.button_release = QtWidgets.QPushButton("Release")
-        self.button_release.setIcon(QtGui.QIcon(icon_loc))
-        self.button_release.clicked.connect(self.release)
-        
-        icon_loc = icon = os.path.join(program_location,"icons","add_comment.png")
-        self.button_comment = QtWidgets.QPushButton("Add Comment")
-        self.button_comment.setIcon(QtGui.QIcon(icon_loc))
-        self.button_comment.clicked.connect(self.addUserComment)
-        
-        icon_loc = icon = os.path.join(program_location,"icons","approve.png")
-        self.button_approve = QtWidgets.QPushButton("Approve")
-        self.button_approve.setIcon(QtGui.QIcon(icon_loc))
-        self.button_approve.clicked.connect(self.approve)
-        
-        icon_loc = icon = os.path.join(program_location,"icons","reject.png")
-        self.button_reject = QtWidgets.QPushButton("Reject")
-        self.button_reject.setIcon(QtGui.QIcon(icon_loc))
-        self.button_reject.clicked.connect(self.reject)
         
         icon_loc = icon = os.path.join(program_location,"icons","export.png")
         self.button_export = QtWidgets.QPushButton("Export")
@@ -109,12 +78,46 @@ class PCNWindow(QtWidgets.QWidget):
         self.button_preview.setIcon(QtGui.QIcon(icon_loc))
         self.button_preview.clicked.connect(self.previewHTML)
         
-        self.toolbar.addWidget(self.button_save)
-        self.toolbar.addWidget(self.button_cancel)
-        self.toolbar.addWidget(self.button_release)
-        self.toolbar.addWidget(self.button_comment)
-        self.toolbar.addWidget(self.button_approve)
-        self.toolbar.addWidget(self.button_reject)
+        if self.doc_data["STATUS"]!="Completed":
+            icon_loc = icon = os.path.join(program_location,"icons","save.png")
+            self.button_save = QtWidgets.QPushButton("Save")
+            self.button_save.setIcon(QtGui.QIcon(icon_loc))
+            self.button_save.clicked.connect(self.save)
+            
+            icon_loc = icon = os.path.join(program_location,"icons","add_comment.png")
+            self.button_comment = QtWidgets.QPushButton("Add Comment")
+            self.button_comment.setIcon(QtGui.QIcon(icon_loc))
+            self.button_comment.clicked.connect(self.addUserComment)
+            self.toolbar.addWidget(self.button_save)
+            if self.parent.user_info["user"]==self.doc_data["AUTHOR"]:
+                self.button_cancel = QtWidgets.QPushButton("Delete")
+                icon_loc = icon = os.path.join(program_location,"icons","cancel.png")
+                self.button_cancel.setIcon(QtGui.QIcon(icon_loc))
+                self.button_cancel.setEnabled(self.doc_data["STATUS"]=="Draft" or self.doc_data["STATUS"]=="Rejected")
+                self.button_cancel.clicked.connect(self.cancel)
+                
+                icon_loc = icon = os.path.join(program_location,"icons","release.png")
+                self.button_release = QtWidgets.QPushButton("Release")
+                self.button_release.setIcon(QtGui.QIcon(icon_loc))
+                self.button_release.clicked.connect(self.release)
+                self.button_release.setDisabled(True)
+                if self.doc_data["STATUS"]=="Rejected":
+                    self.button_cancel.setText("Cancel")
+                self.toolbar.addWidget(self.button_cancel)
+                self.toolbar.addWidget(self.button_release)
+            if self.parent.user_info["user"]!=self.doc_data["AUTHOR"] and self.doc_data["STATUS"]=="Out For Approval":
+                icon_loc = icon = os.path.join(program_location,"icons","approve.png")
+                self.button_approve = QtWidgets.QPushButton("Approve")
+                self.button_approve.setIcon(QtGui.QIcon(icon_loc))
+                self.button_approve.clicked.connect(self.approve)
+                
+                icon_loc = icon = os.path.join(program_location,"icons","reject.png")
+                self.button_reject = QtWidgets.QPushButton("Reject")
+                self.button_reject.setIcon(QtGui.QIcon(icon_loc))
+                self.button_reject.clicked.connect(self.reject)
+                self.toolbar.addWidget(self.button_approve)
+                self.toolbar.addWidget(self.button_reject)
+            self.toolbar.addWidget(self.button_comment)
         self.toolbar.addWidget(self.button_export)
         self.toolbar.addWidget(self.button_preview)
         
@@ -204,7 +207,12 @@ class PCNWindow(QtWidgets.QWidget):
         self.tab_pcn.line_web.setText(result["DOC_TEXT_6"])
         
         self.tab_signature.repopulateTable()
+        if self.doc_data["AUTHOR"]==self.parent.user_info["user"] and self.doc_data["STATUS"]!="Out For Approval" and self.doc_data["STATUS"]!="Completed":
+            self.button_release.setEnabled(self.tab_signature.rowCount()>0)
         self.tab_notification.repopulateTable()
+        if self.doc_data["STATUS"]=="Completed":
+            self.tab_signature.button_add.setDisabled(True)
+            self.tab_notification.button_add.setDisabled(True)
         self.tab_comments.loadComments()
         self.setCommentCount()
     
@@ -225,11 +233,40 @@ class PCNWindow(QtWidgets.QWidget):
         self.tab_pcn.line_id.setText(self.doc_id)
         
     def cancel(self):
-        if self.tab_ecn.line_status.text()=="Draft":
-            self.deleteECN(self.doc_id)
+        if self.tab_pcn.line_status.text()=="Draft":
+            self.deletePCN(self.doc_id)
             self.close()
         else:
-            self.cancelECN(self.doc_id)
+            self.cancelPCN(self.doc_id)
+            
+    def deletePCN(self,doc_id):
+        try:
+            self.cursor.execute(f"DELETE FROM DOCUMENT where DOC_ID='{doc_id}'")
+            self.cursor.execute(f"DELETE FROM COMMENTS where DOC_ID='{doc_id}'")
+            self.cursor.execute(f"DELETE FROM SIGNATURE where DOC_ID='{doc_id}'")
+            self.db.commit()
+            self.dispMsg("PCN has been deleted")
+            self.parent.repopulateTable()
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Problems occured trying to delete PCN.\n Error: {e}")
+            
+    def cancelECN(self,doc_id):
+        comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Comment", "")
+        if ok and comment!="":
+            try:
+                self.addComment(self.doc_id, comment,"Canceling")
+                self.cursor.execute(f"UPDATE DOCUMENT SET STATUS='Canceled' where DOC_ID='{doc_id}'")
+                self.db.commit()
+                self.dispMsg("PCN has been canceled")
+                self.tab_pcn.line_status.setText("Canceled")
+                self.parent.repopulateTable()
+                self.addNotification(self.doc_id, "Canceling",from_user=self.parent.user_info['user'],msg=comment)
+            except Exception as e:
+                print(e)
+                self.dispMsg(f"Problems occured trying to cancel PCN.\n Error:{e}")
+        if ok and comment=="":
+            self.dispMsg("Rejection failed: comment field was left blank.")
         
     def addUserComment(self):
         comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Comment", "")
@@ -534,6 +571,8 @@ class PCNWindow(QtWidgets.QWidget):
                     self.cursor.execute(f"DELETE FROM SIGNATURE WHERE DOC_ID = '{self.doc_id}' and USER_ID='{element}'")
             
             self.db.commit()
+            if self.doc_data["AUTHOR"]==self.parent.user_info["user"]:
+                self.button_release.setEnabled(self.tab_signature.rowCount()>0)
             #print('data updated')
         except Exception as e:
             print(e)
