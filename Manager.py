@@ -28,6 +28,8 @@ if getattr(sys, 'frozen', False):
 else:
     # unfrozen
     program_location = os.path.dirname(os.path.realpath(__file__))
+    
+os.environ['QTWEBENGINE_DISABLE_SANDBOX'] = "1"
 
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
 initfile = os.path.join(program_location, "setting.ini")
