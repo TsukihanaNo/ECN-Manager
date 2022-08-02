@@ -80,13 +80,12 @@ class SignatureTab(QtWidgets.QWidget):
         self.setLayout(mainlayout)       
 
     def onRowSelect(self):
-        if self.doc_type=="ECN":
-            if self.parent.parent.user_permissions["reject_signer"]=="y" and self.parent.tab_ecn.line_status.text()!="Completed":
-                row = self.signatures.currentIndex().row()
-                self.button_revoke.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()) and self.model.get_signed_date(row) is not None)
-            if self.parent.parent.user_info['user']==self.parent.tab_ecn.line_author.text() and self.parent.tab_ecn.line_status.text()!="Completed":
-                self.button_remove.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
-                self.button_edit.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
+        if self.parent.parent.user_permissions["reject_signer"]=="y" and self.parent.doc_data["STATUS"]!="Completed":
+            row = self.signatures.currentIndex().row()
+            self.button_revoke.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()) and self.model.get_signed_date(row) is not None)
+        if self.parent.parent.user_info['user']==self.parent.doc_data["AUTHOR"] and self.parent.doc_data["STATUS"]!="Completed":
+            self.button_remove.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
+            self.button_edit.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
         
     def addRow(self):
         self.signature = SignaturePanel(self)

@@ -31,7 +31,7 @@ class PCNWindow(QtWidgets.QWidget):
         self.db = self.parent.db
         self.cursor = self.parent.cursor
         if self.doc_id is None:
-            self.doc_data = None
+            self.doc_data = {"AUTHOR":self.parent.user_info["user"],"STATUS":"Draft"}
         else:
             command = "Select * from DOCUMENT where DOC_ID = '"+self.doc_id +"'"
             self.cursor.execute(command)
@@ -121,8 +121,8 @@ class PCNWindow(QtWidgets.QWidget):
         self.tab_widget = QtWidgets.QTabWidget(self)
         self.tab_pcn = PCNTab(self)
         self.tab_comments = CommentTab(self)
-        self.tab_signature = SignatureTab(self,"PCN")
-        self.tab_notification = NotificationTab(self)
+        self.tab_signature = SignatureTab(self,"PCN",self.doc_data)
+        self.tab_notification = NotificationTab(self,self.doc_data)
         
         self.tab_widget.addTab(self.tab_pcn,"PCN")
         self.tab_widget.addTab(self.tab_comments, "Comments")
@@ -159,6 +159,7 @@ class PCNWindow(QtWidgets.QWidget):
             replacement = self.tab_pcn.text_replacement.toHtml()
             reference = self.tab_pcn.text_reference.toHtml()
             response = self.tab_pcn.text_response.toHtml()
+            web_desc = self.tab_pcn.line_web.text()
             modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             #dept = self.tab_ecn.combo_dept.currentText()
             
@@ -167,16 +168,16 @@ class PCNWindow(QtWidgets.QWidget):
                 if self.checkSigNotiDuplicate():
                     self.dispMsg("duplicates found in signature and notification tab")
                 else:
-                    data = (doc_id,doc_type,author,status,title,overview,reason,change,products,replacement,reference,response,modifieddate)
-                    self.cursor.execute("INSERT INTO DOCUMENT(DOC_ID,DOC_TYPE,AUTHOR,STATUS,DOC_TITLE,DOC_TEXT_1,DOC_REASON,DOC_SUMMARY,DOC_TEXT_2,DOC_TEXT_3,DOC_TEXT_4,DOC_TEXT_5,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",(data))
+                    data = (doc_id,doc_type,author,status,title,overview,reason,change,products,replacement,reference,response,web_desc,modifieddate)
+                    self.cursor.execute("INSERT INTO DOCUMENT(DOC_ID,DOC_TYPE,AUTHOR,STATUS,DOC_TITLE,DOC_TEXT_1,DOC_REASON,DOC_SUMMARY,DOC_TEXT_2,DOC_TEXT_3,DOC_TEXT_4,DOC_TEXT_5,DOC_TEXT_6,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",(data))
                     self.AddSignatures()
                     self.dispMsg("PCN Saved!")
             else:
                 if self.checkSigNotiDuplicate():
                     self.dispMsg("duplicates found in signature and notification tab")
                 else:
-                    data = (title,overview,reason,change,products,replacement,reference,response,modifieddate,doc_id)
-                    self.cursor.execute("UPDATE DOCUMENT SET DOC_TITLE = ?, DOC_TEXT_1 = ?, DOC_REASON = ?, DOC_SUMMARY = ?, DOC_TEXT_2 = ?, DOC_TEXT_3 = ?, DOC_TEXT_4 = ?, DOC_TEXT_5 = ?, LAST_MODIFIED = ? WHERE DOC_ID = ?",(data))
+                    data = (title,overview,reason,change,products,replacement,reference,response,web_desc,modifieddate,doc_id)
+                    self.cursor.execute("UPDATE DOCUMENT SET DOC_TITLE = ?, DOC_TEXT_1 = ?, DOC_REASON = ?, DOC_SUMMARY = ?, DOC_TEXT_2 = ?, DOC_TEXT_3 = ?, DOC_TEXT_4 = ?, DOC_TEXT_5 = ?, DOC_TEXT_6 = ?, LAST_MODIFIED = ? WHERE DOC_ID = ?",(data))
                     self.AddSignatures()
                     if not msg:
                         self.dispMsg("PCN Updated!")
@@ -200,6 +201,7 @@ class PCNWindow(QtWidgets.QWidget):
         self.tab_pcn.text_replacement.setHtml(result["DOC_TEXT_3"])
         self.tab_pcn.text_reference.setHtml(result["DOC_TEXT_4"])
         self.tab_pcn.text_response.setHtml(result["DOC_TEXT_5"])
+        self.tab_pcn.line_web.setText(result["DOC_TEXT_6"])
         
         self.tab_signature.repopulateTable()
         self.tab_notification.repopulateTable()
@@ -555,6 +557,17 @@ class PCNWindow(QtWidgets.QWidget):
             return False
         else:
             return True
+    
+    def getElapsedDays(self,day1,day2):
+        #today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        day1 = datetime.strptime(day1,'%Y-%m-%d %H:%M:%S')
+        day2 = datetime.strptime(day2,'%Y-%m-%d %H:%M:%S')
+        if day2>day1:
+            elapsed = day2 - day1
+        else:
+            elapsed = day1 - day2
+        #print(elapsed.days)
+        return elapsed.days + round(elapsed.seconds/86400,2)
         
     def previewHTML(self):
         html = self.generateHTML()

@@ -38,7 +38,7 @@ class ECNWindow(QtWidgets.QWidget):
         #self.typeindex = {'New Part':0, 'BOM Update':1, 'Firmware Update':2, 'Configurator Update' : 3,'Product EOL':4}
         self.initAtt()
         if self.doc_id == None:
-            self.doc_data = None
+            self.doc_data = {"AUTHOR":self.parent.user_info["user"],"STATUS":"Draft"}
             self.initReqUI()
             self.generateECNID()
         else:

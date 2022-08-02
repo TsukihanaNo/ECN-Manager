@@ -92,6 +92,7 @@ class LoginWindow(QtWidgets.QWidget):
             if result is not None:
                 print(result["USER_ID"],result["PASSWORD"])
                 self.addNotification("User Info", msg=dialog)
+                self.dispMsg("Email has been sent with your User information.")
             else:
                 self.dispMsg(f"No account found with that email [{dialog}]. Try contacting your admin.")
 

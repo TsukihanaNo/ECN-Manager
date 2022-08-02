@@ -16,12 +16,13 @@ else:
 initfile = os.path.join(program_location, "setting.ini")
 
 class WebView(QtWidgets.QWidget):
-    def __init__(self,parent=None):
+    def __init__(self,parent=None, msg_disable=False):
         super(WebView,self).__init__()
         self.windowWidth =  900
         self.windowHeight = 600
         self.filepath = None
         self.doc_id = None
+        self.msg_disable = msg_disable
         self.initAtt()
         self.initUI()
         #self.show()
@@ -85,7 +86,8 @@ class WebView(QtWidgets.QWidget):
         
     def printPDF(self):
         self.web.printToPdf(self.filepath)
-        self.web.pdfPrintingFinished.connect(self.printComplete) 
+        if not self.msg_disable:
+            self.web.pdfPrintingFinished.connect(self.printComplete) 
         
     def printComplete(self):
         self.dispMsg("pdf exporting done")

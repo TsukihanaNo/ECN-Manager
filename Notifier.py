@@ -5,6 +5,7 @@ from email.mime.base import MIMEBase
 from email import encoders
 from datetime import datetime
 from string import Template
+from WebView import *
 import sqlite3
 import os
 import sys
@@ -135,11 +136,11 @@ class Notifier(QtWidgets.QWidget):
             self.cursor = self.db.cursor()
             self.cursor.row_factory = sqlite3.Row
             
-    def checkLockFile(self):
-        if os.path.exists(lockfile):
-            self.dispMsg("Another Instance is already open.")
-            self.firstInstance = False
-            sys.exit()
+    # def checkLockFile(self):
+    #     if os.path.exists(lockfile):
+    #         self.dispMsg("Another Instance is already open.")
+    #         self.firstInstance = False
+    #         sys.exit()
         
     def generateLockFile(self):
         f = open(lockfile,"w+")
@@ -321,6 +322,12 @@ class Notifier(QtWidgets.QWidget):
         #print(f"send email to these addresses: {receivers} notifying ecn completion")
         attach = []
         attach.append(os.path.join(program_location,doc_id+'.ecnx'))
+        if doc_id[:3]=="PCN":
+            self.log_text.append("-exporting PCN files to server")
+            filepath = os.path.join(self.settings["PCN_Export_Loc"],doc_id)
+            os.mkdir(filepath)
+            self.exportPDF(doc_id,filepath ,"PCN")
+            self.exportHTMLPCNWeb(doc_id, filepath)
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
         self.sendEmail(doc_id,receivers, message,"Completion",attach)
         self.log_text.append(f"-Completion Email sent for {doc_id} to {receivers}")
@@ -393,10 +400,13 @@ class Notifier(QtWidgets.QWidget):
                 if subject=="User Info":
                     msg['Subject']=f"{subject} Notification for ECN Manager"
                 else:
-                    msg['Subject']=f"{subject} Notification for ECN: {doc_id}"
+                    msg['Subject']=f"{subject} Notification for {doc_id}"
                 
                 message +="\n\n"
-                html = self.generateHTML(doc_id)
+                if doc_id[:3]=="PCN":
+                    html = self.generateHTMLPCN(doc_id)
+                else:
+                    html = self.generateHTML(doc_id)
                 message+=html
                 
                 msg.attach(MIMEText(message,'html'))
@@ -499,9 +509,6 @@ class Notifier(QtWidgets.QWidget):
                 
                 export = t.substitute(ECNID=doc_id,ECNTitle=title,Requestor=requestor,Department=dept,Author=author, Reason=reason,Summary=summary,Parts=parts,Attachment=attachment,Signature=signature)
             
-                # with open(foldername+'\\'+ecn_id+'.html', 'w') as f:
-                #     f.write(export)
-                #     f.close()
 
                 self.log_text.append("generation complete")
                 return export
@@ -514,6 +521,72 @@ class Notifier(QtWidgets.QWidget):
         ecnx = os.path.join(program_location,doc_id+'.html')
         os.remove(ecnx)
         self.log_text.append("-HTML file removed")
+        
+    def generateHTMLPCN(self,doc_id):
+        template_loc = os.path.join(self.programLoc,'templates','pcn_template.html')
+        with open(template_loc) as f:
+            lines = f.read() 
+            f.close()
+            t = Template(lines)
+            
+            self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
+            result = self.cursor.fetchone()
+            overview = result['DOC_TEXT_1']
+            products = result['DOC_TEXT_2']
+            change = result['DOC_SUMMARY']
+            reason = result['DOC_REASON']
+            replacement = result['DOC_TEXT_3']
+            reference = result['DOC_TEXT_4']
+            response = result['DOC_TEXT_5']
+
+            #print('substituting text')
+            
+            html = t.substitute(PCNID=doc_id,Overview=overview,Products=products,ChangeDescription=change,Reason=reason,Replacement=replacement,Reference=reference,Response=response)
+
+            return html
+        
+    def generateHTMLPCNWeb(self,doc_id):
+        template_loc = os.path.join(self.programLoc,'templates','pcn_web_template.html')
+        with open(template_loc) as f:
+            lines = f.read() 
+            f.close()
+            t = Template(lines)
+            
+            self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
+            result = self.cursor.fetchone()
+            date = result['COMP_DATE']
+            web_desc = result['DOC_TEXT_6']
+
+            #print('substituting text')
+            
+            html = t.substitute(PCNID=doc_id,Date=date,WebDescription=web_desc)
+
+            return html
+        
+    def exportPDF(self,doc_id,filepath,doc_type):
+        try:
+            if doc_type=="PCN":
+                export = self.generateHTMLPCN(doc_id)
+            else:
+                export = self.generateHTML(doc_id)
+            doc_loc = filepath+'\\'+doc_id+'.pdf'
+            self.webview = WebView(msg_disable=True)
+            self.webview.loadAndPrint(export,doc_loc)
+        except Exception as e:
+            print(e)
+            self.log_text.append(f"Error Occured during document export.\n Error: {e}")
+            
+    def exportHTMLPCNWeb(self,doc_id,filepath):
+        try:
+            export = self.generateHTMLPCNWeb(doc_id)
+            doc_loc = filepath+'\\'+doc_id+'.html'
+            with open(doc_loc, 'w') as f:
+                f.write(export)
+                f.close()
+            self.log_text.append(f"-PCN web HTML has been exported")
+        except Exception as e:
+            print(e)
+            self.log_text.append(f"Error Occured during ecn export.\n Error: {e}")
         
     def getElapsedDays(self,day1,day2):
         today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
