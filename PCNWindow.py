@@ -395,10 +395,8 @@ class PCNWindow(QtWidgets.QWidget):
         results = self.cursor.fetchall()
         stage = []
         for result in results:
-            #print(result[0])
             stage.append(self.parent.stageDictPCN[result[0]])
         stage = sorted(stage)
-        #print(stage)
         return stage
     
     def getTitlesForStage(self):
@@ -408,35 +406,59 @@ class PCNWindow(QtWidgets.QWidget):
                 titles[value] = [key]
             else:
                 titles[value].append(key)
-        #print("titles generated", titles)
         return titles
+    
+    def checkFields(self):
+        if self.tab_pcn.line_title.text()=="":
+            return False
+        if self.tab_pcn.text_overview.toPlainText()=="":
+            return False
+        if self.tab_pcn.text_products.toPlainText()=="":
+            return False
+        if self.tab_pcn.text_change.toPlainText()=="":
+            return False
+        if self.tab_pcn.text_reason.toPlainText()=="":
+            return False
+        if self.tab_pcn.text_replacement.toPlainText()=="":
+            return False
+        if self.tab_pcn.text_reference.toPlainText()=="":
+            return False
+        if self.tab_pcn.text_response.toPlainText()=="":
+            return False
+        if self.tab_pcn.line_web.text()=="":
+            return False
+        return True
         
     def release(self):
-        try:
-            self.save(1)
-            modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            
-            self.cursor.execute(f"SELECT FIRST_RELEASE from DOCUMENT where DOC_ID='{self.doc_id}'")
-            result = self.cursor.fetchone()
-            if result[0] is None:
-                self.cursor.execute(f"UPDATE DOCUMENT SET FIRST_RELEASE = '{modifieddate}' where DOC_ID='{self.doc_id}'")
-            data = (modifieddate, "Out For Approval",self.doc_id)
-            self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?, STATUS = ? WHERE DOC_ID = ?",(data))
-            self.db.commit()
-            currentStage = self.getPCNStage()
-            if currentStage==0:
-                self.setPCNStage(self.getNextStage()[0])
-                self.addNotification(self.doc_id, "Stage Moved")
-            self.tab_pcn.line_status.setText("Out For Approval")
-            self.parent.repopulateTable()
-            self.dispMsg("PCN has been saved and sent out for signing!")
-            #self.addNotification(self.ecn_id, "Released")
-            self.button_release.setDisabled(True)
-            self.button_cancel.setText("Cancel")
-            self.button_cancel.setDisabled(True)
-        except Exception as e:
-            print(e)
-            self.dispMsg(f"Error occured during data update (release)!\n Error: {e}")
+        if self.checkFields():
+            try:
+                print("releasing")
+                self.save(1)
+                modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                
+                self.cursor.execute(f"SELECT FIRST_RELEASE from DOCUMENT where DOC_ID='{self.doc_id}'")
+                result = self.cursor.fetchone()
+                if result[0] is None:
+                    self.cursor.execute(f"UPDATE DOCUMENT SET FIRST_RELEASE = '{modifieddate}' where DOC_ID='{self.doc_id}'")
+                data = (modifieddate, "Out For Approval",self.doc_id)
+                self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?, STATUS = ? WHERE DOC_ID = ?",(data))
+                self.db.commit()
+                currentStage = self.getPCNStage()
+                if currentStage==0:
+                    self.setPCNStage(self.getNextStage()[0])
+                    self.addNotification(self.doc_id, "Stage Moved")
+                self.tab_pcn.line_status.setText("Out For Approval")
+                self.parent.repopulateTable()
+                self.dispMsg("PCN has been saved and sent out for signing!")
+                #self.addNotification(self.ecn_id, "Released")
+                self.button_release.setDisabled(True)
+                self.button_cancel.setText("Cancel")
+                self.button_cancel.setDisabled(True)
+            except Exception as e:
+                print(e)
+                self.dispMsg(f"Error occured during data update (release)!\n Error: {e}")
+        else:
+            self.dispMsg("There are empty Fields, cannot release.")
             
     def approve(self):
         try:

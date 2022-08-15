@@ -700,7 +700,7 @@ class Manager(QtWidgets.QWidget):
         if self.line_search.text()!="":
             search = self.line_search.text()
             matches = []
-            self.cursor.execute(f"Select DOC_ID from DOCUMENT where DOC_TITLE like '%{search}%' OR DOC_REASON like '%{search}%' OR DOC_SUMMARY like '%{search}%'")
+            self.cursor.execute(f"Select DOC_ID from DOCUMENT where DOC_TITLE like '%{search}%' OR DOC_REASON like '%{search}%' OR DOC_SUMMARY like '%{search}%' OR DOC_ID like '%{search}%'")
             results = self.cursor.fetchall()
             for result in results:
                 if result[0] not in matches:

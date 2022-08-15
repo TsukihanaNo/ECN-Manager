@@ -174,7 +174,7 @@ class SearchResults(QtWidgets.QWidget):
         if self.line_search.text()!="":
             search = self.line_search.text()
             self.matches = []
-            self.parent.cursor.execute(f"Select DOC_ID from DOCUMENT where DOC_TITLE like '%{search}%' OR DOC_REASON like '%{search}%' OR DOC_SUMMARY like '%{search}%'")
+            self.parent.cursor.execute(f"Select DOC_ID from DOCUMENT where DOC_TITLE like '%{search}%' OR DOC_REASON like '%{search}%' OR DOC_SUMMARY like '%{search}%' OR DOC_ID like '%{search}%'")
             results = self.parent.cursor.fetchall()
             for result in results:
                 if result[0] not in self.matches:
