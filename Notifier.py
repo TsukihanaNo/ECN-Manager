@@ -653,7 +653,7 @@ class Notifier(QtWidgets.QWidget):
         for email in direct_receivers:
             direct.append(self.emailNameList[email])
         direct = ", ".join(direct)
-        message = f"<p>Hello {direct}:</p><p>{doc_id} has been out for {total_days} and has not moved for {reminder_days} days or more since the last notification has been sent.</p><p> Please work on it at your earlier availability!</p><p> You can view the ECN your queue in the ECN Manager application.</p><p>You can also open the attachment file to launch to be directed to the ECN or the HTML file to see what the ECN is.</p>"
+        message = f"<p>Hello {direct}:</p><p>{doc_id} has been out for {total_days} and has not moved for {reminder_days} days or more since the last notification has been sent.</p><p> Please work on it at your earliest availability!</p><p> You can view the ECN your queue in the ECN Manager application.</p><p>You can also open the attachment file to be directed to the ECN.</p>"
         #print(message)
         #print(f"send email these addresses: {receivers} notifying ecn lateness")
         self.generateECNX(doc_id)
