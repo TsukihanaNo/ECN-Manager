@@ -316,7 +316,7 @@ class Manager(QtWidgets.QWidget):
         if self.user_permissions["create_ecn"]=="n" and self.user_permissions["create_pcn"]=="n":
             items = ["Queue","Open","Completed"]
         else:
-            items = ["My Docs","Queue","Open","Completed"]
+            items = ["My Docs","Queue","Open","Canceled","Draft","Completed"]
         self.dropdown_type.addItems(items)
         
         self.button_open = QtWidgets.QPushButton("Open")
@@ -398,7 +398,11 @@ class Manager(QtWidgets.QWidget):
         elif table_type=="Queue":
             command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and DOCUMENT.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
         elif table_type=="Open":
-            command = "select * from DOCUMENT where STATUS!='Completed'"
+            command = "select * from DOCUMENT where STATUS=='Out For Approval' OR STATUS=='Rejected'"
+        elif table_type=="Canceled":
+            command = "select * from DOCUMENT where STATUS =='Canceled'"
+        elif table_type=="Draft":
+            command = "select * from DOCUMENT where STATUS =='Draft'"
         else:
             command = "select * from DOCUMENT where STATUS='Completed'"
 
@@ -453,8 +457,10 @@ class Manager(QtWidgets.QWidget):
                 counter = 10
             else:
                 counter = diff
+                
+            #print(counter, offset, rowcount)
             for x in range(counter):
-                x = x + offset
+                x = x + rowcount
                 if self.table_data[x]['STAGE']!=0 and self.table_data[x]['STAGE'] is not None:
                     if self.table_data[x]['DOC_ID'][:3]=="PCN":
                         users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDictPCN[str(self.table_data[x]['STAGE'])])
