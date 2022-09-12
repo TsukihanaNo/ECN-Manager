@@ -189,6 +189,7 @@ class PermissionsTab(QtWidgets.QWidget):
         form_layout = QtWidgets.QFormLayout()
         self.check_ecn = QtWidgets.QCheckBox()
         self.check_pcn = QtWidgets.QCheckBox()
+        self.check_project = QtWidgets.QCheckBox()
         self.check_create_user = QtWidgets.QCheckBox()
         self.check_view_analytics = QtWidgets.QCheckBox()
         self.check_reject_signer = QtWidgets.QCheckBox()
@@ -196,11 +197,12 @@ class PermissionsTab(QtWidgets.QWidget):
         self.check_rerouting = QtWidgets.QCheckBox()
         form_layout.addRow("Allow user to create ECNs:",self.check_ecn)
         form_layout.addRow("Allow user to create PCNs:",self.check_pcn)
+        form_layout.addRow("Allow user to create Projects:",self.check_project)
         form_layout.addRow("Allow user to reject to signer:",self.check_reject_signer)
         form_layout.addRow("Allow user to access settings:", self.check_settings)
         form_layout.addRow("Allow user to create users:", self.check_create_user)
         form_layout.addRow("Allow user to view Analytics:",self.check_view_analytics)
-        form_layout.addRow("Allow user to check for rerouting",self.check_rerouting)
+        form_layout.addRow("Allow user to check for rerouting:",self.check_rerouting)
 
         main_layout.addLayout(form_layout)
 
