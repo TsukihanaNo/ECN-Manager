@@ -126,6 +126,7 @@ class LoginWindow(QtWidgets.QWidget):
                     self.parent.user_permissions["reject_signer"] = permissions["REJECT_SIGNER"]
                     self.parent.user_permissions["access_settings"] = permissions["ACCESS_SETTINGS"]
                     self.parent.user_permissions["view_analytics"] = permissions["VIEW_ANALYTICS"]
+                    self.parent.user_permissions["rerouting"] = permissions["REROUTING"]
                 self.parent.loginDone()
                 self.logged = True
                 self.setUserOnline()

@@ -295,6 +295,11 @@ class ECNWindow(QtWidgets.QWidget):
         self.button_preview.clicked.connect(self.previewHTML)
         self.toolbar.addWidget(self.button_preview)
         
+        if self.parent.user_permissions["rerouting"]=="y":
+            self.button_check_stage = QtWidgets.QPushButton("Check Stage")
+            self.button_check_stage.clicked.connect(self.checkStage)
+            self.toolbar.addWidget(self.button_check_stage)
+        
         mainlayout.addWidget(self.toolbar)
         mainlayout.addWidget(self.tabwidget)
         
@@ -307,6 +312,16 @@ class ECNWindow(QtWidgets.QWidget):
         self.setCommentCount()
         self.setPartCount()
         self.setAttachmentCount()        
+    
+    def checkStage(self):
+        try:
+            self.checkComplete()
+            self.db.commit()
+            print("moving ecn stage check")
+            self.moveECNStage()
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error occured during data insertion (approve)!\n Error: {e}")
 
     def printIndex(self):
         print(self.tabwidget.currentIndex())
