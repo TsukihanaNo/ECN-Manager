@@ -11,6 +11,7 @@ from LoginWindow import *
 from datetime import datetime
 from ECNWindow import *
 from PCNWindow import *
+from ProjectWindow import *
 from DataBaseUpdateWindow import *
 from NewDBWindow import *
 from UsersWindow import *
@@ -52,6 +53,7 @@ class Manager(QtWidgets.QWidget):
         self.setFixedSize(self.windowWidth,self.windowHeight)
         self.ecnWindow = None
         self.pcnWindow = None
+        self.projectWindow = None
         self.sorting = (0,QtCore.Qt.DescendingOrder)
         self.doc = doc
         self.firstInstance = True
@@ -327,11 +329,14 @@ class Manager(QtWidgets.QWidget):
         self.button_add = QtWidgets.QPushButton("New ECN")
         self.button_add2 = QtWidgets.QPushButton("New PCN")
         self.button_add2.clicked.connect(self.newPCN)
+        self.button_add3 = QtWidgets.QPushButton("New Project")
+        self.button_add3.clicked.connect(self.newProject)
         #self.button_add.setToolTip("New ECN")
         #self.button_add.setFixedWidth(25)
         icon_loc = icon = os.path.join(program_location,"icons","new.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
         self.button_add2.setIcon(QtGui.QIcon(icon_loc))
+        self.button_add3.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.newECN)
         if self.user_permissions["create_ecn"]=="n":
             self.button_add.hide()
@@ -348,6 +353,7 @@ class Manager(QtWidgets.QWidget):
         self.toolbar.addSeparator()
         self.toolbar.addWidget(self.button_add)
         self.toolbar.addWidget(self.button_add2)
+        self.toolbar.addWidget(self.button_add3)
         self.toolbar.addWidget(self.button_open)
         self.toolbar.addWidget(self.button_refresh)
         self.toolbar.addWidget(self.dropdown_type)
@@ -604,6 +610,16 @@ class Manager(QtWidgets.QWidget):
                 self.pcnWindow = PCNWindow(self,doc_id)
             else:
                 self.pcnWindow.activateWindow()
+                
+    def HookProject(self,doc_id=None):
+        if self.projectWindow is None:
+            self.projectWindow = ProjectWindow(self,doc_id)
+        else:
+            if self.projectWindow.doc_id !=doc_id:
+                self.projectWindow.close()
+                self.projectWindow = ProjectWindow(self,doc_id)
+            else:
+                self.projectWindow.activateWindow()
             
     
     def newECN(self):
@@ -611,6 +627,9 @@ class Manager(QtWidgets.QWidget):
         
     def newPCN(self):
         self.HookPCN()
+        
+    def newProject(self):
+        self.HookProject()
         
     def openDoc(self):
         index = self.docs.currentIndex()
