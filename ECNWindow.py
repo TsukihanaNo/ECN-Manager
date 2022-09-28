@@ -305,10 +305,8 @@ class ECNWindow(QtWidgets.QWidget):
         
         # self.button_move_stage = QtWidgets.QPushButton("Move Stage")
         # self.button_move_stage.clicked.connect(self.moveECNStage)
-        #buttonlayout.addWidget(self.button_export)
-        # buttonlayout.addWidget(self.button_move_stage)
-            
-        #mainlayout.addLayout(buttonlayout)
+        # self.toolbar.addWidget(self.button_move_stage)
+
         self.setCommentCount()
         self.setPartCount()
         self.setAttachmentCount()        

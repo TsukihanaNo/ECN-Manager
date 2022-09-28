@@ -124,7 +124,7 @@ class LoginWindow(QtWidgets.QWidget):
                 else:
                     self.parent.user_permissions["create_ecn"] = permissions["CREATE_ECN"]
                     self.parent.user_permissions["create_pcn"] = permissions["CREATE_PCN"]
-                    self.parent.user_permissions["create_project"] = permissions["CREATE_PROJECT"]
+                    #self.parent.user_permissions["create_project"] = permissions["CREATE_PROJECT"]
                     self.parent.user_permissions["create_user"] = permissions["CREATE_USER"]
                     self.parent.user_permissions["reject_signer"] = permissions["REJECT_SIGNER"]
                     self.parent.user_permissions["access_settings"] = permissions["ACCESS_SETTINGS"]
