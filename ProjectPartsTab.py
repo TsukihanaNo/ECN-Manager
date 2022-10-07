@@ -1,6 +1,6 @@
 from PySide6 import QtGui, QtCore, QtWidgets
 import sys, os
-from PartEditor import *
+from ProjectPartEditor import *
 
 if getattr(sys, 'frozen', False):
     # frozen
@@ -116,11 +116,11 @@ class ProjectPartsTab(QtWidgets.QWidget):
         
         
     def addPart(self):
-        self.part_editor = PartEditor(self)
+        self.part_editor = ProjectPartEditor(self)
         
     def editPart(self):
         index = self.parts.currentIndex()
-        self.part_editor = PartEditor(self,index)
+        self.part_editor = ProjectPartEditor(self,index)
 
     def removeRow(self):
         index = self.parts.selectionModel().selectedIndexes()
