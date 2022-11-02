@@ -109,7 +109,8 @@ class LoginWindow(QtWidgets.QWidget):
                 self.parent.user_info['user'] = info['USER_ID']
                 self.parent.user_info['name'] = info['NAME']
                 self.parent.user_info['title'] = info['JOB_TITLE']
-                self.parent.user_info['stage'] = self.parent.stageDict[info['JOB_TITLE']]
+                self.parent.user_info['stage_ecn'] = self.parent.stageDict[info['JOB_TITLE']]
+                self.parent.user_info['stage_pcn'] = self.parent.stageDictPCN[info['JOB_TITLE']]
                 self.cursor.execute(f"Select * from PERMISSIONS where USER_ID='{self.text_user.text()}'")
                 permissions = self.cursor.fetchone()
                 if permissions is None:

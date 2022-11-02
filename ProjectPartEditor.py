@@ -103,26 +103,26 @@ class ProjectPartEditor(QtWidgets.QWidget):
         mfg = self.line_mfg.text()
         mfg_part_id = self.line_mfg_part.text()
         details = self.text_details.toPlainText()
-        if self.row is not None:
-            if self.checkEmptyFields(part_id, desc, part_type):
-                self.parent.model.update_part_data(self.row, part_id, desc, part_type, disposition, mfg, mfg_part_id,details)
-                if self.parent.parent.parent.visual is not None:
-                    status = self.parent.getStatus(part_id, part_type)
-                    self.parent.model.update_status(self.row, status)
-            else:
-                self.dispMsg("Update Failed. There are empty fields.")
-        else:
-            if not self.parent.model.exist_part(part_id):
-                if self.checkEmptyFields(part_id, desc, part_type, disposition):
-                    if self.parent.parent.parent.visual is not None:
-                        status = self.parent.getStatus(part_id, part_type)
-                    else:
-                        status = "NA"
-                    self.parent.model.add_part(part_id, desc, part_type, disposition, mfg, mfg_part_id,details,status)
-                else:
-                    self.dispMsg("Save Failed. There are empty fields.")
-            else:
-                self.dispMsg("This part has already been added to the part list!")
+        # if self.row is not None:
+        #     if self.checkEmptyFields(part_id, desc, part_type):
+        #         self.parent.model.update_part_data(self.row, part_id, desc, part_type, disposition, mfg, mfg_part_id,details)
+        #         if self.parent.parent.parent.visual is not None:
+        #             status = self.parent.getStatus(part_id, part_type)
+        #             self.parent.model.update_status(self.row, status)
+        #     else:
+        #         self.dispMsg("Update Failed. There are empty fields.")
+        # else:
+        #     if not self.parent.model.exist_part(part_id):
+        #         if self.checkEmptyFields(part_id, desc, part_type, disposition):
+        #             if self.parent.parent.parent.visual is not None:
+        #                 status = self.parent.getStatus(part_id, part_type)
+        #             else:
+        #                 status = "NA"
+        #             self.parent.model.add_part(part_id, desc, part_type, disposition, mfg, mfg_part_id,details,status)
+        #         else:
+        #             self.dispMsg("Save Failed. There are empty fields.")
+        #     else:
+        #         self.dispMsg("This part has already been added to the part list!")
 
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()

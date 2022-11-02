@@ -396,7 +396,8 @@ class Manager(QtWidgets.QWidget):
         if table_type=="My Docs":
             command = "Select * from DOCUMENT where AUTHOR ='" + self.user_info['user'] + "' and STATUS !='Completed'"
         elif table_type=="Queue":
-            command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and DOCUMENT.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
+            #command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and DOCUMENT.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
+            command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}'and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
         elif table_type=="Open":
             command = "select * from DOCUMENT where STATUS=='Out For Approval' OR STATUS=='Rejected'"
         elif table_type=="Canceled":
@@ -408,6 +409,31 @@ class Manager(QtWidgets.QWidget):
 
         self.cursor.execute(command)
         self.table_data = self.cursor.fetchall()
+        
+        
+        if table_type=="Queue":
+            table_index = 0
+            list_index_remove = []
+            #print(self.user_info['stage_ecn'],self.user_info['stage_pcn'])
+            for item in self.table_data:
+                #print(item["DOC_ID"][:3])
+                if item["DOC_ID"][:3]=="ECN":
+                    if item["STAGE"]!=int(self.user_info['stage_ecn']):
+                        list_index_remove.append(table_index)
+                        #print("adding index ecn")
+                else:
+                    if item["STAGE"]!=int(self.user_info['stage_pcn']):
+                        list_index_remove.append(table_index)
+                        #print("adding index pcn")
+                table_index+=1
+                
+            #print(list_index_remove)
+            list_index_remove.sort(reverse=True)
+            #print(list_index_remove)
+            for index in list_index_remove:
+                #print(index)
+                self.table_data.pop(index)
+                
         data_size = len(self.table_data)
         if data_size>10:
             counter = 10
@@ -539,14 +565,36 @@ class Manager(QtWidgets.QWidget):
         result = self.cursor.fetchone()
         #print("open:",result[0])
         self.label_open_docs.setText(f"Open - {result[0]}")
-        self.cursor.execute(f"Select COUNT(DOCUMENT.DOC_ID) from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and DOCUMENT.STAGE={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL")
-        result = self.cursor.fetchone()
+        self.cursor.execute(f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and SIGNATURE.SIGNED_DATE is NULL")
+        result = self.cursor.fetchall()
+        
+        table_index = 0
+        list_index_remove = []
+        for item in result:
+            #print(item["DOC_ID"][:3])
+            if item["DOC_ID"][:3]=="ECN":
+                if item["STAGE"]!=int(self.user_info['stage_ecn']):
+                    list_index_remove.append(table_index)
+                    #print("adding index ecn")
+            else:
+                if item["STAGE"]!=int(self.user_info['stage_pcn']):
+                    list_index_remove.append(table_index)
+                    #print("adding index pcn")
+            table_index+=1
+            
+        #print(list_index_remove)
+        list_index_remove.sort(reverse=True)
+        #print(list_index_remove)
+        for index in list_index_remove:
+            #print(index)
+            result.pop(index)
         #print("queue:",result[0])
-        if result[0]>0:
+        queue_count = len(result)
+        if queue_count>0:
             self.label_wait_docs.setStyleSheet("Color:red;font-weight:bold")
         else:
             self.label_wait_docs.setStyleSheet("Color:green;font-weight:bold")
-        self.label_wait_docs.setText(f"Waiting - {result[0]}")
+        self.label_wait_docs.setText(f"Waiting - {queue_count}")
         self.cursor.execute(f"SELECT COUNT(DOC_ID) from DOCUMENT where STATUS='Completed'")
         result = self.cursor.fetchone()
         #print("complete:",result[0])
