@@ -565,7 +565,7 @@ class Manager(QtWidgets.QWidget):
         result = self.cursor.fetchone()
         #print("open:",result[0])
         self.label_open_docs.setText(f"Open - {result[0]}")
-        self.cursor.execute(f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and SIGNATURE.SIGNED_DATE is NULL")
+        self.cursor.execute(f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and SIGNATURE.SIGNED_DATE is NULL and TYPE='Signing'")
         result = self.cursor.fetchall()
         
         table_index = 0

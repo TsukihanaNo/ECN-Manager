@@ -13,12 +13,13 @@ else:
 initfile = os.path.join(program_location, "setting.ini")
 
 class SignaturePanel(QtWidgets.QWidget):
-    def __init__(self, parent = None, row = None):
+    def __init__(self, parent = None, row = None, sig_type = None):
         super(SignaturePanel,self).__init__()
         self.windowWidth =  300
         self.windowHeight = 140
         self.setFixedSize(self.windowWidth,self.windowHeight)
         self.parent = parent
+        self.sig_type = sig_type
         self.row = row
         self.job_titles =[]
         self.findJobTitles()
@@ -85,6 +86,15 @@ class SignaturePanel(QtWidgets.QWidget):
         if self.checkDuplicate():
             self.dispMsg("This person already exists in list.")
         else:
+            if self.sig_type=="Signing":
+                if self.parent.parent.doc_id[:3]=="ECN":
+                    if self.parent.parent.parent.stageDict[job_title]=="99":
+                        self.dispMsg("This user is set for notification only. Please use the Notification Tab.")
+                        return
+                else:
+                    if self.parent.parent.parent.stageDictPCN[job_title]=="99":
+                        self.dispMsg("This user is set for notification only. Please use the notification Tab.")
+                        return     
             self.parent.model.add_signature(job_title, name, user)
             
     def updateSignature(self):
@@ -94,7 +104,16 @@ class SignaturePanel(QtWidgets.QWidget):
         if self.checkDuplicate():
             self.dispMsg("This person already exists in list.")
         else:
-            self.parent.model.update_signature(self.row,job_title, name, user)
+            if self.sig_type=="Signing":
+                if self.parent.parent.doc_id[:3]=="ECN":
+                    if self.parent.parent.parent.stageDict[job_title]=="99":
+                        self.dispMsg("This user is set for notification only.")
+                        return
+                else:
+                    if self.parent.parent.parent.stageDictPCN[job_title]=="99":
+                        self.dispMsg("This user is set for notification only.")
+                        return     
+            self.parent.model.add_signature(job_title, name, user)
         
     def setBoxJob(self,text=None):
         self.box_title.addItems(self.job_titles)

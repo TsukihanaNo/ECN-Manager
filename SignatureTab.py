@@ -88,7 +88,7 @@ class SignatureTab(QtWidgets.QWidget):
             self.button_edit.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
         
     def addRow(self):
-        self.signature = SignaturePanel(self)
+        self.signature = SignaturePanel(self,sig_type="Signing")
         
     def editSignature(self):
         index = self.signatures.currentIndex()

@@ -185,7 +185,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.list_dept.doubleClicked.connect(self.removeDept)
         self.button_dept_remove = QtWidgets.QPushButton("Remove")
         self.button_dept_remove.clicked.connect(self.removeDept)
-        self.label_jobs = QtWidgets.QLabel("Job Titles and stages:")
+        self.label_jobs = QtWidgets.QLabel("Job Titles and stages (Set stage to 99 for notification only):")
         headers = ['Job Title','ECN Stage','PCN Stage']
         self.table_jobs = QtWidgets.QTableWidget(0,len(headers),self)
         self.table_jobs.setHorizontalHeaderLabels(headers)
