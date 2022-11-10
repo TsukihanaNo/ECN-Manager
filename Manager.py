@@ -48,6 +48,7 @@ databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT"
 class Manager(QtWidgets.QWidget):
     def __init__(self,doc = None):
         super(Manager, self).__init__()
+        self.clientVersion = "221109"
         self.windowWidth = 1000
         self.windowHeight = 600
         self.setFixedSize(self.windowWidth,self.windowHeight)
@@ -101,6 +102,19 @@ class Manager(QtWidgets.QWidget):
             self.dispMsg("Another Instance is already open.")
             self.firstInstance = False
             sys.exit()
+            
+    def checkVersion(self):
+        print("checking version")
+        self.cursor.execute(f"Select * from CLIENTVERSION")
+        result = self.cursor.fetchone()
+        if result is None:
+            self.dispMsg("Client Version data missing from DB, please set it up")
+        else:
+            if result[0]!=self.clientVersion:
+                self.dispMsg(f"Your client is out of date, please grab the latest version from the server.")
+                return False
+            else:
+                return True
         
     def generateLockFile(self):
         f = open(lockfile,"w+")
@@ -196,8 +210,12 @@ class Manager(QtWidgets.QWidget):
             self.db = sqlite3.connect(self.settings["DB_LOC"])
             self.cursor = self.db.cursor()
             self.cursor.row_factory = sqlite3.Row
-            self.logWindowsUser()
-            self.loginWindow = LoginWindow(self)
+            if self.checkVersion():
+                self.logWindowsUser()
+                self.loginWindow = LoginWindow(self)
+            else:
+                self.removeLockFile()
+                sys.exit()
             
             
     def loadSettings(self):
@@ -700,7 +718,7 @@ class Manager(QtWidgets.QWidget):
         self.animation.start()
 
     def closeEvent(self, event):
-        #print("setting things off")
+        print("setting things off")
         self.setUserOffline()
         self.logOutWindowsUser()
         self.db.close()

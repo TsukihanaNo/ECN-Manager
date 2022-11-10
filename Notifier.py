@@ -41,7 +41,9 @@ class Notifier(QtWidgets.QWidget):
         self.getUserList()
         self.getEmailNameDict()
         self.getStageDict()
+        self.getStageDictPCN()
         self.getTitleStageDict()
+        self.getTitleStageDictPCN()
         self.initAtt()
         self.initUI()
         self.center()
@@ -196,12 +198,30 @@ class Notifier(QtWidgets.QWidget):
             else:
                 self.titleStageDict[value].append(key)
                 
+    def getTitleStageDictPCN(self):
+        self.titleStageDictPCN = {}
+        for key, value in self.stageDictPCN.items():
+            if value not in self.titleStageDictPCN.keys():
+                self.titleStageDictPCN[value]=[key]
+            else:
+                self.titleStageDictPCN[value].append(key)
+                
     def getStageDict(self):
         self.stageDict = {}
         stages = self.settings["Stage"].split(",")
         for stage in stages:
             key,value = stage.split("-")
             self.stageDict[key.strip()] = value.strip()
+            
+    def getStageDictPCN(self):
+        self.stageDictPCN = {}
+        if "PCN_Stage" not in self.settings.keys():
+            self.dispMsg("PCN_Stage not defined, please update your settings.")
+        else:
+            stages = self.settings["PCN_Stage"].split(",")
+            for stage in stages:
+                key,value = stage.split("-")
+                self.stageDictPCN[key.strip()] = value.strip()
             
     def sendNotification(self):
         self.cursor.execute("Select * from NOTIFICATION where STATUS='Not Sent'")
@@ -364,7 +384,10 @@ class Notifier(QtWidgets.QWidget):
         self.cursor.execute(f"Select Stage from DOCUMENT where DOC_ID='{doc_id}'")
         result = self.cursor.fetchone()
         stage = result[0]
-        users = self.getWaitingUser(doc_id, self.titleStageDict[str(stage)])
+        if doc_id[:3]=="ECN":
+            users = self.getWaitingUser(doc_id, self.titleStageDict[str(stage)])
+        else:
+            users = self.getWaitingUser(doc_id, self.titleStageDictPCN[str(stage)])
         receivers = []
         for user in users:
             receivers.append(self.userList[user])
@@ -611,10 +634,10 @@ class Notifier(QtWidgets.QWidget):
         for result in results:
             if result['LAST_NOTIFIED'] is not None:
                 elapsed = self.getElapsedDays(today, result["LAST_NOTIFIED"])
-                print(elapsed.days)
+                #print(elapsed.days)
             else:
                 elapsed = self.getElapsedDays(today, result["FIRST_RELEASE"])
-                print(elapsed.days)
+                #print(elapsed.days)
             if elapsed.days >= int(self.settings['Reminder_Days']):
                 doc_id = result["DOC_ID"]
                 first_release = result["FIRST_RELEASE"]
@@ -623,7 +646,10 @@ class Notifier(QtWidgets.QWidget):
                 self.cursor.execute(f"Select Stage from DOCUMENT where DOC_ID='{doc_id}'")
                 result = self.cursor.fetchone()
                 stage = result[0]
-                users = self.getWaitingUser(doc_id, self.titleStageDict[str(stage)])
+                if doc_id[:3]=="ECN":
+                    users = self.getWaitingUser(doc_id, self.titleStageDict[str(stage)])
+                else:
+                    users = self.getWaitingUser(doc_id, self.titleStageDictPCN[str(stage)])
                 for user in users:
                     direct_receivers.append(self.userList[user])
                 users = self.getWaitingUser(doc_id, self.titleStageDict[str(self.settings['Reminder_Stages'])])
