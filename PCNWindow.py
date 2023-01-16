@@ -121,6 +121,11 @@ class PCNWindow(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_export)
         self.toolbar.addWidget(self.button_preview)
         
+        if self.parent.user_permissions["rerouting"]=="y":
+            self.button_check_stage = QtWidgets.QPushButton("Check Stage")
+            self.button_check_stage.clicked.connect(self.checkStage)
+            self.toolbar.addWidget(self.button_check_stage)
+        
         self.tab_widget = QtWidgets.QTabWidget(self)
         self.tab_pcn = PCNTab(self)
         self.tab_comments = CommentTab(self)
@@ -345,6 +350,16 @@ class PCNWindow(QtWidgets.QWidget):
             data = (new_month,counter,old_month)
             self.cursor.execute(f"UPDATE PCNCOUNTER SET MONTH = ?, COUNTER=? where MONTH = ?",(data))
         self.db.commit()
+        
+    def checkStage(self):
+        try:
+            self.checkComplete()
+            self.db.commit()
+            print("moving pcn stage check")
+            self.movePCNStage()
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error occured during data insertion (approve)!\n Error: {e}")
         
     def getPCNStage(self):
         try:

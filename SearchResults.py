@@ -133,7 +133,11 @@ class SearchResults(QtWidgets.QWidget):
     def openECN(self):
         row = self.table.currentRow()
         doc_id =self.table.item(row,0).text()
-        self.parent.HookEcn(doc_id)
+        if doc_id[:3]=="ECN":
+            self.parent.HookEcn(doc_id)
+        else:
+            self.parent.HookPCN(doc_id)
+        #self.parent.HookEcn(doc_id)
         
     def getElapsedDays(self,day1,day2):
         today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
