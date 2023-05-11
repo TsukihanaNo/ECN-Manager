@@ -3,6 +3,7 @@ import re
 import sys
 import time
 import sqlite3
+import psutil
 from PySide6 import QtGui, QtCore, QtWidgets
 from LoginWindow import *
 #from CompletedTab import *
@@ -48,7 +49,7 @@ databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT"
 class Manager(QtWidgets.QWidget):
     def __init__(self,doc = None):
         super(Manager, self).__init__()
-        self.clientVersion = "221109"
+        self.clientVersion = "230406"
         self.windowWidth = 1000
         self.windowHeight = 600
         self.setFixedSize(self.windowWidth,self.windowHeight)
@@ -58,10 +59,11 @@ class Manager(QtWidgets.QWidget):
         self.sorting = (0,QtCore.Qt.DescendingOrder)
         self.doc = doc
         self.firstInstance = True
-        self.checkLockLoc()
-        self.checkLockFile()
-        self.generateLockFile()
+        # self.checkLockLoc()
+        # self.checkLockFile()
+        # self.generateLockFile()
         #self.checkNotifier()
+        self.checkInstance()
         self.ico = QtGui.QIcon(icon)
         self.startUpCheck()
         self.getStageDict()
@@ -132,6 +134,17 @@ class Manager(QtWidgets.QWidget):
             return False
         else:
             return True
+        
+    def checkInstance(self):
+        count=0
+        for p in psutil.process_iter(['name']):
+            if p.name()=="Manager.exe":
+                count+=1
+        
+        if count>1:
+            self.dispMsg(f"Another Instance is already open.")
+            self.firstInstance = False
+            sys.exit()
         
     def logWindowsUser(self):
         user = os.getlogin()
@@ -214,7 +227,7 @@ class Manager(QtWidgets.QWidget):
                 self.logWindowsUser()
                 self.loginWindow = LoginWindow(self)
             else:
-                self.removeLockFile()
+                #self.removeLockFile()
                 sys.exit()
             
             
@@ -722,8 +735,8 @@ class Manager(QtWidgets.QWidget):
         self.setUserOffline()
         self.logOutWindowsUser()
         self.db.close()
-        if self.firstInstance:
-            self.removeLockFile()
+        # if self.firstInstance:
+        #     self.removeLockFile()
         for w in QtWidgets.QApplication.allWidgets():
             w.close()
             

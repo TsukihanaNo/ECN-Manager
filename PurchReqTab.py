@@ -1,6 +1,7 @@
 from PySide6 import QtGui, QtCore, QtWidgets
 import sys, os
 from PartEditor import *
+from PurchReqWindow import *
 
 if getattr(sys, 'frozen', False):
     # frozen
@@ -13,6 +14,10 @@ class PurchReqTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(PurchReqTab,self).__init__()
         self.parent = parent
+        self.db = parent.db
+        self.settings = parent.settings
+        self.user_info = parent.user_info
+        self.ico = parent.ico
         self.initAtt()
         self.clipboard = QtGui.QGuiApplication.clipboard()
         self.menu = QtWidgets.QMenu(self)
@@ -28,20 +33,20 @@ class PurchReqTab(QtWidgets.QWidget):
         
         mainlayout.addWidget(self.toolbar)
 
-        self.button_add = QtWidgets.QPushButton("Add Part")
+        self.button_add = QtWidgets.QPushButton("Add Requisition")
         icon_loc = icon = os.path.join(program_location,"icons","add.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
-        self.button_add.clicked.connect(self.addPart)
-        self.button_remove = QtWidgets.QPushButton("Remove Part")
+        self.button_add.clicked.connect(self.addReq)
+        self.button_remove = QtWidgets.QPushButton("Remove Requisition")
         icon_loc = icon = os.path.join(program_location,"icons","minus.png")
         self.button_remove.setIcon(QtGui.QIcon(icon_loc))
         self.button_remove.setDisabled(True)
         self.button_remove.clicked.connect(self.removeRow)
-        self.button_edit = QtWidgets.QPushButton("Edit Part")
+        self.button_edit = QtWidgets.QPushButton("Edit Requisition")
         icon_loc = icon = os.path.join(program_location,"icons","edit.png")
         self.button_edit.setIcon(QtGui.QIcon(icon_loc))
         self.button_edit.setDisabled(True)
-        self.button_edit.clicked.connect(self.editPart)
+        self.button_edit.clicked.connect(self.editReq)
         
         self.toolbar.addWidget(self.button_add)
         self.toolbar.addWidget(self.button_remove)
@@ -115,12 +120,12 @@ class PurchReqTab(QtWidgets.QWidget):
             self.button_edit.setEnabled(bool(self.parts.selectionModel().selectedIndexes()))
         
         
-    def addPart(self):
-        self.part_editor = PartEditor(self)
+    def addReq(self):
+        self.req_editor = PurchReqWindow(self)
         
-    def editPart(self):
+    def editReq(self):
         index = self.parts.currentIndex()
-        self.part_editor = PartEditor(self,index)
+        self.part_editor = PurchReqWindow(self,index)
 
     def removeRow(self):
         index = self.parts.selectionModel().selectedIndexes()

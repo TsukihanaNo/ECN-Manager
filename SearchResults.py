@@ -158,14 +158,16 @@ class SearchResults(QtWidgets.QWidget):
             else:
                 self.titleStageDict[value].append(key)
                 
-    def getWaitingUser(self,doc,titles):
+    def getWaitingUser(self,ecn,titles):
         users = []
         usr_str = ""
+        #print(titles)
         for title in titles:
-            self.parent.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{doc}' and JOB_TITLE='{title}' and SIGNED_DATE is Null")
-            result = self.parent.cursor.fetchone()
-            if result is not None:
-                users.append(result[0])
+            self.parent.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{ecn}' and JOB_TITLE='{title}' and SIGNED_DATE is Null and TYPE='Signing'")
+            results = self.parent.cursor.fetchall()
+            for result in results:
+                if result is not None:
+                    users.append(result[0])
         count = 0
         for user in users:
             usr_str += user
