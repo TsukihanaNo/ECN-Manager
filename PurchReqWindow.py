@@ -18,6 +18,7 @@ class PurchReqWindow(QtWidgets.QWidget):
         self.db = self.parent.db
         self.settings = parent.settings
         self.user_info = self.parent.user_info
+        self.visual = parent.visual
         self.windowWidth =  900
         self.windowHeight = 550
         self.setFixedSize(self.windowWidth,self.windowHeight)
@@ -45,6 +46,7 @@ class PurchReqWindow(QtWidgets.QWidget):
         self.toolbar = QtWidgets.QToolBar()
         
         self.button_save = QtWidgets.QPushButton("Save")
+        self.button_save.clicked.connect(self.save)
         self.button_release = QtWidgets.QPushButton("Release")
         # self.button_members = QtWidgets.QPushButton("Members")
         
@@ -52,22 +54,11 @@ class PurchReqWindow(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_release)
         # self.toolbar.addWidget(self.button_members)
         
-        self.label_id = QtWidgets.QLabel("Requisition ID:")
-        self.line_id = QtWidgets.QLineEdit()
-        self.label_title = QtWidgets.QLabel("Project Name:")
-        self.line_title = QtWidgets.QLineEdit()
-        layout_header = QtWidgets.QHBoxLayout()
-        layout_header.addWidget(self.label_id)
-        layout_header.addWidget(self.line_id)
-        layout_header.addWidget(self.label_title)
-        layout_header.addWidget(self.line_title)
-        
         self.tab_purch_req = PurchReqDetailTab(self)
         self.tab_widget = QtWidgets.QTabWidget(self)
         self.tab_widget.addTab(self.tab_purch_req,"Purch Reqs")
         
         mainlayout.addWidget(self.toolbar)
-        mainlayout.addLayout(layout_header)
         mainlayout.addWidget(self.tab_widget)
         self.setLayout(mainlayout)
         
@@ -81,6 +72,10 @@ class PurchReqWindow(QtWidgets.QWidget):
             QtGui.QGuiApplication.primaryScreen().availableGeometry(),
         ),
     )
+        
+    def save(self):
+        self.visual.getReqHeader(self.tab_purch_req.line_id.text())
+        self.tab_purch_req.repopulateTable()
         
         
     def dispMsg(self,msg):

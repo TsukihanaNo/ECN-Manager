@@ -63,5 +63,30 @@ class Visual():
             return True
         else:
             return False
-
+        
+    def checkReqID(self,req_id):
+        self.cur.execute(f"select ID from PURC_REQUISITION where ID='{req_id}'")
+        result = self.cur.fetchone()
+        if result is not None:
+            return True
+        else:
+            return False
+        
+    def getReqHeader(self,req_id):
+        self.cur.execute(f"select ASSIGNED_TO, STATUS from PURC_REQUISITION where ID='{req_id}'")
+        result = self.cur.fetchone()
+        return result
+    
+    def getReqItems(self,req_id):
+        self.cur.execute(f"select LINE_NO, LINE_STATUS, PART_ID, VENDOR_PART_ID, ORDER_QTY, PURCHASE_UM from PURC_REQ_LINE where PURC_REQ_ID='{req_id}'")
+        results = self.cur.fetchall()
+        # items = []
+        # for result in results:
+        #     items.append(result)
+            
+        # for item in items:
+        #     print(item)
+            
+        # return items
+        return results
     

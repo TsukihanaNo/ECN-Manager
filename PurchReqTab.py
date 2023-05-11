@@ -18,6 +18,7 @@ class PurchReqTab(QtWidgets.QWidget):
         self.settings = parent.settings
         self.user_info = parent.user_info
         self.ico = parent.ico
+        self.visual = parent.visual
         self.initAtt()
         self.clipboard = QtGui.QGuiApplication.clipboard()
         self.menu = QtWidgets.QMenu(self)
