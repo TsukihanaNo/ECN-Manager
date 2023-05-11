@@ -6,9 +6,6 @@ import sqlite3
 import psutil
 from PySide6 import QtGui, QtCore, QtWidgets
 from LoginWindow import *
-#from CompletedTab import *
-#from MyECNTab import *
-#from MyQueueTab import *
 from datetime import datetime
 from ECNWindow import *
 from PCNWindow import *
@@ -35,16 +32,7 @@ os.environ['QTWEBENGINE_DISABLE_SANDBOX'] = "1"
 
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
 initfile = os.path.join(program_location, "setting.ini")
-lock_loc = r"C:\ProgramData\ECN-Manager"
-lockfile = os.path.join(lock_loc, "ecn.lock")
-notifier_lockfile = os.path.join(program_location, "notifier.lock")
 icon = os.path.join(program_location,"icons","manager.ico")
-
-databaseRequirements = {"ECN": ["ECN_ID TEXT", "ECN_TYPE TEXT", "ECN_TITLE TEXT", "ECN_REASON TEXT","REQUESTOR TEXT" ,"AUTHOR TEXT", "STATUS TEXT", "COMP_DATE DATE", "ECN_SUMMARY TEXT", "LAST_CHANGE_DATE DATE"],
-                        "COMMENT": ["ECN_ID TEXT", "USER TEXT", "COMM_DATE DATE", "COMMENT TEXT"],
-                        "USER": ["USER_ID TEXT", "PASSWORD TEXT", "NAME TEXT", "ROLE TEXT", "JOB_TITLE TEXT", "STATUS TEXT"],
-                        "CHANGELOG": ["ECN_ID TEXT", "CHANGEDATE DATETIME", "NAME TEXT","DATABLOCK TEXT" ,"PREVDATA TEXT", "NEWDATA TEXT"],
-                        }
 
 class Manager(QtWidgets.QWidget):
     def __init__(self,doc = None):
@@ -59,10 +47,6 @@ class Manager(QtWidgets.QWidget):
         self.sorting = (0,QtCore.Qt.DescendingOrder)
         self.doc = doc
         self.firstInstance = True
-        # self.checkLockLoc()
-        # self.checkLockFile()
-        # self.generateLockFile()
-        #self.checkNotifier()
         self.checkInstance()
         self.ico = QtGui.QIcon(icon)
         self.startUpCheck()
@@ -81,8 +65,6 @@ class Manager(QtWidgets.QWidget):
             self.visual = Visual(self,user, pw , db,ic)
         else:
             self.visual = None
-        #print(self.visual)
-        # self.checkDBTables()
 
     def center(self):
         window = self.window()
@@ -95,15 +77,6 @@ class Manager(QtWidgets.QWidget):
         ),
     )
     
-    def checkLockLoc(self):
-        if not os.path.exists(lock_loc):
-            os.makedirs(lock_loc)
-        
-    def checkLockFile(self):
-        if os.path.exists(lockfile):
-            self.dispMsg("Another Instance is already open.")
-            self.firstInstance = False
-            sys.exit()
             
     def checkVersion(self):
         print("checking version")
@@ -118,10 +91,6 @@ class Manager(QtWidgets.QWidget):
             else:
                 return True
         
-    def generateLockFile(self):
-        f = open(lockfile,"w+")
-        f.write("program started, lock trigger")
-        f.close()
         
     def removeLockFile(self):
         os.remove(lockfile)
@@ -164,10 +133,6 @@ class Manager(QtWidgets.QWidget):
         data = ("offline",time,user)
         self.cursor.execute("UPDATE WINDOWSLOG SET STATUS = ?, DATETIME = ? WHERE USER = ?",(data))
         self.db.commit()
-        
-    def checkNotifier(self):
-        if not os.path.exists(notifier_lockfile):
-            self.dispMsg("The Notifier is currently not running. No notifications will be sent until it is launched.")
 
     def loginDone(self):
         self.initAtt()
@@ -250,51 +215,6 @@ class Manager(QtWidgets.QWidget):
             missing_keys += "Port "
         if missing_keys !="":
             self.dispMsg(f"The following settings are missing: {missing_keys}. Please set them up in the settings window and set up the rest of the settings.")
-        
-        
-    def checkDBTables(self):
-        addtable = {}
-        addcolumns = {}
-        removetables = []
-        checkedtable = []
-        self.cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'")
-        test = self.cursor.fetchall()
-        for item in test:
-            for key in item.keys():
-                if item[key] in databaseRequirements.keys():
-                    checkedtable.append(item[key])
-                    command = "PRAGMA table_info(" + item[key] + ")"
-                    self.cursor.execute(command)
-                    columns = self.cursor.fetchall()
-                    missingcol = []
-                    colcheck = []
-                    for colname in columns:
-                        col = colname[1] + ' ' + colname[2]
-                        colcheck.append(col)
-                    for col in databaseRequirements[item[key]]:
-                        if col not in colcheck:
-                            missingcol.append(col)
-                    if len(missingcol) > 0:
-                        addcolumns[item[key]] = missingcol
-                else:
-                    removetables.append(item[key])
-        for item in databaseRequirements.keys():
-            if item not in checkedtable:
-                addtable[item] = databaseRequirements[item]
-        if len(addtable) != 0 or len(removetables) != 0 or len(addcolumns) != 0:
-            self.databaseupdate = DataBaseUpdateWindow(
-                self, addtable, removetables, addcolumns)
-
-    # def dbTest(self):
-    #     print("initiating test")
-    #     #self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    #     self.cursor.execute("select * from CHANGELOG")
-    #     test = self.cursor.fetchall()
-    #     print(len(test))
-    #     for item in test:
-    #         for key in item.keys():
-    #             print(item[key])
 
     def initAtt(self):
         self.setGeometry(100, 50, self.windowWidth, self.windowHeight)
