@@ -3,6 +3,8 @@ from datetime import datetime
 import sys, os
 
 
+VISUAL_REQ_STATUS = {'V':"Approved",'I':"In Process",'C': "Closed",'X': "Canceled/Void",'T':"Draft",'O':"Ordered"}
+
 class PurchReqDetailTab(QtWidgets.QWidget):
     def __init__(self, parent = None, doc_id = None):
         super(PurchReqDetailTab,self).__init__()
@@ -19,33 +21,72 @@ class PurchReqDetailTab(QtWidgets.QWidget):
         self.tablist = []
         self.initAtt()
         self.initUI()
+        if self.doc_id is not None:
+            self.line_id.setText(self.doc_id)
+            self.loadHeader()
+            self.loadItems()
+        else:
+            self.line_author.setText(self.user_info["user"])
         
     def initAtt(self):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         
     def initUI(self):
         main_layout = QtWidgets.QVBoxLayout(self)
+        self.label_doc_id = QtWidgets.QLabel("Doc ID:")
+        self.line_doc_id = QtWidgets.QLineEdit()
+        self.line_doc_id.setDisabled(True)
         self.label_id = QtWidgets.QLabel("Req ID:")
         self.line_id = QtWidgets.QLineEdit()
         self.label_status = QtWidgets.QLabel("Status:")
         self.line_status = QtWidgets.QLineEdit()
-        self.line_status.setReadOnly(True)
+        self.line_status.setDisabled(True)
         self.label_status_visual = QtWidgets.QLabel("Status Visual:")
         self.line_status_visual = QtWidgets.QLineEdit()
-        self.line_status_visual.setReadOnly(True)
+        self.line_status_visual.setDisabled(True)
+        # self.line_status_visual.setReadOnly(True)
         self.label_buyer = QtWidgets.QLabel("Assigned Buyer:")
         self.line_buyer = QtWidgets.QLineEdit()
-        self.line_buyer.setReadOnly(True)
+        self.line_buyer.setDisabled(True)
+        self.label_author = QtWidgets.QLabel("Author")
+        self.line_author = QtWidgets.QLineEdit()
+        self.line_author.setDisabled(True)
         
         hlayout = QtWidgets.QHBoxLayout()
-        hlayout.addWidget(self.label_id)
-        hlayout.addWidget(self.line_id)
-        hlayout.addWidget(self.label_status)
-        hlayout.addWidget(self.line_status)
-        hlayout.addWidget(self.label_status_visual)
-        hlayout.addWidget(self.line_status_visual)
-        hlayout.addWidget(self.label_buyer)
-        hlayout.addWidget(self.line_buyer)
+        vlayout = QtWidgets.QVBoxLayout()
+        vlayout.addWidget(self.label_doc_id)
+        vlayout.addWidget(self.line_doc_id)
+        hlayout.addLayout(vlayout)
+        vlayout1 = QtWidgets.QVBoxLayout()
+        vlayout1.addWidget(self.label_id)
+        vlayout1.addWidget(self.line_id)
+        hlayout.addLayout(vlayout1)
+        vlayout2 = QtWidgets.QVBoxLayout()
+        vlayout2.addWidget(self.label_status)
+        vlayout2.addWidget(self.line_status)
+        hlayout.addLayout(vlayout2)
+        vlayout3 = QtWidgets.QVBoxLayout()
+        vlayout3.addWidget(self.label_status_visual)
+        vlayout3.addWidget(self.line_status_visual)
+        hlayout.addLayout(vlayout3)
+        vlayout4 = QtWidgets.QVBoxLayout()
+        vlayout4.addWidget(self.label_buyer)
+        vlayout4.addWidget(self.line_buyer)
+        hlayout.addLayout(vlayout4)
+        vlayout5 = QtWidgets.QVBoxLayout()
+        vlayout5.addWidget(self.label_author)
+        vlayout5.addWidget(self.line_author)
+        hlayout.addLayout(vlayout5)
+        # hlayout.addWidget(self.label_doc_id)
+        # hlayout.addWidget(self.line_doc_id)
+        # hlayout.addWidget(self.label_id)
+        # hlayout.addWidget(self.line_id)
+        # hlayout.addWidget(self.label_status)
+        # hlayout.addWidget(self.line_status)
+        # hlayout.addWidget(self.label_status_visual)
+        # hlayout.addWidget(self.line_status_visual)
+        # hlayout.addWidget(self.label_buyer)
+        # hlayout.addWidget(self.line_buyer)
         
         self.label_details = QtWidgets.QLabel("Requisition Details:")
         self.text_details = QtWidgets.QTextEdit()
@@ -69,11 +110,17 @@ class PurchReqDetailTab(QtWidgets.QWidget):
         main_layout.addWidget(self.list_items)
         self.setLayout(main_layout)
         
-    def repopulateTable(self):
+    def loadItems(self):
+        self.model.clear_items()
         results = self.visual.getReqItems(self.line_id.text())
         for result in results:
-            #print(result['FILEPATH'])
+            print(result[0],result[1],result[2],result[3],result[4],result[5],"")
             self.model.add_item(result[0],result[1],result[2],result[3],result[4],result[5],"")
+            
+    def loadHeader(self):
+        result = self.visual.getReqHeader(self.line_id.text())
+        self.line_status_visual.setText(VISUAL_REQ_STATUS[result[1]])
+        self.line_buyer.setText(result[0])
             
     def resizeEvent(self, e):
         self.model.layoutChanged.emit()
@@ -113,25 +160,62 @@ class ItemsDelegate(QtWidgets.QStyledItemDelegate):
         # painter.drawLine(r.bottomLeft(),r.bottomRight())
         # painter.drawLine(r.topLeft(),r.bottomLeft())
         
+        if line_status =="C":
+            color = QtGui.QColor("#CAFFBF")
+            rect = QtCore.QRect(r.topLeft()+QtCore.QPoint(15+15+300+330,2),QtCore.QSize(110,15))
+            painter.setBrush(color)
+            painter.drawRoundedRect(rect, 5, 5)
+        
         font = painter.font()
-        font.setPointSize(8)
+        font.setPointSize(10)
+        font.setBold(True)
         #font.setBold(True)
         painter.setFont(font)
         painter.setPen(QtCore.Qt.black)
-        painter.drawText(r.topLeft()+QtCore.QPoint(35,12),str(line_no)+".")
-        # font = painter.font()
-        # font.setPointSize(8)
-        # font.setBold(False)
-        # painter.setFont(font)
-        # painter.setPen(QtCore.Qt.black)
-        painter.drawText(r.topLeft()+QtCore.QPoint(45,12),"Status: " + line_status)
-        # painter.drawText(r.topLeft()+QtCore.QPoint(55,12),"Part ID: " + part_id)
-        painter.drawText(r.topLeft()+QtCore.QPoint(90,12),"Vendor Part ID: " + vendor_part_id)
+        text = str(line_no)+"."
+        painter.drawText(r.topLeft()+QtCore.QPoint(15,14),text)
+        text = "Part ID: "
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15,14),text)
+        text = "Vendor Part ID: "
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+300,14),text)
+        text = "Status: "
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+300+335,14),text)
+        text = "Qty: "
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15,40),text)
+        text = "UOM: "
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+200,40),text)
+        text = "P.O #: "
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+200+200,40),text)
         
+        font.setBold(False)
+        painter.setFont(font)
+        # text = str(line_no)+"."
+        # painter.drawText(r.topLeft()+QtCore.QPoint(15,14),text)
+        font_metric = QtGui.QFontMetrics(painter.font())
+        font_offset = font_metric.boundingRect("Part ID:").width()
+        text = str(part_id)
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+font_offset+10,14),text)
+        text = vendor_part_id
+        font_offset=font_metric.boundingRect("Vendor Part ID:").width()
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+300+font_offset+10,14),text)
+        text = VISUAL_REQ_STATUS[line_status]
+        font_offset=font_metric.boundingRect("Status:").width()
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+300+335+font_offset+10,14),text)
+        text = str(order_qty)
+        font_offset=font_metric.boundingRect("Qty:").width()
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+font_offset+10,40),text)
+        text = str(purchase_um)
+        font_offset=font_metric.boundingRect("UOM:").width()
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+200+font_offset+10,40),text)
+        text = str(purch_order)
+        font_offset=font_metric.boundingRect("P.O #:").width()
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+200+200+font_offset+10,40),text)
+        
+
         painter.restore()
 
     def sizeHint(self, option, index):
-        return QtCore.QSize(option.rect.width()-50,32)
+        return QtCore.QSize(option.rect.width()-50,50)
 
 class ItemsModel(QtCore.QAbstractListModel):
     def __init__(self, *args, **kwargs):

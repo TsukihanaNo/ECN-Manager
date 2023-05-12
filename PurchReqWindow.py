@@ -74,8 +74,11 @@ class PurchReqWindow(QtWidgets.QWidget):
     )
         
     def save(self):
-        self.visual.getReqHeader(self.tab_purch_req.line_id.text())
-        self.tab_purch_req.repopulateTable()
+        if self.visual.checkReqID(self.tab_purch_req.line_id.text()):
+            self.tab_purch_req.loadHeader()
+            self.tab_purch_req.loadItems()
+        else:
+            self.dispMsg("The purchase requisition ID does not exist in Visual. Please make sure you entered it correctly or that you have entered a purchase requisition in Visual prior to adding it here.")
         
         
     def dispMsg(self,msg):
