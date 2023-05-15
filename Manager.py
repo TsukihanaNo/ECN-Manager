@@ -350,7 +350,7 @@ class Manager(QtWidgets.QWidget):
             #command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and DOCUMENT.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
             command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}'and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
         elif table_type=="Open":
-            command = "select * from DOCUMENT where STATUS=='Out For Approval' OR STATUS=='Rejected'"
+            command = "select * from DOCUMENT where STATUS=='Out For Approval' OR STATUS=='Rejected' OR STATUS='Started'"
         elif table_type=="Canceled":
             command = "select * from DOCUMENT where STATUS =='Canceled'"
         elif table_type=="Draft":
@@ -635,8 +635,10 @@ class Manager(QtWidgets.QWidget):
         doc_id = index.data(QtCore.Qt.DisplayRole)[0]
         if doc_id[:3]=="ECN":
             self.HookEcn(doc_id)
-        else:
+        elif doc_id[:3]=="PCN":
             self.HookPCN(doc_id)
+        else:
+            self.HookProject(doc_id)
 
 
     def loadInAnim(self):

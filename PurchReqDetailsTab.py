@@ -40,6 +40,7 @@ class PurchReqDetailTab(QtWidgets.QWidget):
         self.line_id = QtWidgets.QLineEdit()
         self.label_status = QtWidgets.QLabel("Status:")
         self.line_status = QtWidgets.QLineEdit()
+        self.line_status.setText("Draft")
         self.line_status.setDisabled(True)
         self.label_status_visual = QtWidgets.QLabel("Status Visual:")
         self.line_status_visual = QtWidgets.QLineEdit()
@@ -114,8 +115,8 @@ class PurchReqDetailTab(QtWidgets.QWidget):
         self.model.clear_items()
         results = self.visual.getReqItems(self.line_id.text())
         for result in results:
-            print(result[0],result[1],result[2],result[3],result[4],result[5],"")
-            self.model.add_item(result[0],result[1],result[2],result[3],result[4],result[5],"")
+            # print(result[0],result[1],result[2],result[3],result[4],result[5],result[6])
+            self.model.add_item(result[0],result[1],result[2],result[3],result[4],result[5],result[6])
             
     def loadHeader(self):
         result = self.visual.getReqHeader(self.line_id.text())
