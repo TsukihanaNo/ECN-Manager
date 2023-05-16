@@ -19,6 +19,7 @@ class ProjectWindow(QtWidgets.QWidget):
         self.db = self.parent.db
         self.settings = parent.settings
         self.user_info = self.parent.user_info
+        self.user_permissions = parent.user_permissions
         self.ico = parent.ico
         self.visual = parent.visual
         self.windowWidth =  950
@@ -90,6 +91,7 @@ class ProjectWindow(QtWidgets.QWidget):
         self.tab_widget = QtWidgets.QTabWidget(self)
         # self.tab_material = ProjectPartsTab(self)
         self.tab_purch_req = PurchReqTab(self)
+        
         # self.tab_widget.addTab(self.tab_material,"Parts")
         self.tab_widget.addTab(self.tab_purch_req,"Purch Reqs")
         

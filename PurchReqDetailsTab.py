@@ -9,11 +9,12 @@ class PurchReqDetailTab(QtWidgets.QWidget):
     def __init__(self, parent = None, doc_id = None):
         super(PurchReqDetailTab,self).__init__()
         self.parent = parent
-        self.cursor = self.parent.cursor
-        self.db = self.parent.db
+        self.cursor = parent.cursor
+        self.db = parent.db
         self.settings = parent.settings
         self.visual = parent.visual
-        self.user_info = self.parent.user_info
+        self.user_info = parent.user_info
+        self.user_permissions = parent.user_permissions
         # self.windowWidth =  self.parent.windowWidth
         # self.windowHeight = self.parent.windowHeight
         # self.setFixedSize(self.windowWidth,self.windowHeight)

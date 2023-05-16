@@ -18,6 +18,7 @@ class PurchReqTab(QtWidgets.QWidget):
         self.db = parent.db
         self.settings = parent.settings
         self.user_info = parent.user_info
+        self.user_permissions = parent.user_permissions
         self.ico = parent.ico
         self.visual = parent.visual
         self.doc_id = parent.doc_id
@@ -40,11 +41,11 @@ class PurchReqTab(QtWidgets.QWidget):
         icon_loc = icon = os.path.join(program_location,"icons","add.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.addReq)
-        self.button_remove = QtWidgets.QPushButton("Remove Requisition")
-        icon_loc = icon = os.path.join(program_location,"icons","minus.png")
-        self.button_remove.setIcon(QtGui.QIcon(icon_loc))
-        self.button_remove.setDisabled(True)
-        self.button_remove.clicked.connect(self.removeRow)
+        # self.button_remove = QtWidgets.QPushButton("Remove Requisition")
+        # icon_loc = icon = os.path.join(program_location,"icons","minus.png")
+        # self.button_remove.setIcon(QtGui.QIcon(icon_loc))
+        # self.button_remove.setDisabled(True)
+        # self.button_remove.clicked.connect(self.removeRow)
         self.button_edit = QtWidgets.QPushButton("Edit Requisition")
         icon_loc = icon = os.path.join(program_location,"icons","edit.png")
         self.button_edit.setIcon(QtGui.QIcon(icon_loc))
@@ -52,12 +53,12 @@ class PurchReqTab(QtWidgets.QWidget):
         self.button_edit.clicked.connect(self.editReq)
         
         self.toolbar.addWidget(self.button_add)
-        self.toolbar.addWidget(self.button_remove)
+        # self.toolbar.addWidget(self.button_remove)
         self.toolbar.addWidget(self.button_edit)
         
         self.reqs = QtWidgets.QListView()
         self.reqs.setStyleSheet("QListView{background-color:#f0f0f0}")
-        self.reqs.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.reqs.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.reqs.setResizeMode(QtWidgets.QListView.Adjust)
         self.reqs.setItemDelegate(ReqsDelegate())
         self.reqs.doubleClicked.connect(self.editReq)
@@ -119,10 +120,7 @@ class PurchReqTab(QtWidgets.QWidget):
         self.menu.exec_(event.globalPos())
         
     def onRowSelect(self):
-        pass
-        # if self.parent.parent.user_info['user']==self.parent.doc_data["AUTHOR"]:
-        #     self.button_remove.setEnabled(bool(self.reqs.selectionModel().selectedIndexes()))
-        #     self.button_edit.setEnabled(bool(self.reqs.selectionModel().selectedIndexes()))
+        self.button_edit.setEnabled(bool(self.reqs.selectionModel().selectedIndexes()))
         
         
     def addReq(self):

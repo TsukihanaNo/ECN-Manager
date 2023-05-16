@@ -2,6 +2,8 @@ from PySide6 import QtWidgets, QtCore, QtGui
 from datetime import datetime
 import sys, os
 from PurchReqDetailsTab import *
+from SignatureTab import *
+from NotificationTab import *
 
 if getattr(sys, 'frozen', False):
     # frozen
@@ -15,9 +17,10 @@ class PurchReqWindow(QtWidgets.QWidget):
         super(PurchReqWindow,self).__init__()
         self.parent = parent
         self.cursor = parent.cursor
-        self.db = self.parent.db
+        self.db = parent.db
         self.settings = parent.settings
-        self.user_info = self.parent.user_info
+        self.user_info = parent.user_info
+        self.user_permissions = parent.user_permissions
         self.visual = parent.visual
         self.windowWidth =  900
         self.windowHeight = 550
@@ -59,8 +62,13 @@ class PurchReqWindow(QtWidgets.QWidget):
         # self.toolbar.addWidget(self.button_members)
         
         self.tab_purch_req = PurchReqDetailTab(self)
+        self.tab_signature = SignatureTab(self)
+        self.tab_notification = NotificationTab(self)
+        
         self.tab_widget = QtWidgets.QTabWidget(self)
         self.tab_widget.addTab(self.tab_purch_req,"Purch Reqs")
+        self.tab_widget.addTab(self.tab_signature,"Signatures")
+        self.tab_widget.addTab(self.tab_notification,"Notifications")
         
         mainlayout.addWidget(self.toolbar)
         mainlayout.addWidget(self.tab_widget)
