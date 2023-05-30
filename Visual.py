@@ -36,6 +36,18 @@ class Visual():
             if item=="" or item is None:
                 return False
         return True
+    
+    def queryPartsNoStage(self):
+        command = "select ID, Description from part where stage_id is Null and inventory_locked='Y'"
+        self.cur.execute(command)
+        results = self.cur.fetchall()
+        return results
+    
+    def queryPartsFromBOM(self,part_id):
+        command = f"select requirement.part_id, part.description from requirement left join part on part.id = requirement.part_id where workorder_type='M' and workorder_base_id='{part_id}'"
+        self.cur.execute(command)
+        results = self.cur.fetchall()
+        return results
 
     def checkObsolete(self,part):
         self.cur.execute(f"select STATUS from PART where ID='{part}'")

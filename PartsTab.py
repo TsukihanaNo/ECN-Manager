@@ -1,6 +1,7 @@
 from PySide6 import QtGui, QtCore, QtWidgets
 import sys, os
 from PartEditor import *
+from PartImportPanel import *
 
 if getattr(sys, 'frozen', False):
     # frozen
@@ -13,6 +14,7 @@ class PartsTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(PartsTab,self).__init__()
         self.parent = parent
+        self.visual = parent.visual
         self.initAtt()
         self.clipboard = QtGui.QGuiApplication.clipboard()
         self.menu = QtWidgets.QMenu(self)
@@ -43,9 +45,13 @@ class PartsTab(QtWidgets.QWidget):
         self.button_edit.setDisabled(True)
         self.button_edit.clicked.connect(self.editPart)
         
+        self.button_import_visual = QtWidgets.QPushButton("Import - Visual")
+        self.button_import_visual.clicked.connect(self.importPart)
+        
         self.toolbar.addWidget(self.button_add)
         self.toolbar.addWidget(self.button_remove)
         self.toolbar.addWidget(self.button_edit)
+        self.toolbar.addWidget(self.button_import_visual)
         
         self.parts = QtWidgets.QListView()
         self.parts.setStyleSheet("QListView{background-color:#f0f0f0}")
@@ -117,6 +123,9 @@ class PartsTab(QtWidgets.QWidget):
         
     def addPart(self):
         self.part_editor = PartEditor(self)
+        
+    def importPart(self):
+        self.import_editor = PartImportPanel(self)
         
     def editPart(self):
         index = self.parts.currentIndex()

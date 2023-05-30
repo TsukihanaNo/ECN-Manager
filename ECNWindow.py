@@ -30,6 +30,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.db = self.parent.db
         self.settings = parent.settings
         self.user_info = self.parent.user_info
+        self.visual = parent.visual
         self.windowWidth =  950
         self.windowHeight = 580
         self.setFixedSize(self.windowWidth,self.windowHeight)
