@@ -38,16 +38,38 @@ class Visual():
         return True
     
     def queryPartsNoStage(self):
-        command = "select ID, Description from part where stage_id is Null and inventory_locked='Y'"
+        command = "select ID, Description, purchased, fabricated from part where stage_id is Null and inventory_locked='Y'"
         self.cur.execute(command)
         results = self.cur.fetchall()
-        return results
+        filtered_results = []
+        for result in results:
+            if result[2]=="Y":
+                ptype="Purchased"
+            else:
+                ptype="Fabricated"
+            if not self.checkPartSetup(result[0],ptype):
+                filtered_results.append(result)
+                
+        return filtered_results
     
-    def queryPartsFromBOM(self,part_id):
-        command = f"select requirement.part_id, part.description from requirement left join part on part.id = requirement.part_id where workorder_type='M' and workorder_base_id='{part_id}'"
+    def queryPartsFromBOM(self,part_id,filtered=False):
+        command = f"select requirement.part_id, part.description, part.purchased, part.fabricated  from requirement left join part on part.id = requirement.part_id where workorder_type='M' and workorder_base_id='{part_id}'"
         self.cur.execute(command)
         results = self.cur.fetchall()
-        return results
+        
+        if not filtered:
+            return results
+        
+        filtered_results = []
+        for result in results:
+            if result[2]=="Y":
+                ptype="Purchased"
+            else:
+                ptype="Fabricated"
+            if not self.checkPartSetup(result[0],ptype):
+                filtered_results.append(result)
+                
+        return filtered_results
 
     def checkObsolete(self,part):
         self.cur.execute(f"select STATUS from PART where ID='{part}'")

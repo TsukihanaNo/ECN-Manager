@@ -20,6 +20,10 @@ class SignaturePanel(QtWidgets.QWidget):
         self.setFixedSize(self.windowWidth,self.windowHeight)
         self.parent = parent
         self.sig_type = sig_type
+        self.doc_type = parent.doc_type
+        self.stageDict = parent.stageDict
+        self.stageDictPCN = parent.stageDictPCN
+        print(self.doc_type)
         self.row = row
         self.job_titles =[]
         self.findJobTitles()
@@ -87,12 +91,12 @@ class SignaturePanel(QtWidgets.QWidget):
             self.dispMsg("This person already exists in list.")
         else:
             if self.sig_type=="Signing":
-                if self.parent.parent.doc_id[:3]=="ECN":
-                    if self.parent.parent.parent.stageDict[job_title]=="99":
+                if self.doc_type=="ECN":
+                    if self.stageDict[job_title]=="99":
                         self.dispMsg("This user is set for notification only. Please use the Notification Tab.")
                         return
                 else:
-                    if self.parent.parent.parent.stageDictPCN[job_title]=="99":
+                    if self.stageDictPCN[job_title]=="99":
                         self.dispMsg("This user is set for notification only. Please use the notification Tab.")
                         return     
             self.parent.model.add_signature(job_title, name, user)
@@ -106,11 +110,11 @@ class SignaturePanel(QtWidgets.QWidget):
         else:
             if self.sig_type=="Signing":
                 if self.parent.parent.doc_id[:3]=="ECN":
-                    if self.parent.parent.parent.stageDict[job_title]=="99":
+                    if self.stageDict[job_title]=="99":
                         self.dispMsg("This user is set for notification only.")
                         return
                 else:
-                    if self.parent.parent.parent.stageDictPCN[job_title]=="99":
+                    if self.stageDictPCN[job_title]=="99":
                         self.dispMsg("This user is set for notification only.")
                         return     
             self.parent.model.add_signature(job_title, name, user)

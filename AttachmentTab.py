@@ -15,6 +15,7 @@ class AttachmentTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(AttachmentTab,self).__init__()
         self.parent = parent
+        self.user_info = parent.user_info
         self.files = []
         self.initAtt()
         self.initUI()
@@ -76,7 +77,7 @@ class AttachmentTab(QtWidgets.QWidget):
         self.setLayout(mainlayout)
         
     def onRowSelect(self):
-        if self.parent.parent.user_info['user']==self.parent.doc_data["AUTHOR"] and self.parent.doc_data["STATUS"]!="Completed":
+        if self.user_info['user']==self.parent.doc_data["AUTHOR"] and self.parent.doc_data["STATUS"]!="Completed":
             self.button_remove.setEnabled(bool(self.attachments.selectionModel().selectedIndexes()))
         self.button_open.setEnabled(bool(self.attachments.selectionModel().selectedIndexes()))
         self.button_open_loc.setEnabled(bool(self.attachments.selectionModel().selectedIndexes()))

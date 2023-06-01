@@ -21,6 +21,8 @@ class PurchReqWindow(QtWidgets.QWidget):
         self.settings = parent.settings
         self.user_info = parent.user_info
         self.user_permissions = parent.user_permissions
+        self.stageDict = parent.stageDict
+        self.stageDictPCN = parent.stageDictPCN
         self.visual = parent.visual
         self.windowWidth =  900
         self.windowHeight = 550
@@ -62,7 +64,7 @@ class PurchReqWindow(QtWidgets.QWidget):
         # self.toolbar.addWidget(self.button_members)
         
         self.tab_purch_req = PurchReqDetailTab(self)
-        self.tab_signature = SignatureTab(self)
+        self.tab_signature = SignatureTab(self,"PRQ")
         self.tab_notification = NotificationTab(self)
         
         self.tab_widget = QtWidgets.QTabWidget(self)
@@ -100,9 +102,88 @@ class PurchReqWindow(QtWidgets.QWidget):
                     self.updateData()
                     if not msg:
                         self.dispMsg("Project has been updated!")
+                        
         else:
             self.dispMsg("The purchase requisition ID does not exist in Visual. Please make sure you entered it correctly or that you have entered a purchase requisition in Visual prior to adding it here.")
         
+    def AddSignatures(self):
+        #inserting to signature table
+        #SIGNATURE(ECN_ID TEXT, NAME TEXT, USER_ID TEXT, HAS_SIGNED TEXT, SIGNED_DATE TEXT)
+        try:
+            #get current values in db
+            current_list = []
+            self.cursor.execute(f"SELECT USER_ID FROM SIGNATURE WHERE DOC_ID='{self.doc_id}' and TYPE='Signing'")
+            results = self.cursor.fetchall()
+            for result in results:
+                current_list.append(result[0])
+            #print('current list',current_list)
+            #get new values
+            new_list = []
+            for x in range(self.tab_signature.rowCount()):
+                job_title = self.tab_signature.model.get_job_title(x)
+                name = self.tab_signature.model.get_name(x)
+                user_id = self.tab_signature.model.get_user(x)
+                new_list.append((self.doc_id,job_title,name,user_id,"Signing"))
+            #print('new list',new_list)
+            
+            for element in new_list:
+                if element[3] not in current_list:
+                    #print(f'insert {element[3]} into signature db')
+                    self.cursor.execute("INSERT INTO SIGNATURE(DOC_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(element))
+            for element in current_list:
+                no_match = True
+                for elements in new_list:
+                    if element == elements[3]:
+                        no_match = False
+                if no_match:
+                    #print(f"remove {element} from signature db")
+                    self.cursor.execute(f"DELETE FROM SIGNATURE WHERE DOC_ID = '{self.doc_id}' and USER_ID='{element}'")
+                    
+                    
+            current_list = []
+            self.cursor.execute(f"SELECT USER_ID FROM SIGNATURE WHERE DOC_ID='{self.doc_id}' and TYPE='Notify'")
+            results = self.cursor.fetchall()
+            for result in results:
+                current_list.append(result[0])
+            
+            new_list = []
+            for x in range(self.tab_notification.rowCount()):
+                job_title = self.tab_notification.model.get_job_title(x)
+                name = self.tab_notification.model.get_name(x)
+                user_id = self.tab_notification.model.get_user(x)
+                new_list.append((self.doc_id,job_title,name,user_id,"Notify"))
+                
+            for element in new_list:
+                if element[3] not in current_list:
+                    #print(f'insert {element[3]} into notify db')
+                    self.cursor.execute("INSERT INTO SIGNATURE(DOC_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(element))
+            for element in current_list:
+                no_match = True
+                for elements in new_list:
+                    if element == elements[3]:
+                        no_match = False
+                if no_match:
+                    #print(f"remove {element} from notify db")
+                    self.cursor.execute(f"DELETE FROM SIGNATURE WHERE DOC_ID = '{self.doc_id}' and USER_ID='{element}'")
+            
+            if self.doc_data["AUTHOR"]==self.parent.user_info["user"]:
+                self.button_release.setEnabled(self.tab_signature.rowCount()>0)
+            #print('data updated')
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error occured during data update (signature)!\n Error: {e}")
+            
+    def checkSigNotiDuplicate(self):
+        sigs = []
+        for row in range(self.tab_signature.rowCount()):
+            sigs.append(self.tab_signature.model.get_user(row))
+        for row in range(self.tab_notification.rowCount()):
+            sigs.append(self.tab_notification.model.get_user(row))
+        #print(sigs)
+        if len(sigs)==len(set(sigs)):
+            return False
+        else:
+            return True
     
     def checkID(self):
         self.cursor.execute(f"select DOC_ID from PURCH_REQS where DOC_ID='{self.tab_purch_req.line_doc_id.text()}'")
@@ -136,6 +217,10 @@ class PurchReqWindow(QtWidgets.QWidget):
             detail = self.tab_purch_req.text_details.toHtml()
             data = (self.project_id,self.doc_id,req_id,detail,status,author,modifieddate)
             self.cursor.execute("INSERT INTO PURCH_REQS(PROJECT_ID,DOC_ID,REQ_ID,DETAILS,STATUS,AUTHOR,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?)",(data))
+            if self.checkSigNotiDuplicate():
+                self.dispMsg("Duplicate signatures found")
+            else:
+                self.AddSignatures()
             self.db.commit()
             self.parent.model.add_req(self.doc_id,req_id,status)
         except Exception as e:

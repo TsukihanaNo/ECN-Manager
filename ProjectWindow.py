@@ -22,6 +22,8 @@ class ProjectWindow(QtWidgets.QWidget):
         self.user_permissions = parent.user_permissions
         self.ico = parent.ico
         self.visual = parent.visual
+        self.stageDict = parent.stageDict
+        self.stageDictPCN = parent.stageDictPCN
         self.windowWidth =  950
         self.windowHeight = 580
         self.setFixedSize(self.windowWidth,self.windowHeight)
@@ -104,6 +106,7 @@ class ProjectWindow(QtWidgets.QWidget):
         if self.checkFields():
             if self.doc_id is None:
                 self.generateID()
+                self.tab_purch_req.button_add.setEnabled(True)
             if not self.checkID():
                 self.insertData()
                 if not msg:

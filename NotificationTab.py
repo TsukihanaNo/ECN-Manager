@@ -15,6 +15,8 @@ class NotificationTab(QtWidgets.QWidget):
     def __init__(self, parent = None,doc_type="ECN",doc_data=None):
         super(NotificationTab,self).__init__()
         self.parent = parent
+        self.stageDict = parent.stageDict
+        self.stageDictPCN = parent.stageDictPCN
         self.doc_type = doc_type
         self.doc_data = doc_data
         self.job_titles =[]

@@ -29,8 +29,10 @@ class ECNWindow(QtWidgets.QWidget):
         self.cursor = self.parent.cursor
         self.db = self.parent.db
         self.settings = parent.settings
-        self.user_info = self.parent.user_info
+        self.user_info = parent.user_info
         self.visual = parent.visual
+        self.stageDict = parent.stageDict
+        self.stageDictPCN = parent.stageDictPCN
         self.windowWidth =  950
         self.windowHeight = 580
         self.setFixedSize(self.windowWidth,self.windowHeight)
@@ -39,7 +41,7 @@ class ECNWindow(QtWidgets.QWidget):
         #self.typeindex = {'New Part':0, 'BOM Update':1, 'Firmware Update':2, 'Configurator Update' : 3,'Product EOL':4}
         self.initAtt()
         if self.doc_id == None:
-            self.doc_data = {"AUTHOR":self.parent.user_info["user"],"STATUS":"Draft"}
+            self.doc_data = {"AUTHOR":self.user_info["user"],"STATUS":"Draft"}
             self.initReqUI()
             self.generateECNID()
         else:
@@ -56,7 +58,7 @@ class ECNWindow(QtWidgets.QWidget):
     def initAtt(self):
         self.setWindowIcon(self.parent.ico)
         self.setGeometry(100,50,self.windowWidth,self.windowHeight)
-        self.setWindowTitle(f"ECN-Viewer - user: {self.parent.user_info['user']}")
+        self.setWindowTitle(f"ECN-Viewer - user: {self.user_info['user']}")
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         self.setMinimumWidth(self.windowWidth)
@@ -81,8 +83,8 @@ class ECNWindow(QtWidgets.QWidget):
         
         self.tabwidget = QtWidgets.QTabWidget(self)
         self.tab_ecn = ECNTab(self)
-        self.tab_ecn.line_author.setText(self.parent.user_info['user'])
-        self.tab_ecn.box_requestor.setCurrentText(self.parent.user_info['user'])
+        self.tab_ecn.line_author.setText(self.user_info['user'])
+        self.tab_ecn.box_requestor.setCurrentText(self.user_info['user'])
         self.tab_ecn.line_status.setText("Draft")
         #self.tab_ecn.edit_date.setDate(QtCore.QDate.currentDate())
         #self.tab_ecn.edit_date.setMinimumDate(QtCore.QDate.currentDate())
@@ -176,7 +178,7 @@ class ECNWindow(QtWidgets.QWidget):
         #buttonlayout = QtWidgets.QHBoxLayout()
         
         #disable signature and attachment adding if not author and completed
-        if self.parent.user_info['user']==self.doc_data['AUTHOR'] and self.doc_data['STATUS']!="Completed":
+        if self.user_info['user']==self.doc_data['AUTHOR'] and self.doc_data['STATUS']!="Completed":
             self.tab_signature.button_add.setEnabled(True)
             #self.tab_signature.button_remove.setEnabled(True)
             self.tab_attach.button_add.setEnabled(True)
@@ -194,7 +196,7 @@ class ECNWindow(QtWidgets.QWidget):
             # self.tab_comments.enterText.setVisible(False)
         
         if self.tab_ecn.line_status.text()!="Completed":
-            if self.parent.user_info['user']==self.tab_ecn.line_author.text():
+            if self.user_info['user']==self.tab_ecn.line_author.text():
                 self.button_save = QtWidgets.QPushButton("Save")
                 #self.button_save.setToolTip("Save")
                 icon_loc = icon = os.path.join(program_location,"icons","save.png")
@@ -390,7 +392,7 @@ class ECNWindow(QtWidgets.QWidget):
     def approve(self):
         try:
             approvedate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            data = (approvedate,self.doc_id,self.parent.user_info['user'])
+            data = (approvedate,self.doc_id,self.user_info['user'])
             self.cursor.execute("UPDATE SIGNATURE SET SIGNED_DATE = ? WHERE DOC_ID = ? and USER_ID = ?",(data))
             self.cursor.execute(f"UPDATE DOCUMENT SET LAST_MODIFIED = '{approvedate}' where DOC_ID='{self.doc_id}'")
             self.tab_signature.repopulateTable()
@@ -418,7 +420,7 @@ class ECNWindow(QtWidgets.QWidget):
                 self.parent.repopulateTable()
                 self.dispMsg("Rejection successful. Setting ECN stage to 0 and all signatures have been removed.")
                 self.tab_ecn.line_status.setText("Rejected")
-                self.addNotification(self.doc_id, "Rejected To Author",from_user=self.parent.user_info['user'],msg=comment)
+                self.addNotification(self.doc_id, "Rejected To Author",from_user=self.user_info['user'],msg=comment)
                 self.button_reject.setDisabled(True)
                 self.button_approve.setDisabled(True)
             except Exception as e:
@@ -581,12 +583,12 @@ class ECNWindow(QtWidgets.QWidget):
         comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Comment", "")
         if ok and comment!="":
             self.addComment(self.doc_id, comment,"User Comment")
-            self.addNotification(self.doc_id, "User Comment",from_user=self.parent.user_info['user'], msg=comment)
+            self.addNotification(self.doc_id, "User Comment",from_user=self.user_info['user'], msg=comment)
             #self.dispMsg("Comment has been added!")
 
     def addComment(self,doc_id,comment,commentType):
         #COMMENTS(ECN_ID TEXT, NAME TEXT, USER TEXT, COMM_DATE DATE, COMMENT TEXT
-        data = (doc_id, self.parent.user_info['user'],datetime.now().strftime('%Y-%m-%d %H:%M:%S'),comment,commentType)
+        data = (doc_id, self.user_info['user'],datetime.now().strftime('%Y-%m-%d %H:%M:%S'),comment,commentType)
         self.cursor.execute("INSERT INTO COMMENTS(DOC_ID, USER, COMM_DATE, COMMENT,TYPE) VALUES(?,?,?,?,?)",(data))
         self.db.commit()
         # self.tab_comments.enterText.clear()
@@ -641,7 +643,7 @@ class ECNWindow(QtWidgets.QWidget):
                 self.dispMsg("ECN has been canceled")
                 self.tab_ecn.line_status.setText("Canceled")
                 self.parent.repopulateTable()
-                self.addNotification(self.doc_id, "Canceling",from_user=self.parent.user_info['user'],msg=comment)
+                self.addNotification(self.doc_id, "Canceling",from_user=self.user_info['user'],msg=comment)
             except Exception as e:
                 print(e)
                 self.dispMsg(f"Problems occured trying to cancel ECN.\n Error:{e}")
@@ -689,7 +691,7 @@ class ECNWindow(QtWidgets.QWidget):
     
     def getTitlesForStage(self):
         titles = {}
-        for key, value in self.parent.stageDict.items():
+        for key, value in self.stageDict.items():
             if value not in titles:
                 titles[value] = [key]
             else:
@@ -727,7 +729,7 @@ class ECNWindow(QtWidgets.QWidget):
         stage = []
         for result in results:
             #print(result[0])
-            stage.append(self.parent.stageDict[result[0]])
+            stage.append(self.stageDict[result[0]])
         stage = sorted(stage)
         #print(stage)
         return stage
@@ -755,14 +757,14 @@ class ECNWindow(QtWidgets.QWidget):
             return False
         titles = self.getTitlesForStage()
         titles = titles[str(curStage)]
-        self.cursor.execute(f"SELECT USER_ID from SIGNATURE where DOC_ID='{self.doc_id}' and USER_ID='{self.parent.user_info['user']}'")
+        self.cursor.execute(f"SELECT USER_ID from SIGNATURE where DOC_ID='{self.doc_id}' and USER_ID='{self.user_info['user']}'")
         result = self.cursor.fetchone()
-        if self.parent.user_info['title'] in titles and result is not None:
+        if self.user_info['title'] in titles and result is not None:
             return True
         return False
             
     def hasUserSigned(self):
-        self.cursor.execute(f"SELECT SIGNED_DATE from SIGNATURE where DOC_ID='{self.doc_id}' and USER_ID='{self.parent.user_info['user']}'")
+        self.cursor.execute(f"SELECT SIGNED_DATE from SIGNATURE where DOC_ID='{self.doc_id}' and USER_ID='{self.user_info['user']}'")
         result = self.cursor.fetchone()
         if result is None or result[0] is None:
             #print("found none returning false")
@@ -1041,7 +1043,7 @@ class ECNWindow(QtWidgets.QWidget):
     def checkDiff(self):
         doc_id = self.doc_id
         changedate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        user = self.parent.user_info['user']
+        user = self.user_info['user']
         prevdata = self.now_type
         newdata = self.tab_ecn.combo_type.currentText()
         if newdata != prevdata:

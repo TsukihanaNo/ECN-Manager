@@ -26,8 +26,11 @@ class PCNWindow(QtWidgets.QWidget):
         self.windowWidth =  950
         self.windowHeight = 800
         self.parent = parent
+        self.user_info = parent.user_info
         self.doc_id = doc_id
         self.settings = parent.settings
+        self.stageDict = parent.stageDict
+        self.stageDictPCN = parent.stageDictPCN
         self.db = self.parent.db
         self.cursor = self.parent.cursor
         if self.doc_id is None:
@@ -410,13 +413,13 @@ class PCNWindow(QtWidgets.QWidget):
         results = self.cursor.fetchall()
         stage = []
         for result in results:
-            stage.append(self.parent.stageDictPCN[result[0]])
+            stage.append(self.stageDictPCN[result[0]])
         stage = sorted(stage)
         return stage
     
     def getTitlesForStage(self):
         titles = {}
-        for key, value in self.parent.stageDictPCN.items():
+        for key, value in self.stageDictPCN.items():
             if value not in titles:
                 titles[value] = [key]
             else:

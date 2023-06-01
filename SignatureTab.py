@@ -16,6 +16,8 @@ class SignatureTab(QtWidgets.QWidget):
         self.parent = parent
         self.doc_type = doc_type
         self.doc_data= doc_data
+        self.stageDict = parent.stageDict
+        self.stageDictPCN = parent.stageDictPCN
         self.job_titles =[]
         self.findJobTitles()
         self.initAtt()
@@ -128,7 +130,7 @@ class SignatureTab(QtWidgets.QWidget):
         for row in range(self.rowCount()):
             user = self.model.get_user(row)
             job_title = self.model.get_job_title(row)
-            stage =self.parent.parent.stageDict[job_title]
+            stage =self.stageDict[job_title]
             table_dict[user]=stage
         return table_dict
         

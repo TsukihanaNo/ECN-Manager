@@ -19,6 +19,8 @@ class PurchReqTab(QtWidgets.QWidget):
         self.settings = parent.settings
         self.user_info = parent.user_info
         self.user_permissions = parent.user_permissions
+        self.stageDict = parent.stageDict
+        self.stageDictPCN = parent.stageDictPCN
         self.ico = parent.ico
         self.visual = parent.visual
         self.doc_id = parent.doc_id
@@ -38,6 +40,8 @@ class PurchReqTab(QtWidgets.QWidget):
         mainlayout.addWidget(self.toolbar)
 
         self.button_add = QtWidgets.QPushButton("Add Requisition")
+        if self.doc_id is None:
+            self.button_add.setDisabled(True)
         icon_loc = icon = os.path.join(program_location,"icons","add.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.addReq)

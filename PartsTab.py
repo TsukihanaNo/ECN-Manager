@@ -30,7 +30,7 @@ class PartsTab(QtWidgets.QWidget):
         
         mainlayout.addWidget(self.toolbar)
 
-        self.button_add = QtWidgets.QPushButton("Add Part")
+        self.button_add = QtWidgets.QPushButton("Add Part - Manual")
         icon_loc = icon = os.path.join(program_location,"icons","add.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.addPart)
@@ -45,13 +45,16 @@ class PartsTab(QtWidgets.QWidget):
         self.button_edit.setDisabled(True)
         self.button_edit.clicked.connect(self.editPart)
         
-        self.button_import_visual = QtWidgets.QPushButton("Import - Visual")
+        self.button_import_visual = QtWidgets.QPushButton("Import From Visual")
+        icon_loc = icon = os.path.join(program_location,"icons","add.png")
+        self.button_import_visual.setIcon(QtGui.QIcon(icon_loc))
         self.button_import_visual.clicked.connect(self.importPart)
         
         self.toolbar.addWidget(self.button_add)
+        self.toolbar.addWidget(self.button_import_visual)
         self.toolbar.addWidget(self.button_remove)
         self.toolbar.addWidget(self.button_edit)
-        self.toolbar.addWidget(self.button_import_visual)
+        
         
         self.parts = QtWidgets.QListView()
         self.parts.setStyleSheet("QListView{background-color:#f0f0f0}")
@@ -190,7 +193,7 @@ class PartsDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         painter.save()
         
-        part_id, desc, part_type, disposition, mfg, mfg_part_id, reference,replacing , Inspection = index.model().data(index, QtCore.Qt.DisplayRole)
+        part_id, desc, part_type, disposition, mfg, mfg_part_id, reference,replacing , inspection = index.model().data(index, QtCore.Qt.DisplayRole)
         status = index.model().data(index, QtCore.Qt.DecorationRole)
         
         lineMarkedPen = QtGui.QPen(QtGui.QColor("#f0f0f0"),1,QtCore.Qt.SolidLine)
@@ -202,7 +205,10 @@ class PartsDelegate(QtWidgets.QStyledItemDelegate):
         elif option.state & QtWidgets.QStyle.State_MouseOver:
             color = QtGui.QColor("#BDB2FF")
         else:
-            color = QtGui.QColor("#FFFFFC")
+            if inspection =="" and disposition=="":
+                color = QtGui.QColor("#FFADAD")
+            else:
+                color = QtGui.QColor("#FFFFFC")
         painter.setBrush(color)
         painter.drawRoundedRect(r, 5, 5)
         
@@ -244,7 +250,7 @@ class PartsDelegate(QtWidgets.QStyledItemDelegate):
         painter.setFont(font)
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,15),f"Type: {part_type}")
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,30),f"Disposition: {disposition}")
-        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,45),f"Inspection: {Inspection}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,45),f"Inspection: {inspection}")
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,65),f"Manufacturer: {mfg}")
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,65),f"Mfg. Part: {mfg_part_id}")
         if reference is not None:
@@ -288,7 +294,7 @@ class PartsModel(QtCore.QAbstractListModel):
         
     def update_status(self,row,status):
         self.status[row]=status
-        self.layoutChange.emit()
+        self.layoutChanged.emit()
         
     def get_part_data(self,row):
         return self.parts[row]
