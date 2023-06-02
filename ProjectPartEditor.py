@@ -74,9 +74,7 @@ class ProjectPartEditor(QtWidgets.QWidget):
         form_layout.addRow("Mfg. Part ID:", self.line_mfg_part)
         form_layout.addRow("Misc Details:", self.text_details)
         form_layout.addRow(self.button_save)
-        
-        self.setLayout(form_layout)
-        
+                
     def loadData(self,data):
         self.line_part.setText(data[0])
         self.line_desc.setText(data[1])

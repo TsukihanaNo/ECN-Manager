@@ -76,7 +76,6 @@ class PCNTab(QtWidgets.QWidget):
         mainLayout.addWidget(self.label_web)
         mainLayout.addWidget(self.line_web)
         
-        self.setLayout(mainLayout)
         
         
     def getNameList(self):

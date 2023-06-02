@@ -28,8 +28,6 @@ class ChangeLogTab(QtWidgets.QWidget):
         vlayout.addLayout(hlayout)
         vlayout.setAlignment(QtCore.Qt.AlignCenter)
 
-        self.setLayout(vlayout)
-
 
     def initiateTable(self):
         titles = ['ECN ID', 'Time Stamp', 'Name', 'Prev Data', 'New Data']

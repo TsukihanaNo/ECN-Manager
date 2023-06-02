@@ -153,7 +153,7 @@ class PurchReqTab(QtWidgets.QWidget):
             #     status = self.getStatus(result['PART_ID'], result['TYPE'])
             # else:
             #     status = "NA"
-            self.model.add_req(result['DOC_ID'], result['REQ_ID'],result['STATUS'])
+            self.model.add_req(result['DOC_ID'],result["DOC_TITLE"], result['REQ_ID'],result['STATUS'])
             
     def rowCount(self):
         return self.model.rowCount(self.reqs)
@@ -196,7 +196,7 @@ class ReqsDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         painter.save()
         
-        doc_id, req_id,status = index.model().data(index, QtCore.Qt.DisplayRole)
+        doc_id, title,req_id,status = index.model().data(index, QtCore.Qt.DisplayRole)
         # status = index.model().data(index, QtCore.Qt.DecorationRole)
         
         lineMarkedPen = QtGui.QPen(QtGui.QColor("#f0f0f0"),1,QtCore.Qt.SolidLine)
@@ -245,22 +245,8 @@ class ReqsDelegate(QtWidgets.QStyledItemDelegate):
         font.setBold(False)
         painter.setFont(font)
         painter.setPen(QtCore.Qt.black)
-        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,45),req_id)
-        font.setPointSize(8)
-        painter.setFont(font)
-        # painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,15),f"Type: {part_type}")
-        # painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,30),f"Disposition: {disposition}")
-        # painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,45),f"Inspection: {Inspection}")
-        # painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,65),f"Manufacturer: {mfg}")
-        # painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,65),f"Mfg. Part: {mfg_part_id}")
-        # if reference is not None:
-        #     if len(reference)>50:
-        #         reference = reference[:50] +" ..."
-        # painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,80),f"Reference: {reference}")
-        # if replacing is not None:
-        #     if len(replacing)>100:
-        #         replacing = replacing[:100] +" ..."
-        # painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,95),f"Replacing: {replacing}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,25),"Req. ID: "+req_id)
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,45),title)
         painter.restore()
 
     def sizeHint(self, option, index):
@@ -288,8 +274,8 @@ class ReqsModel(QtCore.QAbstractListModel):
         del self.reqs[row]
         self.layoutChanged.emit()
         
-    def update_req_data(self,row, doc_id, req_id,status):
-        self.reqs[row]=(doc_id, req_id,status)
+    def update_req_data(self,row, doc_id,title, req_id,status):
+        self.reqs[row]=(doc_id,title, req_id,status)
         self.layoutChanged.emit()
         
     def update_status(self,row,status):
@@ -335,9 +321,9 @@ class ReqsModel(QtCore.QAbstractListModel):
     # def get_inspection(self,row):
     #     return self.reqs[row][8]
     
-    def add_req(self, doc_id, req_id,status):
+    def add_req(self, doc_id,title, req_id,status):
         # Access the list via the model.
-        self.reqs.append((doc_id, req_id,status))
+        self.reqs.append((doc_id,title, req_id,status))
         self.status.append(status)
         # Trigger refresh.
         self.layoutChanged.emit()

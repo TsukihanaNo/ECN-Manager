@@ -78,7 +78,6 @@ class Notifier(QtWidgets.QWidget):
         mainLayout.addWidget(self.log_text)
         mainLayout.addWidget(self.button_refresh)
         # mainLayout.setMenuBar(self.menubar)
-        self.setLayout(mainLayout)
         self.repopulateTable()
     
     def startTask(self):

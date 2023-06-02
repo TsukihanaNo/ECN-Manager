@@ -74,7 +74,6 @@ class AttachmentTab(QtWidgets.QWidget):
         mainlayout.addWidget(self.toolbar)
         mainlayout.addWidget(self.attachments)
 
-        self.setLayout(mainlayout)
         
     def onRowSelect(self):
         if self.user_info['user']==self.parent.doc_data["AUTHOR"] and self.parent.doc_data["STATUS"]!="Completed":

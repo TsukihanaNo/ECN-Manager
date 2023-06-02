@@ -37,7 +37,7 @@ class PurchReqDetailTab(QtWidgets.QWidget):
         self.label_doc_id = QtWidgets.QLabel("Doc ID:")
         self.line_doc_id = QtWidgets.QLineEdit()
         self.line_doc_id.setDisabled(True)
-        self.label_id = QtWidgets.QLabel("Req ID:")
+        self.label_id = QtWidgets.QLabel("Visual Req. ID:")
         self.line_id = QtWidgets.QLineEdit()
         self.label_status = QtWidgets.QLabel("Status:")
         self.line_status = QtWidgets.QLineEdit()
@@ -53,6 +53,8 @@ class PurchReqDetailTab(QtWidgets.QWidget):
         self.label_author = QtWidgets.QLabel("Author")
         self.line_author = QtWidgets.QLineEdit()
         self.line_author.setDisabled(True)
+        self.label_title = QtWidgets.QLabel("Doc. Title")
+        self.line_title = QtWidgets.QLineEdit()
         
         hlayout = QtWidgets.QHBoxLayout()
         vlayout = QtWidgets.QVBoxLayout()
@@ -79,19 +81,11 @@ class PurchReqDetailTab(QtWidgets.QWidget):
         vlayout5.addWidget(self.label_author)
         vlayout5.addWidget(self.line_author)
         hlayout.addLayout(vlayout5)
-        # hlayout.addWidget(self.label_doc_id)
-        # hlayout.addWidget(self.line_doc_id)
-        # hlayout.addWidget(self.label_id)
-        # hlayout.addWidget(self.line_id)
-        # hlayout.addWidget(self.label_status)
-        # hlayout.addWidget(self.line_status)
-        # hlayout.addWidget(self.label_status_visual)
-        # hlayout.addWidget(self.line_status_visual)
-        # hlayout.addWidget(self.label_buyer)
-        # hlayout.addWidget(self.line_buyer)
+
         
         self.label_details = QtWidgets.QLabel("Requisition Details:")
         self.text_details = QtWidgets.QTextEdit()
+        self.text_details.setFixedHeight(80)
         self.label_items = QtWidgets.QLabel("Requisition Items:")
         self.list_items = QtWidgets.QListView()
         self.list_items.setStyleSheet("QListView{background-color:#f0f0f0}")
@@ -105,12 +99,12 @@ class PurchReqDetailTab(QtWidgets.QWidget):
         # self.list_items.selectionModel().selectionChanged.connect(self.onRowSelect)
         
         main_layout.addLayout(hlayout)
-        
+        main_layout.addWidget(self.label_title)
+        main_layout.addWidget(self.line_title)
         main_layout.addWidget(self.label_details)
         main_layout.addWidget(self.text_details)
         main_layout.addWidget(self.label_items)
         main_layout.addWidget(self.list_items)
-        self.setLayout(main_layout)
         
     def loadItems(self):
         self.model.clear_items()

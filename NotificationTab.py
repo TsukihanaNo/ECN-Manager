@@ -71,7 +71,6 @@ class NotificationTab(QtWidgets.QWidget):
                 self.signatures.doubleClicked.connect(self.editSignature)
             else:
                 self.button_add.setDisabled(True)
-        self.setLayout(mainlayout)       
 
     def onRowSelect(self):
         if self.parent.parent.user_info['user']==self.parent.doc_data["AUTHOR"] and self.parent.doc_data["STATUS"]!="Completed":

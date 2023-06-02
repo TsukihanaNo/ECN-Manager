@@ -75,7 +75,6 @@ class PartsTab(QtWidgets.QWidget):
         
         mainlayout.addWidget(self.parts)
         
-        self.setLayout(mainlayout)              
         self.repopulateTable()
         
     def createMenu(self):

@@ -79,9 +79,7 @@ class PartEditor(QtWidgets.QWidget):
         form_layout.addRow("Replacing", self.text_replace)
         form_layout.addRow("Inspection:", self.box_inspec)
         form_layout.addRow(self.button_save)
-        
-        self.setLayout(form_layout)
-        
+                
     def loadData(self,data):
         self.line_part.setText(data[0])
         self.line_desc.setText(data[1])

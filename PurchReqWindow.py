@@ -35,6 +35,9 @@ class PurchReqWindow(QtWidgets.QWidget):
         self.initUI()
         if self.doc_id is not None:
             self.loadData()
+        else:
+            self.doc_data = {"AUTHOR":self.user_info["user"],"STATUS":"Draft"}
+
             
         self.center()
         self.show()
@@ -93,15 +96,14 @@ class PurchReqWindow(QtWidgets.QWidget):
             self.tab_purch_req.loadItems()
             if self.doc_id is None:
                 self.generateID()
-            if self.checkFields():
-                if not self.checkID():
-                    self.insertData()
-                    if not msg:
-                        self.dispMsg("Project has been saved!")
-                else:
-                    self.updateData()
-                    if not msg:
-                        self.dispMsg("Project has been updated!")
+            if not self.checkID():
+                self.insertData()
+                if not msg:
+                    self.dispMsg("Project has been saved!")
+            else:
+                self.updateData()
+                if not msg:
+                    self.dispMsg("Project has been updated!")
                         
         else:
             self.dispMsg("The purchase requisition ID does not exist in Visual. Please make sure you entered it correctly or that you have entered a purchase requisition in Visual prior to adding it here.")
@@ -212,11 +214,12 @@ class PurchReqWindow(QtWidgets.QWidget):
         try:
             status = 'Draft'
             req_id = self.tab_purch_req.line_id.text()
+            title = self.tab_purch_req.line_title.text()
             modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             author = self.user_info['user']
             detail = self.tab_purch_req.text_details.toHtml()
-            data = (self.project_id,self.doc_id,req_id,detail,status,author,modifieddate)
-            self.cursor.execute("INSERT INTO PURCH_REQS(PROJECT_ID,DOC_ID,REQ_ID,DETAILS,STATUS,AUTHOR,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?)",(data))
+            data = (self.project_id,self.doc_id,req_id,title,detail,status,author,modifieddate)
+            self.cursor.execute("INSERT INTO PURCH_REQS(PROJECT_ID,DOC_ID,REQ_ID,DOC_TITLE,DETAILS,STATUS,AUTHOR,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?)",(data))
             if self.checkSigNotiDuplicate():
                 self.dispMsg("Duplicate signatures found")
             else:
@@ -230,26 +233,153 @@ class PurchReqWindow(QtWidgets.QWidget):
     def updateData(self):
         try:
             req_id = self.tab_purch_req.line_id.text()
+            title = self.tab_purch_req.line_title.text()
             detail = self.tab_purch_req.text_details.toHtml()
-            data = (req_id, detail,self.doc_id)
+            data = (req_id,title, detail,self.doc_id)
             status = self.tab_purch_req.line_status.text()
-            self.cursor.execute("UPDATE PURCH_REQS SET REQ_ID = ?, DETAILS = ? WHERE DOC_ID = ?",(data))
+            self.cursor.execute("UPDATE PURCH_REQS SET REQ_ID = ?, DOC_TITLE = ?, DETAILS = ? WHERE DOC_ID = ?",(data))
             self.db.commit()
-            self.parent.model.update_req_data(self.row,self.doc_id,req_id,status)
+            self.parent.model.update_req_data(self.row,self.doc_id,title,req_id,status)
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data update (updateData)!\n Error: {e}")
     
     def loadData(self):
         self.cursor.execute(f"select * from PURCH_REQS where DOC_ID='{self.doc_id}'")
-        result = self.cursor.fetchone()
-        self.tab_purch_req.line_doc_id.setText(result['DOC_ID'])
-        self.tab_purch_req.line_id.setText(result["REQ_ID"])
-        self.tab_purch_req.line_status.setText(result["STATUS"])
-        self.tab_purch_req.text_details.setHtml(result["DETAILS"])
-        self.tab_purch_req.line_author.setText(result["AUTHOR"])
+        self.doc_data = self.cursor.fetchone()
+        self.tab_purch_req.line_doc_id.setText(self.doc_data['DOC_ID'])
+        self.tab_purch_req.line_id.setText(self.doc_data["REQ_ID"])
+        self.tab_purch_req.line_title.setText(self.doc_data["DOC_TITLE"])
+        self.tab_purch_req.line_status.setText(self.doc_data["STATUS"])
+        self.tab_purch_req.text_details.setHtml(self.doc_data["DETAILS"])
+        self.tab_purch_req.line_author.setText(self.doc_data["AUTHOR"])
         self.tab_purch_req.loadHeader()
         self.tab_purch_req.loadItems()
+        
+    def release(self):
+        if self.checkFields():
+            try:
+                print("releasing")
+                self.save(1)
+                modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                
+                self.cursor.execute(f"SELECT FIRST_RELEASE from DOCUMENT where DOC_ID='{self.doc_id}'")
+                result = self.cursor.fetchone()
+                if result[0] is None:
+                    self.cursor.execute(f"UPDATE DOCUMENT SET FIRST_RELEASE = '{modifieddate}' where DOC_ID='{self.doc_id}'")
+                data = (modifieddate, "Out For Approval",self.doc_id)
+                self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?, STATUS = ? WHERE DOC_ID = ?",(data))
+                self.db.commit()
+                currentStage = self.getPCNStage()
+                if currentStage==0:
+                    self.setPCNStage(self.getNextStage()[0])
+                    self.addNotification(self.doc_id, "Stage Moved")
+                self.tab_pcn.line_status.setText("Out For Approval")
+                self.parent.repopulateTable()
+                self.dispMsg("PCN has been saved and sent out for signing!")
+                #self.addNotification(self.ecn_id, "Released")
+                self.button_release.setDisabled(True)
+                self.button_cancel.setText("Cancel")
+                self.button_cancel.setDisabled(True)
+            except Exception as e:
+                print(e)
+                self.dispMsg(f"Error occured during data update (release)!\n Error: {e}")
+        else:
+            self.dispMsg("There are empty Fields, cannot release.")
+            
+    def approve(self):
+        try:
+            approvedate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            data = (approvedate,self.doc_id,self.parent.user_info['user'])
+            self.cursor.execute("UPDATE SIGNATURE SET SIGNED_DATE = ? WHERE DOC_ID = ? and USER_ID = ?",(data))
+            self.cursor.execute(f"UPDATE DOCUMENT SET LAST_MODIFIED = '{approvedate}' where DOC_ID='{self.doc_id}'")
+            self.tab_signature.repopulateTable()
+            self.dispMsg("PCN has been signed!")
+            self.button_approve.setDisabled(True)
+            self.checkComplete()
+            self.db.commit()
+            print("moving pcn stage check")
+            self.movePCNStage()
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error occured during data insertion (approve)!\n Error: {e}")
+    
+    def reject(self):
+        comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Comment", "")
+        if ok and comment!="":
+            self.addComment(self.doc_id, comment,"Rejecting to author")
+            try:
+                modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                data = (modifieddate, "Rejected",self.doc_id)
+                self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?, STATUS = ? WHERE DOC_ID = ?",(data))
+                self.cursor.execute(f"UPDATE SIGNATURE SET SIGNED_DATE=Null where DOC_ID='{self.doc_id}'")
+                self.db.commit()
+                self.setPCNStage(0)
+                self.parent.repopulateTable()
+                self.dispMsg("Rejection successful. Setting PCN stage to 0 and all signatures have been removed.")
+                self.tab_pcn.line_status.setText("Rejected")
+                self.addNotification(self.doc_id, "Rejected To Author",from_user=self.parent.user_info['user'],msg=comment)
+                self.button_reject.setDisabled(True)
+                self.button_approve.setDisabled(True)
+            except Exception as e:
+                print(e)
+                self.dispMsg(f"Error occured during data update (reject)!\n Error: {e}")
+        if ok and comment=="":
+            self.dispMsg("Rejection failed: comment field was left blank.")
+    
+    def checkComplete(self):
+        try:
+            command = f"Select * from SIGNATURE where DOC_ID ='{self.doc_id}' and TYPE='Signing'"
+            self.cursor.execute(command)
+            results = self.cursor.fetchall()
+            completed = True
+            for result in results:
+                if result['SIGNED_DATE'] == None or result['SIGNED_DATE']== "":
+                    completed = False
+            if completed:
+                completeddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                self.cursor.execute(f"select FIRST_RELEASE from DOCUMENT where DOC_ID='{self.doc_id}'")
+                result = self.cursor.fetchone()
+                #print(result[0])
+                #first_release = datetime.strptime(str(result[0]),'%Y-%m-%d %H:%M:%S')
+                elapsed = self.getElapsedDays(result[0], completeddate)
+                #print(elapsed)
+                #elapsed = self.getElapsedDays(first_release, completeddate)
+                data = (completeddate,completeddate,elapsed, "Completed",self.doc_id)
+                self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?,COMP_DATE = ?, COMP_DAYS = ?, STATUS = ? WHERE DOC_ID = ?",(data))
+                #self.db.commit()
+                self.parent.repopulateTable()
+                self.dispMsg("PCN is now completed")
+                self.addNotification(self.doc_id, "Completed")
+                self.tab_signature.button_add.setDisabled(True)
+                self.tab_notification.button_add.setDisabled(True)
+            else:
+                self.parent.repopulateTable()
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error Occured during check Complete.\n Error: {e}")
+            
+    def setCommentCount(self):
+        self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where DOC_ID='{self.doc_id}'")
+        result = self.cursor.fetchone()
+        self.tab_widget.setTabText(1, "Comments ("+str(result[0])+")")
+    
+    def existNotification(self,doc_id):
+        self.cursor.execute(f"Select * from NOTIFICATION where DOC_ID='{doc_id}' and STATUS='Not Sent'")
+        result = self.cursor.fetchone()
+        if result is not None:
+            return True
+        else:
+            return False
+        
+    def checkFields(self):
+        if self.tab_purch_req.line_title.text()=="":
+            return False
+        if self.tab_purch_req.line_id.text()=="":
+            return False
+        if self.tab_purch_req.text_details.toPlainText()=="":
+            return False
+        return True
         
         
     def dispMsg(self,msg):
