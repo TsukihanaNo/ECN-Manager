@@ -21,3 +21,6 @@ class Hook(QtCore.QObject):
                 self.launch.emit(msg)
             if msg == 'close':
                 conn.close()
+                
+    def stop(self):
+        self.running = False

@@ -72,6 +72,7 @@ class CommentTab(QtWidgets.QWidget):
             self.model.add_message(USER_ME,f"{self.user_name[user]} ({user})  -  {comm_date}  [{comm_type}]:",comment,comment_type)
         else:
             self.model.add_message(USER_THEM,f"{self.user_name[user]} ({user})  -  {comm_date}  [{comm_type}]:",comment,comment_type)
+            
 
 USER_ME = 0
 USER_THEM = 1

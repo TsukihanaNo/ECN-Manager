@@ -82,13 +82,13 @@ class SettingsWindow(QtWidgets.QWidget):
         self.line_pass_v.setEchoMode(QtWidgets.QLineEdit.Password)
         self.label_db_v = QtWidgets.QLabel("DB:  ")
         self.line_db_v = QtWidgets.QLineEdit(self)
-        layout_user_v = QtWidgets.QHBoxLayout(self)
+        layout_user_v = QtWidgets.QHBoxLayout()
         layout_user_v.addWidget(self.label_user_v)
         layout_user_v.addWidget(self.line_user_v)
-        layout_pass_v = QtWidgets.QHBoxLayout(self)
+        layout_pass_v = QtWidgets.QHBoxLayout()
         layout_pass_v.addWidget(self.label_pass_v)
         layout_pass_v.addWidget(self.line_pass_v)
-        layout_db_v = QtWidgets.QHBoxLayout(self)
+        layout_db_v = QtWidgets.QHBoxLayout()
         layout_db_v.addWidget(self.label_db_v)
         layout_db_v.addWidget(self.line_db_v)
         layout_left.addWidget(self.label_visual)
@@ -105,13 +105,13 @@ class SettingsWindow(QtWidgets.QWidget):
         self.label_smtp_email = QtWidgets.QLabel("Email:")
         self.line_smtp_email = QtWidgets.QLineEdit(self)
         self.line_smtp_email.setPlaceholderText("Enter sent from address")
-        layout_smtp_ip = QtWidgets.QHBoxLayout(self)
+        layout_smtp_ip = QtWidgets.QHBoxLayout()
         layout_smtp_ip.addWidget(self.label_smtp_ip)
         layout_smtp_ip.addWidget(self.line_smtp_address)
-        layout_smtp_port = QtWidgets.QHBoxLayout(self)
+        layout_smtp_port = QtWidgets.QHBoxLayout()
         layout_smtp_port.addWidget(self.label_smtp_port)
         layout_smtp_port.addWidget(self.line_smtp_port)
-        layout_smtp_email = QtWidgets.QHBoxLayout(self)
+        layout_smtp_email = QtWidgets.QHBoxLayout()
         layout_smtp_email.addWidget(self.label_smtp_email)
         layout_smtp_email.addWidget(self.line_smtp_email)
         layout_left.addWidget(self.label_smtp)
@@ -186,7 +186,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.button_dept_remove = QtWidgets.QPushButton("Remove")
         self.button_dept_remove.clicked.connect(self.removeDept)
         self.label_jobs = QtWidgets.QLabel("Job Titles and stages (Set stage to 99 for notification only):")
-        headers = ['Job Title','ECN Stage','PCN Stage']
+        headers = ['Job Title','ECN Stage','PCN Stage','PRQ Stage']
         self.table_jobs = QtWidgets.QTableWidget(0,len(headers),self)
         self.table_jobs.setHorizontalHeaderLabels(headers)
         self.table_jobs.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -236,11 +236,22 @@ class SettingsWindow(QtWidgets.QWidget):
                 self.PCNstageDict[key.strip()] = value.strip()
         else:
             self.PCNstageDict = None
+            
+    def getPRQStageDict(self):
+        if "PRQ_Stage" in self.settings.keys():
+            self.PCNstageDict = {}
+            stages = self.settings["PRQ_Stage"].split(",")
+            for stage in stages:
+                key,value = stage.split("-")
+                self.PRQstageDict[key.strip()] = value.strip()
+        else:
+            self.PRQstageDict = None
 
 
     def loadSettings(self):
         self.getStageDict()
         self.getPCNStageDict()
+        self.getPRQStageDict()
         self.line_db.setText(self.settings["DB_LOC"])
         if "Visual" in self.settings.keys():
             user,pw,db = self.settings["Visual"].split(",")
@@ -289,6 +300,8 @@ class SettingsWindow(QtWidgets.QWidget):
                 self.table_jobs.setItem(row,1,QtWidgets.QTableWidgetItem(self.stageDict[item]))
                 if self.PCNstageDict is not None:
                     self.table_jobs.setItem(row,2,QtWidgets.QTableWidgetItem(self.PCNstageDict[item]))
+                if self.PRQstageDict is not None:
+                    self.table_jobs.setItem(row,3,QtWidgets.QTableWidgetItem(self.PRQstageDict[item]))
                 row+=1
 
     def saveSettings(self):
@@ -325,19 +338,23 @@ class SettingsWindow(QtWidgets.QWidget):
         jobs = ""
         stages = ""
         pcn_stages = ""
+        prq_stages = ""
         for x in range(self.table_jobs.rowCount()):
             #print(x,self.table_jobs.item(x, 0).text(),self.table_jobs.item(x, 1).text())
             if x < self.table_jobs.rowCount()-1:
                 jobs += self.table_jobs.item(x, 0).text()+","
                 stages += self.table_jobs.item(x, 0).text() + "-" + self.table_jobs.item(x, 1).text() + ","
                 pcn_stages += self.table_jobs.item(x, 0).text() + "-" + self.table_jobs.item(x, 2).text() + ","
+                prq_stages += self.table_jobs.item(x, 0).text() + "-" + self.table_jobs.item(x, 3).text() + ","
             else:
                 jobs += self.table_jobs.item(x, 0).text()+"\n"
                 stages += self.table_jobs.item(x, 0).text() + "-" + self.table_jobs.item(x, 1).text() + "\n"
                 pcn_stages += self.table_jobs.item(x, 0).text() + "-" + self.table_jobs.item(x, 2).text() + "\n"
+                prq_stages += self.table_jobs.item(x, 0).text() + "-" + self.table_jobs.item(x, 3).text() + "\n"
         data += "Job_Titles : " + jobs
         data += "Stage : " + stages
         data += "PCN_Stage : " + pcn_stages
+        data += "PRQ_Stage : " + prq_stages
         data += "PCN_Export_Loc : " + self.line_PCN_export.text()+"\n"
         data += "PCN_Web_Href : " + self.line_PCN_web.text()+"\n"
         try:

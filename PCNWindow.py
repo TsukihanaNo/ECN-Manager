@@ -307,10 +307,10 @@ class PCNWindow(QtWidgets.QWidget):
         else:
             return False
         
-    def addNotification(self,doc_id,notificationType,from_user=None,userslist=None,msg=""):
+    def addNotification(self,doc_id,notificationType,from_user=None,usersList=None,msg=""):
         print('adding notification')
-        if userslist is not None:
-            if type(userslist)==type([]):
+        if usersList is not None:
+            if type(usersList)==type([]):
                 users = ""
                 count = 0
                 for user in usersList:
@@ -319,7 +319,7 @@ class PCNWindow(QtWidgets.QWidget):
                         users +=","
                     count+=1
             else:
-                users = userslist
+                users = usersList
         else:
             users = ""
         if from_user is None:

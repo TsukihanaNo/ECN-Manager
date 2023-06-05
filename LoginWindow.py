@@ -38,7 +38,7 @@ class LoginWindow(QtWidgets.QWidget):
         self.button_forgot.setFixedWidth(100)
         textLayout = QtWidgets.QVBoxLayout(self)
         textLayout.setAlignment(QtCore.Qt.AlignCenter)
-        buttonLayout = QtWidgets.QHBoxLayout(self)
+        buttonLayout = QtWidgets.QHBoxLayout()
         buttonLayout.setAlignment(QtCore.Qt.AlignCenter)
         self.text_pass.setFixedWidth(300)
         self.text_pass.setAlignment(QtCore.Qt.AlignCenter)

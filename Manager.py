@@ -52,6 +52,7 @@ class Manager(QtWidgets.QWidget):
         self.startUpCheck()
         self.getStageDict()
         self.getStageDictPCN()
+        self.getStageDictPRQ()
         self.getTitleStageDict()
         self.getTitleStageDictPCN()
         self.user_info = {}
@@ -348,7 +349,8 @@ class Manager(QtWidgets.QWidget):
             command = "Select * from DOCUMENT where AUTHOR ='" + self.user_info['user'] + "' and STATUS !='Completed'"
         elif table_type=="Queue":
             #command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and DOCUMENT.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
-            command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}'and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
+            #command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}'and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
+            command =f"select * from SIGNATURE LEFT join PURCH_REQS on SIGNATURE.DOC_ID=PURCH_REQS.DOC_ID LEFT join DOCUMENT on SIGNATURE.DOC_ID=DOCUMENT.DOC_ID where PURCH_REQS.STATUS='Out For Approval' or DOCUMENT.STATUS ='Out For Approval' and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing' and SIGNATURE.USER_ID='{self.user_info['user']}'"
         elif table_type=="Open":
             command = "select * from DOCUMENT where STATUS=='Out For Approval' OR STATUS=='Rejected' OR STATUS='Started'"
         elif table_type=="Canceled":
@@ -700,6 +702,16 @@ class Manager(QtWidgets.QWidget):
                 key,value = stage.split("-")
                 self.stageDictPCN[key.strip()] = value.strip()
         #print("stage dict pcn",self.stageDictPCN)
+        
+    def getStageDictPRQ(self):
+        self.stageDictPRQ = {}
+        if "PRQ_Stage" not in self.settings.keys():
+            self.dispMsg("PRQ_Stage not defined, please update your settings.")
+        else:
+            stages = self.settings["PRQ_Stage"].split(",")
+            for stage in stages:
+                key,value = stage.split("-")
+                self.stageDictPRQ[key.strip()] = value.strip()
         
     def getNameList(self):
         command = "Select NAME from USER where STATUS ='Active'"

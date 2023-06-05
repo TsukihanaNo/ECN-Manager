@@ -21,6 +21,7 @@ class PurchReqTab(QtWidgets.QWidget):
         self.user_permissions = parent.user_permissions
         self.stageDict = parent.stageDict
         self.stageDictPCN = parent.stageDictPCN
+        self.stageDictPRQ = parent.stageDictPRQ
         self.ico = parent.ico
         self.visual = parent.visual
         self.doc_id = parent.doc_id

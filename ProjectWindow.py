@@ -24,6 +24,7 @@ class ProjectWindow(QtWidgets.QWidget):
         self.visual = parent.visual
         self.stageDict = parent.stageDict
         self.stageDictPCN = parent.stageDictPCN
+        self.stageDictPRQ = parent.stageDictPRQ
         self.windowWidth =  950
         self.windowHeight = 580
         self.setFixedSize(self.windowWidth,self.windowHeight)
@@ -66,11 +67,9 @@ class ProjectWindow(QtWidgets.QWidget):
         
         self.button_save = QtWidgets.QPushButton("Save")
         self.button_save.clicked.connect(self.save)
-        self.button_req_check = QtWidgets.QPushButton("Check For Reqs")
         # self.button_members = QtWidgets.QPushButton("Members")
         
         self.toolbar.addWidget(self.button_save)
-        self.toolbar.addWidget(self.button_req_check)
         # self.toolbar.addWidget(self.button_members)
         
         self.label_id = QtWidgets.QLabel("Project ID:")
