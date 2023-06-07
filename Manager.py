@@ -309,6 +309,26 @@ class Manager(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_open)
         self.toolbar.addWidget(self.button_refresh)
         self.toolbar.addWidget(self.dropdown_type)
+
+        filter_layout = QtWidgets.QHBoxLayout()
+        self.radio_all = QtWidgets.QRadioButton("All Docs")
+        self.radio_all.setChecked(True)
+        self.radio_all.clicked.connect(self.repopulateTable)
+        self.radio_ecn = QtWidgets.QRadioButton("ECNs Only")
+        self.radio_ecn.clicked.connect(self.repopulateTable)
+        self.radio_pcn = QtWidgets.QRadioButton("PCNs Only")
+        self.radio_pcn.clicked.connect(self.repopulateTable)
+        self.radio_prj = QtWidgets.QRadioButton("PRJs Only")
+        self.radio_prj.clicked.connect(self.repopulateTable)
+        self.radio_prq = QtWidgets.QRadioButton("PRQs Only")
+        self.radio_prq.clicked.connect(self.repopulateTable)
+        filter_layout.addWidget(self.radio_all)
+        filter_layout.addWidget(self.radio_ecn)
+        filter_layout.addWidget(self.radio_pcn)
+        filter_layout.addWidget(self.radio_prj)
+        filter_layout.addWidget(self.radio_prq)
+
+        mainLayout.addLayout(filter_layout)
         
         self.docs = QtWidgets.QListView()
         self.docs.setStyleSheet("QListView{background-color:#f0f0f0}")
@@ -338,6 +358,18 @@ class Manager(QtWidgets.QWidget):
     def onRowSelect(self):
         self.button_open.setEnabled(bool(self.docs.selectionModel().selectedIndexes()))
 
+    def getFilterType(self):
+        if self.radio_all.isChecked():
+            return ""
+        if self.radio_ecn.isChecked():
+            return "and DOC_ID like 'ECN%'"
+        if self.radio_pcn.isChecked():
+            return "and DOC_ID like 'PCN%'"
+        if self.radio_prj.isChecked():
+            return "and DOC_ID like 'PRJ%'"
+        if self.radio_prq.isChecked():
+            return "and DOC_ID like 'PRQ%'"
+
         
     def repopulateTable(self):
         self.getECNQty()
@@ -345,24 +377,24 @@ class Manager(QtWidgets.QWidget):
         if self.docs.verticalScrollBar().value()>0:
             self.docs.verticalScrollBar().setValue(0)
         table_type = self.dropdown_type.currentText()
+        filter_type = self.getFilterType()
         if table_type=="My Docs":
-            command = "Select * from DOCUMENT where AUTHOR ='" + self.user_info['user'] + "' and STATUS !='Completed'"
+            command = "Select * from DOCUMENT where AUTHOR ='" + self.user_info['user'] + f"' and STATUS !='Completed' {filter_type}"
         elif table_type=="Queue":
             #command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and DOCUMENT.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
             #command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}'and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
             command =f"select * from SIGNATURE LEFT join PURCH_REQS on SIGNATURE.DOC_ID=PURCH_REQS.DOC_ID LEFT join DOCUMENT on SIGNATURE.DOC_ID=DOCUMENT.DOC_ID where PURCH_REQS.STATUS='Out For Approval' or DOCUMENT.STATUS ='Out For Approval' and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing' and SIGNATURE.USER_ID='{self.user_info['user']}'"
         elif table_type=="Open":
-            command = "select * from DOCUMENT where STATUS=='Out For Approval' OR STATUS=='Rejected' OR STATUS='Started'"
+            command = f"select * from DOCUMENT where (STATUS=='Out For Approval' OR STATUS=='Rejected' OR STATUS='Started') {filter_type}"
         elif table_type=="Canceled":
-            command = "select * from DOCUMENT where STATUS =='Canceled'"
+            command = f"select * from DOCUMENT where STATUS =='Canceled' {filter_type}"
         elif table_type=="Draft":
-            command = "select * from DOCUMENT where STATUS =='Draft'"
+            command = f"select * from DOCUMENT where STATUS =='Draft' {filter_type}"
         else:
-            command = "select * from DOCUMENT where STATUS='Completed'"
+            command = f"select * from DOCUMENT where STATUS='Completed' {filter_type}"
 
         self.cursor.execute(command)
         self.table_data = self.cursor.fetchall()
-        
         
         if table_type=="Queue":
             table_index = 0
@@ -857,6 +889,7 @@ class DocModel(QtCore.QAbstractListModel):
 
     def clear_docs(self):
         self.docs = []
+        self.layoutChanged.emit()
     
     def add_doc(self, doc_id, title, doc_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count):
         # Access the list via the model.
