@@ -307,13 +307,13 @@ class PurchReqWindow(QtWidgets.QWidget):
                 self.save(1)
                 modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 
-                self.cursor.execute(f"SELECT FIRST_RELEASE from PURCH_REQS where DOC_ID='{self.doc_id}'")
+                self.cursor.execute(f"SELECT FIRST_RELEASE from DOCUMENT where DOC_ID='{self.doc_id}'")
                 print("getting first release")
                 result = self.cursor.fetchone()
                 if result[0] is None:
-                    self.cursor.execute(f"UPDATE PURCH_REQS SET FIRST_RELEASE = '{modifieddate}' where DOC_ID='{self.doc_id}'")
+                    self.cursor.execute(f"UPDATE DOCUMENT SET FIRST_RELEASE = '{modifieddate}' where DOC_ID='{self.doc_id}'")
                 data = (modifieddate, "Out For Approval",self.doc_id)
-                self.cursor.execute("UPDATE PURCH_REQS SET LAST_MODIFIED = ?, STATUS = ? WHERE DOC_ID = ?",(data))
+                self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?, STATUS = ? WHERE DOC_ID = ?",(data))
                 self.db.commit()
                 print("getting prq stage")
                 currentStage = self.getPRQStage()
@@ -500,7 +500,7 @@ class PurchReqWindow(QtWidgets.QWidget):
     def setPRQStage(self,stage):
         try:
             #print('setting ecn to ', stage)
-            self.cursor.execute(f"UPDATE PURCH_REQS SET STAGE ='{stage}', TEMPSTAGE = '{stage}' where DOC_ID='{self.doc_id}'")
+            self.cursor.execute(f"UPDATE DOCUMENT SET STAGE ='{stage}', TEMPSTAGE = '{stage}' where DOC_ID='{self.doc_id}'")
             self.db.commit()
         except Exception as e:
             self.dispMsg(f"Error trying to set PRQ stage. Error: {e}")

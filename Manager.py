@@ -433,27 +433,28 @@ class Manager(QtWidgets.QWidget):
         self.repopulateTable()
 
     def setButtonHightlight(self):
+        style = "background-color:pink; border: 0; height: 20px;"
         if self.table_type=="My Docs":
-            self.button_doc.setStyleSheet("background-color:pink;")
+            self.button_doc.setStyleSheet(style)
         if self.table_type=="Queue":
-            self.button_queue.setStyleSheet("background-color:pink;")
+            self.button_queue.setStyleSheet(style)
         if self.table_type=="Open":
-            self.button_open_docs.setStyleSheet("background-color:pink;")
+            self.button_open_docs.setStyleSheet(style)
         if self.table_type=="Canceled":
-            self.button_canceled.setStyleSheet("background-color:pink;")
+            self.button_canceled.setStyleSheet(style)
         if self.table_type=="Draft":
-            self.button_draft.setStyleSheet("background-color:pink;")
+            self.button_draft.setStyleSheet(style)
         if self.table_type=="Completed":
-            self.button_completed.setStyleSheet("background-color:pink;")
+            self.button_completed.setStyleSheet(style)
 
     def resetButtonColor(self):
         for child in self.navbar.children():
             if isinstance(child,QtWidgets.QPushButton):
-                child.setStyleSheet("background-color:gray;")
+                child.setStyleSheet("background-color:lightgray; border:0; height: 18px;")
 
     def setQueueHighlight(self):
         if self.getQueueCount()>0:
-            self.button_queue.setStyleSheet("background-color:red")
+            self.button_queue.setStyleSheet("background-color:red; border:0; height: 18px")
 
     def getMyDocCount(self):
         command = "Select Count(DOC_ID) from DOCUMENT where AUTHOR ='" + self.user_info['user'] + f"' and STATUS !='Completed'"
