@@ -110,22 +110,30 @@ class PurchReqWindow(QtWidgets.QWidget):
     )
         
     def save(self, msg=None):
-        if self.visual.checkReqID(self.tab_purch_req.line_id.text()):
-            self.tab_purch_req.loadHeader()
-            self.tab_purch_req.loadItems()
-            if self.doc_id is None:
-                self.generateID()
-            if not self.checkID():
-                self.insertData()
-                if not msg:
-                    self.dispMsg("Project has been saved!")
-            else:
-                self.updateData()
-                if not msg:
-                    self.dispMsg("Project has been updated!")
-                        
+        if self.doc_id is None:
+            self.generateID()
+        if not self.checkID():
+            self.insertData()
+            self.dispMsg("purch req has been saved")
         else:
-            self.dispMsg("The purchase requisition ID does not exist in Visual. Please make sure you entered it correctly or that you have entered a purchase requisition in Visual prior to adding it here.")
+            self.updateData()
+            self.dispMsg("purch req has been updated")
+        # if self.visual.checkReqID(self.tab_purch_req.line_id.text()):
+        #     self.tab_purch_req.loadHeader()
+        #     self.tab_purch_req.loadItems()
+        #     if self.doc_id is None:
+        #         self.generateID()
+        #     if not self.checkID():
+        #         self.insertData()
+        #         if not msg:
+        #             self.dispMsg("Project has been saved!")
+        #     else:
+        #         self.updateData()
+        #         if not msg:
+        #             self.dispMsg("Project has been updated!")
+                        
+        # else:
+        #     self.dispMsg("The purchase requisition ID does not exist in Visual. Please make sure you entered it correctly or that you have entered a purchase requisition in Visual prior to adding it here.")
         
     def AddSignatures(self):
         #inserting to signature table
@@ -207,7 +215,7 @@ class PurchReqWindow(QtWidgets.QWidget):
             return True
     
     def checkID(self):
-        self.cursor.execute(f"select DOC_ID from PURCH_REQS where DOC_ID='{self.tab_purch_req.line_doc_id.text()}'")
+        self.cursor.execute(f"select DOC_ID from DOCUMENT where DOC_ID='{self.tab_purch_req.line_doc_id.text()}'")
         result = self.cursor.fetchone()
         if result is not None:
             return True
@@ -248,7 +256,7 @@ class PurchReqWindow(QtWidgets.QWidget):
             else:
                 self.AddSignatures()
             self.db.commit()
-            self.parent.model.add_req(self.doc_id,req_id,status)
+            self.parent.model.add_req(self.doc_id,title,req_id,status)
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data insertion (insertData)!\n Error: {e}")
@@ -276,7 +284,7 @@ class PurchReqWindow(QtWidgets.QWidget):
             self.dispMsg(f"Error occured during data update (updateData)!\n Error: {e}")
     
     def loadData(self):
-        self.cursor.execute(f"select * from DOCUMENT where DOC_ID='{self.doc_id}'")
+        self.cursor.execute(f"select * from DOCUMENT left join PURCH_REQ_DOC_LINK ON DOCUMENT.DOC_ID=PURCH_REQ_DOC_LINK.DOC_ID where DOCUMENT.DOC_ID='{self.doc_id}'")
         self.doc_data = self.cursor.fetchone()
         self.tab_purch_req.line_doc_id.setText(self.doc_data['DOC_ID'])
         self.tab_purch_req.line_title.setText(self.doc_data["DOC_TITLE"])

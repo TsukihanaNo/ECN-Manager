@@ -59,6 +59,7 @@ class Manager(QtWidgets.QWidget):
         self.user_permissions = {}
         self.programLoc = program_location
         self.nameList = []
+        self.table_type="My Docs"
         #print("Visual" in self.settings.keys())
         if "Visual" in self.settings.keys():
             user,pw,db = self.settings['Visual'].split(',')
@@ -232,10 +233,12 @@ class Manager(QtWidgets.QWidget):
     def initUI(self):
         self.menubar = QtWidgets.QMenuBar(self)
         self.toolbar = QtWidgets.QToolBar()
+        self.navbar = QtWidgets.QToolBar()
         self.statusbar = QtWidgets.QStatusBar()
         self.statusbar.setSizeGripEnabled(False)
         mainLayout = QtWidgets.QVBoxLayout(self)
         mainLayout.setMenuBar(self.menubar)
+        mainLayout.addWidget(self.navbar)
         mainLayout.addWidget(self.toolbar)
 
         self.createMenuActions()
@@ -256,8 +259,8 @@ class Manager(QtWidgets.QWidget):
         self.label_open_docs = QtWidgets.QLabel("Open - ")
         self.label_wait_docs = QtWidgets.QLabel("Waiting - ")
         self.label_complete_docs = QtWidgets.QLabel("Completed - ")
-        self.dropdown_type = QtWidgets.QComboBox(self)
-        self.dropdown_type.setFixedWidth(100)
+        # self.dropdown_type = QtWidgets.QComboBox(self)
+        # self.dropdown_type.setFixedWidth(100)
         self.button_refresh = QtWidgets.QPushButton("Refresh")
         #self.button_refresh.setToolTip("Refresh")
         icon_loc = icon = os.path.join(program_location,"icons","refresh.png")
@@ -265,11 +268,11 @@ class Manager(QtWidgets.QWidget):
         #self.button_refresh.setFixedWidth(25)
         self.button_refresh.clicked.connect(self.repopulateTable)
         
-        if self.user_permissions["create_ecn"]=="n" and self.user_permissions["create_pcn"]=="n":
-            items = ["Queue","Open","Completed"]
-        else:
-            items = ["My Docs","Queue","Open","Canceled","Draft","Completed"]
-        self.dropdown_type.addItems(items)
+        # if self.user_permissions["create_ecn"]=="n" and self.user_permissions["create_pcn"]=="n":
+        #     items = ["Queue","Open","Completed"]
+        # else:
+        #     items = ["My Docs","Queue","Open","Canceled","Draft","Completed"]
+        # self.dropdown_type.addItems(items)
         
         self.button_open = QtWidgets.QPushButton("Open")
         self.button_open.setEnabled(False)
@@ -300,6 +303,39 @@ class Manager(QtWidgets.QWidget):
         self.statusbar.addPermanentWidget(self.label_complete_docs)
         self.statusbar.addPermanentWidget(self.label_wait_docs)
 
+        button_size = 100
+        self.button_doc = QtWidgets.QPushButton("My Docs")
+        self.button_doc.setFixedWidth(button_size)
+        self.button_doc.clicked.connect(self.loadMyDocs)
+        self.button_queue = QtWidgets.QPushButton("Queue")
+        self.button_queue.setFixedWidth(button_size)
+        self.button_queue.clicked.connect(self.loadQueueDocs)
+        # self.button_doc.setStyleSheet("background-color:blue;")
+        self.button_open_docs = QtWidgets.QPushButton("Inprogress")
+        self.button_open_docs.setFixedWidth(button_size)
+        self.button_open_docs.clicked.connect(self.loadOpenDocs)
+        self.button_canceled = QtWidgets.QPushButton("Canceled")
+        self.button_canceled.setFixedWidth(button_size)
+        self.button_canceled.clicked.connect(self.loadCanceledDocs)
+        self.button_draft = QtWidgets.QPushButton("Drafts")
+        self.button_draft.setFixedWidth(button_size)
+        self.button_draft.clicked.connect(self.loadDrafts)
+        self.button_completed = QtWidgets.QPushButton("Completed")
+        self.button_completed.setFixedWidth(button_size)
+        self.button_completed.clicked.connect(self.loadCompletedDocs)
+        self.navbar.addWidget(self.button_doc)
+        self.navbar.addWidget(self.button_queue)
+        self.navbar.addWidget(self.button_open_docs)
+        self.navbar.addWidget(self.button_canceled)
+        self.navbar.addWidget(self.button_draft)
+        self.navbar.addWidget(self.button_completed)
+
+        for child in self.navbar.children():
+            if isinstance(child,QtWidgets.QLayout):
+                child.setSpacing(0)
+            if isinstance(child,QtWidgets.QPushButton):
+                child.setStyleSheet("background-color:gray;")
+
         self.toolbar.addWidget(self.line_search)
         self.toolbar.addWidget(self.button_search)
         self.toolbar.addSeparator()
@@ -308,7 +344,7 @@ class Manager(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_add3)
         self.toolbar.addWidget(self.button_open)
         self.toolbar.addWidget(self.button_refresh)
-        self.toolbar.addWidget(self.dropdown_type)
+        # self.toolbar.addWidget(self.dropdown_type)
 
         filter_layout = QtWidgets.QHBoxLayout()
         self.radio_all = QtWidgets.QRadioButton("All Docs")
@@ -347,7 +383,7 @@ class Manager(QtWidgets.QWidget):
         
         mainLayout.addWidget(self.statusbar)
         
-        self.dropdown_type.currentIndexChanged.connect(self.repopulateTable)
+        # self.dropdown_type.currentIndexChanged.connect(self.repopulateTable)
         
         self.docs.verticalScrollBar().valueChanged.connect(self.loadMoreTable)
         
@@ -369,26 +405,70 @@ class Manager(QtWidgets.QWidget):
             return "and DOC_ID like 'PRJ%'"
         if self.radio_prq.isChecked():
             return "and DOC_ID like 'PRQ%'"
+        
+    def loadMyDocs(self):
+        self.table_type = "My Docs"
+        self.repopulateTable()
 
+    def loadOpenDocs(self):
+        self.table_type = "Open"
+        self.repopulateTable()
+
+    def loadCanceledDocs(self):
+        self.table_type = "Canceled"
+        self.repopulateTable()
+
+    def loadDrafts(self):
+        self.table_type="Draft"
+        self.repopulateTable()
+
+    def loadQueueDocs(self):
+        self.table_type = "Queue"
+        self.repopulateTable()
+
+    def loadCompletedDocs(self):
+        self.table_type = "Completed"
+        self.repopulateTable()
+
+    def setButtonHightlight(self):
+        if self.table_type=="My Docs":
+            self.button_doc.setStyleSheet("background-color:pink;")
+        if self.table_type=="Queue":
+            self.button_queue.setStyleSheet("background-color:pink;")
+        if self.table_type=="Open":
+            self.button_open_docs.setStyleSheet("background-color:pink;")
+        if self.table_type=="Canceled":
+            self.button_canceled.setStyleSheet("background-color:pink;")
+        if self.table_type=="Draft":
+            self.button_draft.setStyleSheet("background-color:pink;")
+        if self.table_type=="Completed":
+            self.button_completed.setStyleSheet("background-color:pink;")
+
+    def resetButtonColor(self):
+        for child in self.navbar.children():
+            if isinstance(child,QtWidgets.QPushButton):
+                child.setStyleSheet("background-color:gray;")
         
     def repopulateTable(self):
+        self.resetButtonColor()
+        self.setButtonHightlight()
         self.getECNQty()
         self.model.clear_docs()
         if self.docs.verticalScrollBar().value()>0:
             self.docs.verticalScrollBar().setValue(0)
-        table_type = self.dropdown_type.currentText()
+        #table_type = self.dropdown_type.currentText()
         filter_type = self.getFilterType()
-        if table_type=="My Docs":
+        if self.table_type=="My Docs":
             command = "Select * from DOCUMENT where AUTHOR ='" + self.user_info['user'] + f"' and STATUS !='Completed' {filter_type}"
-        elif table_type=="Queue":
+        elif self.table_type=="Queue":
             #command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and DOCUMENT.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
             #command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}'and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
             command =f"select * from SIGNATURE LEFT join PURCH_REQS on SIGNATURE.DOC_ID=PURCH_REQS.DOC_ID LEFT join DOCUMENT on SIGNATURE.DOC_ID=DOCUMENT.DOC_ID where PURCH_REQS.STATUS='Out For Approval' or DOCUMENT.STATUS ='Out For Approval' and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing' and SIGNATURE.USER_ID='{self.user_info['user']}'"
-        elif table_type=="Open":
+        elif self.table_type=="Open":
             command = f"select * from DOCUMENT where (STATUS=='Out For Approval' OR STATUS=='Rejected' OR STATUS='Started') {filter_type}"
-        elif table_type=="Canceled":
+        elif self.table_type=="Canceled":
             command = f"select * from DOCUMENT where STATUS =='Canceled' {filter_type}"
-        elif table_type=="Draft":
+        elif self.table_type=="Draft":
             command = f"select * from DOCUMENT where STATUS =='Draft' {filter_type}"
         else:
             command = f"select * from DOCUMENT where STATUS='Completed' {filter_type}"
@@ -396,7 +476,7 @@ class Manager(QtWidgets.QWidget):
         self.cursor.execute(command)
         self.table_data = self.cursor.fetchall()
         
-        if table_type=="Queue":
+        if self.table_type=="Queue":
             table_index = 0
             list_index_remove = []
             #print(self.user_info['stage_ecn'],self.user_info['stage_pcn'])
@@ -432,7 +512,7 @@ class Manager(QtWidgets.QWidget):
                     users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
             else:
                 users = ""
-            if table_type!="Completed":
+            if self.table_type!="Completed":
                 if self.table_data[x]['STATUS']!="Draft":
                     today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     elapsed = self.getElapsedDays(today, self.table_data[x]['FIRST_RELEASE'])
@@ -459,7 +539,7 @@ class Manager(QtWidgets.QWidget):
         percent = self.docs.verticalScrollBar().value()/self.docs.verticalScrollBar().maximum()
         rowcount = self.rowCount()
         total_count= len(self.table_data)
-        table_type = self.dropdown_type.currentText()
+        #table_type = self.dropdown_type.currentText()
         offset = 10
         #print(rowcount,percent)
         if percent> 0.90 and rowcount<total_count:
@@ -479,7 +559,7 @@ class Manager(QtWidgets.QWidget):
                         users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
                 else:
                     users = ""
-                if table_type!="Completed":
+                if self.table_type!="Completed":
                     if self.table_data[x]['STATUS']!="Draft":
                         today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                         elapsed = self.getElapsedDays(today, self.table_data[x]['FIRST_RELEASE'])

@@ -147,7 +147,7 @@ class PurchReqTab(QtWidgets.QWidget):
         
             
     def repopulateTable(self):
-        self.parent.cursor.execute(f"select * from PURCH_REQS where PROJECT_ID='{self.doc_id}'")
+        self.parent.cursor.execute(f"select * from DOCUMENT LEFT JOIN PURCH_REQ_DOC_LINK ON DOCUMENT.DOC_ID=PURCH_REQ_DOC_LINK.DOC_ID WHERE PURCH_REQ_DOC_LINK.PROJECT_ID='{self.doc_id}'")
         results = self.parent.cursor.fetchall()
         for result in results:
             # if self.parent.parent.visual is not None:
