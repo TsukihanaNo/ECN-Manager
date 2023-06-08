@@ -256,8 +256,8 @@ class Manager(QtWidgets.QWidget):
         #mainLayout.addLayout(searchLayout)
         
         self.label_doc_count = QtWidgets.QLabel("DOC Count:")
-        self.label_open_docs = QtWidgets.QLabel("Open - ")
-        self.label_wait_docs = QtWidgets.QLabel("Waiting - ")
+        self.label_open_docs = QtWidgets.QLabel("Inprogress - ")
+        self.label_wait_docs = QtWidgets.QLabel("Queue - ")
         self.label_complete_docs = QtWidgets.QLabel("Completed - ")
         # self.dropdown_type = QtWidgets.QComboBox(self)
         # self.dropdown_type.setFixedWidth(100)
@@ -302,6 +302,8 @@ class Manager(QtWidgets.QWidget):
         self.statusbar.addPermanentWidget(self.label_open_docs)
         self.statusbar.addPermanentWidget(self.label_complete_docs)
         self.statusbar.addPermanentWidget(self.label_wait_docs)
+
+        myDocCount = self.getMyDocCount()
 
         button_size = 100
         self.button_doc = QtWidgets.QPushButton("My Docs")
@@ -448,9 +450,20 @@ class Manager(QtWidgets.QWidget):
         for child in self.navbar.children():
             if isinstance(child,QtWidgets.QPushButton):
                 child.setStyleSheet("background-color:gray;")
-        
+
+    def setQueueHighlight(self):
+        if self.getQueueCount()>0:
+            self.button_queue.setStyleSheet("background-color:red")
+
+    def getMyDocCount(self):
+        command = "Select Count(DOC_ID) from DOCUMENT where AUTHOR ='" + self.user_info['user'] + f"' and STATUS !='Completed'"
+        self.cursor.execute(command)
+        result = self.cursor.fetchone()
+        return result[0]
+
     def repopulateTable(self):
         self.resetButtonColor()
+        self.setQueueHighlight()
         self.setButtonHightlight()
         self.getECNQty()
         self.model.clear_docs()
@@ -461,9 +474,8 @@ class Manager(QtWidgets.QWidget):
         if self.table_type=="My Docs":
             command = "Select * from DOCUMENT where AUTHOR ='" + self.user_info['user'] + f"' and STATUS !='Completed' {filter_type}"
         elif self.table_type=="Queue":
-            #command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and DOCUMENT.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
-            #command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}'and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
-            command =f"select * from SIGNATURE LEFT join PURCH_REQS on SIGNATURE.DOC_ID=PURCH_REQS.DOC_ID LEFT join DOCUMENT on SIGNATURE.DOC_ID=DOCUMENT.DOC_ID where PURCH_REQS.STATUS='Out For Approval' or DOCUMENT.STATUS ='Out For Approval' and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing' and SIGNATURE.USER_ID='{self.user_info['user']}'"
+            # command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and DOCUMENT.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
+            command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}'and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
         elif self.table_type=="Open":
             command = f"select * from DOCUMENT where (STATUS=='Out For Approval' OR STATUS=='Rejected' OR STATUS='Started') {filter_type}"
         elif self.table_type=="Canceled":
@@ -624,12 +636,8 @@ class Manager(QtWidgets.QWidget):
                 usr_str+=","
             count+=1
         return usr_str
-                
-    def getECNQty(self):
-        self.cursor.execute(f"SELECT COUNT(DOC_ID) from DOCUMENT where STATUS!='Completed'")
-        result = self.cursor.fetchone()
-        #print("open:",result[0])
-        self.label_open_docs.setText(f"Open - {result[0]}")
+    
+    def getQueueCount(self):
         self.cursor.execute(f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and SIGNATURE.SIGNED_DATE is NULL and TYPE='Signing'")
         result = self.cursor.fetchall()
         
@@ -655,11 +663,19 @@ class Manager(QtWidgets.QWidget):
             result.pop(index)
         #print("queue:",result[0])
         queue_count = len(result)
+        return queue_count
+                
+    def getECNQty(self):
+        self.cursor.execute(f"SELECT COUNT(DOC_ID) from DOCUMENT where STATUS!='Completed'")
+        result = self.cursor.fetchone()
+        #print("open:",result[0])
+        self.label_open_docs.setText(f"Inprogress - {result[0]}")
+        queue_count = self.getQueueCount()
         if queue_count>0:
             self.label_wait_docs.setStyleSheet("Color:red;font-weight:bold")
         else:
             self.label_wait_docs.setStyleSheet("Color:green;font-weight:bold")
-        self.label_wait_docs.setText(f"Waiting - {queue_count}")
+        self.label_wait_docs.setText(f"Queue - {queue_count}")
         self.cursor.execute(f"SELECT COUNT(DOC_ID) from DOCUMENT where STATUS='Completed'")
         result = self.cursor.fetchone()
         #print("complete:",result[0])
