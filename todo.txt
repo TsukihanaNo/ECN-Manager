@@ -1,11 +1,7 @@
-- notification server
-    - email for ecns past a certain elapsed days (done)
-
 - EVN export
 
 - docx export
 
-- check for required fields before allowing for release
 
 - universal search (prototype done)
     - search criteria

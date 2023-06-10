@@ -28,7 +28,6 @@ class PurchReqTab(QtWidgets.QWidget):
         self.initAtt()
         self.clipboard = QtGui.QGuiApplication.clipboard()
         self.menu = QtWidgets.QMenu(self)
-        self.createMenu()
         self.initUI()
 
     def initAtt(self):
