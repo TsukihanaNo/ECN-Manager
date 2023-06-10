@@ -2,6 +2,7 @@ from PySide6 import QtWidgets, QtCore
 from datetime import datetime
 from PurchReqTab import *
 from ProjectPartsTab import *
+from ProjectScheduleTab import *
 import sys
 
 if getattr(sys, 'frozen', False):
@@ -90,11 +91,13 @@ class ProjectWindow(QtWidgets.QWidget):
         layout_header.addWidget(self.label_status)
         layout_header.addWidget(self.line_status)
         self.tab_widget = QtWidgets.QTabWidget(self)
-        # self.tab_material = ProjectPartsTab(self)
+        self.tab_parts = ProjectPartsTab(self)
         self.tab_purch_req = PurchReqTab(self)
+        self.tab_schedule = ProjectScheduleTab(self)
         
-        # self.tab_widget.addTab(self.tab_material,"Parts")
+        self.tab_widget.addTab(self.tab_parts,"Parts")
         self.tab_widget.addTab(self.tab_purch_req,"Purch Reqs")
+        self.tab_widget.addTab(self.tab_schedule, "Schedule")
         
         mainlayout.addWidget(self.toolbar)
         mainlayout.addLayout(layout_header)

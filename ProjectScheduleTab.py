@@ -1,7 +1,5 @@
 from PySide6 import QtGui, QtCore, QtWidgets
 import sys, os
-from PartEditor import *
-from PurchReqWindow import *
 
 if getattr(sys, 'frozen', False):
     # frozen
@@ -10,9 +8,9 @@ else:
     # unfrozen
     program_location = os.path.dirname(os.path.realpath(__file__))
 
-class PurchReqTab(QtWidgets.QWidget):
+class ProjectScheduleTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
-        super(PurchReqTab,self).__init__()
+        super(ProjectScheduleTab,self).__init__()
         self.parent = parent
         self.cursor = parent.cursor
         self.db = parent.db
@@ -28,7 +26,6 @@ class PurchReqTab(QtWidgets.QWidget):
         self.initAtt()
         self.clipboard = QtGui.QGuiApplication.clipboard()
         self.menu = QtWidgets.QMenu(self)
-        self.createMenu()
         self.initUI()
 
     def initAtt(self):
@@ -40,66 +37,66 @@ class PurchReqTab(QtWidgets.QWidget):
         
         mainlayout.addWidget(self.toolbar)
 
-        self.button_add = QtWidgets.QPushButton("Add Requisition")
+        self.button_add = QtWidgets.QPushButton("Add Task")
         if self.doc_id is None:
             self.button_add.setDisabled(True)
         icon_loc = icon = os.path.join(program_location,"icons","add.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
-        self.button_add.clicked.connect(self.addReq)
-        self.button_remove = QtWidgets.QPushButton("Remove Requisition")
+        self.button_add.clicked.connect(self.addTask)
+        self.button_remove = QtWidgets.QPushButton("Remove Task")
         icon_loc = icon = os.path.join(program_location,"icons","minus.png")
         self.button_remove.setIcon(QtGui.QIcon(icon_loc))
         self.button_remove.setDisabled(True)
         self.button_remove.clicked.connect(self.removeRow)
-        self.button_edit = QtWidgets.QPushButton("Edit Requisition")
+        self.button_edit = QtWidgets.QPushButton("Edit Task")
         icon_loc = icon = os.path.join(program_location,"icons","edit.png")
         self.button_edit.setIcon(QtGui.QIcon(icon_loc))
         self.button_edit.setDisabled(True)
-        self.button_edit.clicked.connect(self.editReq)
+        self.button_edit.clicked.connect(self.editTask)
         
         self.toolbar.addWidget(self.button_add)
         self.toolbar.addWidget(self.button_remove)
         self.toolbar.addWidget(self.button_edit)
         
-        self.reqs = QtWidgets.QListView()
-        self.reqs.setStyleSheet("QListView{background-color:#f0f0f0}")
-        self.reqs.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.reqs.setResizeMode(QtWidgets.QListView.Adjust)
-        self.reqs.setItemDelegate(ReqsDelegate())
-        self.reqs.doubleClicked.connect(self.editReq)
+        self.tasks = QtWidgets.QListView()
+        self.tasks.setStyleSheet("QListView{background-color:#f0f0f0}")
+        self.tasks.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.tasks.setResizeMode(QtWidgets.QListView.Adjust)
+        self.tasks.setItemDelegate(TasksDelegate())
+        self.tasks.doubleClicked.connect(self.editTask)
         # if self.parent.doc_data is not None:
         #     if self.parent.parent.user_info['user']==self.parent.doc_data["AUTHOR"]:
-        #         self.reqs.doubleClicked.connect(self.editPart)
+        #         self.tasks.doubleClicked.connect(self.editPart)
         #     else:
         #         self.button_add.setDisabled(True)
         # else:
-        #     self.reqs.doubleClicked.connect(self.editPart)
-        self.model = ReqsModel()
-        self.reqs.setModel(self.model)
+        #     self.tasks.doubleClicked.connect(self.editPart)
+        self.model = TasksModel()
+        self.tasks.setModel(self.model)
         
-        self.reqs.selectionModel().selectionChanged.connect(self.onRowSelect)
+        self.tasks.selectionModel().selectionChanged.connect(self.onRowSelect)
         
-        mainlayout.addWidget(self.reqs)
+        mainlayout.addWidget(self.tasks)
         
         self.setLayout(mainlayout)              
         #self.repopulateTable()
         
+        
     def onRowSelect(self):
-        self.button_edit.setEnabled(bool(self.reqs.selectionModel().selectedIndexes()))
+        self.button_edit.setEnabled(bool(self.tasks.selectionModel().selectedIndexes()))
         
         
-    def addReq(self):
-        self.req_editor = PurchReqWindow(self)
-        
-    def editReq(self):
-        index = self.reqs.currentIndex()
+    def addTask(self):
+        pass
+
+    def editTask(self):
+        index = self.tasks.currentIndex()
         print(index.data(QtCore.Qt.DisplayRole))
         doc_id = index.data(QtCore.Qt.DisplayRole)[0]
         row = index.row()
-        self.part_editor = PurchReqWindow(self,doc_id,row)
 
     def removeRow(self):
-        index = self.reqs.selectionModel().selectedIndexes()
+        index = self.tasks.selectionModel().selectedIndexes()
         index = sorted(index, reverse=True)
         for item in index:
             row = item.row()
@@ -107,39 +104,11 @@ class PurchReqTab(QtWidgets.QWidget):
         
             
     def repopulateTable(self):
-        self.parent.cursor.execute(f"select * from DOCUMENT LEFT JOIN PURCH_REQ_DOC_LINK ON DOCUMENT.DOC_ID=PURCH_REQ_DOC_LINK.DOC_ID WHERE PURCH_REQ_DOC_LINK.PROJECT_ID='{self.doc_id}'")
-        results = self.parent.cursor.fetchall()
-        for result in results:
-            # if self.parent.parent.visual is not None:
-            #     status = self.getStatus(result['PART_ID'], result['TYPE'])
-            # else:
-            #     status = "NA"
-            self.model.add_req(result['DOC_ID'],result["DOC_TITLE"], result['REQ_ID'],result['STATUS'])
-            
+        pass
+
     def rowCount(self):
-        return self.model.rowCount(self.reqs)
+        return self.model.rowCount(self.tasks)
     
-    def getStatus(self,part,part_type):
-        if self.parent.parent.visual.partExist(part):
-            if self.parent.parent.visual.checkPartSetup(part,part_type):
-                return "Completed"
-            else: 
-                return "Incomplete"
-        else:
-            return "Not Found"
-            
-    def updateStatusColor(self):
-        for row in range(self.rowCount()):
-            part = self.model.get_part_id(row)
-            part_type = self.model.get_type(row)
-            if self.parent.parent.visual is not None:
-                if self.parent.parent.visual.partExist(part):
-                    if self.parent.parent.visual.checkPartSetup(part,part_type):
-                        self.model.update_status(row, "Complete")
-                    else: 
-                        self.model.update_status(row, "Incomplete")
-                else:
-                    self.model.update_status(row, "Not Found")
                     
     def resizeEvent(self, e):
         self.model.layoutChanged.emit()
@@ -149,11 +118,10 @@ class PurchReqTab(QtWidgets.QWidget):
         msgbox = QtWidgets.QMessageBox()
         msgbox.setText(msg+"        ")
         msgbox.exec()
-            
-                
+
 PADDING = QtCore.QMargins(15, 2, 15, 2)
 
-class ReqsDelegate(QtWidgets.QStyledItemDelegate):
+class TasksDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         painter.save()
         
@@ -213,15 +181,14 @@ class ReqsDelegate(QtWidgets.QStyledItemDelegate):
     def sizeHint(self, option, index):
         return QtCore.QSize(option.rect.width()-50,55)
 
-class ReqsModel(QtCore.QAbstractListModel):
+class TasksModel(QtCore.QAbstractListModel):
     def __init__(self, *args, **kwargs):
-        super(ReqsModel, self).__init__(*args, **kwargs)
-        self.reqs = []
-        self.status = []
+        super(TasksModel, self).__init__(*args, **kwargs)
+        self.tasks = []
 
     def data(self, index, role):
         if role == QtCore.Qt.DisplayRole:
-            return self.reqs[index.row()]
+            return self.tasks[index.row()]
         if role == QtCore.Qt.DecorationRole:
             return self.status[index.row()]
 
@@ -229,62 +196,24 @@ class ReqsModel(QtCore.QAbstractListModel):
         self._size[index.row()]
         
     def rowCount(self, index):
-        return len(self.reqs)
+        return len(self.tasks)
     
     def removeRow(self, row):
-        del self.reqs[row]
+        del self.tasks[row]
         self.layoutChanged.emit()
         
     def update_req_data(self,row, doc_id,title, req_id,status):
-        self.reqs[row]=(doc_id,title, req_id,status)
+        self.tasks[row]=(doc_id,title, req_id,status)
         self.layoutChanged.emit()
         
-    def update_status(self,row,status):
-        self.status[row]=status
-        self.layoutChange.emit()
-        
-    def get_req_data(self,row):
-        return self.reqs[row]
+    def get_task_data(self,row):
+        return self.tasks[row]
 
-    def clear_reqs(self):
-        self.reqs = []
-        
-    # def exist_part(self,part):
-    #     for data in self.reqs:
-    #         if data[0]==part:
-    #             return True
-    #     return False
-        
-    # def get_part_id(self, row):
-    #     return self.reqs[row][0]
-
-    # def get_desc(self,row):
-    #     return self.reqs[row][1]
-
-    # def get_type(self,row):
-    #     return self.reqs[row][2]
+    def clear_tasks(self):
+        self.tasks = []
     
-    # def get_disposition(self,row):
-    #     return self.reqs[row][3]
-    
-    # def get_mfg(self,row):
-    #     return self.reqs[row][4]
-    
-    # def get_mfg_part(self,row):
-    #     return self.reqs[row][5]
-    
-    # def get_reference(self,row):
-    #     return self.reqs[row][6]
-    
-    # def get_replace(self,row):
-    #     return self.reqs[row][7]
-    
-    # def get_inspection(self,row):
-    #     return self.reqs[row][8]
-    
-    def add_req(self, doc_id,title, req_id,status):
+    def add_task(self, doc_id,title, req_id,status):
         # Access the list via the model.
-        self.reqs.append((doc_id,title, req_id,status))
-        self.status.append(status)
+        self.tasks.append((doc_id,title, req_id,status))
         # Trigger refresh.
         self.layoutChanged.emit()
