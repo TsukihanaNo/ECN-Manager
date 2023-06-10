@@ -166,6 +166,23 @@ class ProjectWindow(QtWidgets.QWidget):
         self.line_status.setText(result["STATUS"])
         self.tab_purch_req.repopulateTable()
         
+    def addParts(self):
+        # part_id, desc,fab_type,status,vendor, vendor_part_id,tooling_po, tooling_cost,cost_per,notes,part_po,ecn, qty_on_hand, qty_incoming
+        try:
+            self.cursor.execute("DELETE FROM PARTS WHERE DOC_ID = '" + self.doc_id + "'")
+            self.db.commit()
+            for row in range(self.tab_parts.rowCount()):
+                part_data = self.tab_parts.model.get_part_data(row)
+                data = (self.doc_id, part, desc,ptype,disposition,mfg,mfg_part,rep,ref,insp)
+                self.cursor.execute("INSERT INTO PROJECT_PARTS(DOC_ID,PART_ID,DESC,TYPE,DISPOSITION,MFG,MFG_PART,REPLACING,REFERENCE,INSPEC) VALUES(?,?,?,?,?,?,?,?,?,?)",(data))
+                
+            self.db.commit()
+            #self.tab_parts.setStatusColor()
+            #print('data inserted')
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error occured during data update (parts)!\n Error: {e}")
+        
 
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()

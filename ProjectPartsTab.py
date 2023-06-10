@@ -13,6 +13,7 @@ class ProjectPartsTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(ProjectPartsTab,self).__init__()
         self.parent = parent
+        self.doc_id = parent.doc_id
         self.initAtt()
         self.clipboard = QtGui.QGuiApplication.clipboard()
         self.menu = QtWidgets.QMenu(self)
@@ -52,6 +53,7 @@ class ProjectPartsTab(QtWidgets.QWidget):
         self.parts.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.parts.setResizeMode(QtWidgets.QListView.Adjust)
         self.parts.setItemDelegate(PartsDelegate())
+        self.parts.doubleClicked.connect(self.editPart)
         # if self.parent.doc_data is not None:
         #     if self.parent.parent.user_info['user']==self.parent.doc_data["AUTHOR"]:
         #         self.parts.doubleClicked.connect(self.editPart)
@@ -110,9 +112,8 @@ class ProjectPartsTab(QtWidgets.QWidget):
         self.menu.exec_(event.globalPos())
         
     def onRowSelect(self):
-        if self.parent.parent.user_info['user']==self.parent.doc_data["AUTHOR"]:
-            self.button_remove.setEnabled(bool(self.parts.selectionModel().selectedIndexes()))
-            self.button_edit.setEnabled(bool(self.parts.selectionModel().selectedIndexes()))
+        self.button_remove.setEnabled(bool(self.parts.selectionModel().selectedIndexes()))
+        self.button_edit.setEnabled(bool(self.parts.selectionModel().selectedIndexes()))
         
         
     def addPart(self):
@@ -181,7 +182,7 @@ class PartsDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         painter.save()
         
-        part_id, desc, part_type, fab_type,status,vendor,tooling_po,part_po,ecn, qty_on_hand, qty_incoming = index.model().data(index, QtCore.Qt.DisplayRole)
+        part_id, desc,fab_type,status,vendor, vendor_part_id,tooling_po, tooling_cost,cost_per,part_po,note,ecn, qty_on_hand, qty_incoming = index.model().data(index, QtCore.Qt.DisplayRole)
         status = index.model().data(index, QtCore.Qt.DecorationRole)
         
         lineMarkedPen = QtGui.QPen(QtGui.QColor("#f0f0f0"),1,QtCore.Qt.SolidLine)
@@ -211,7 +212,7 @@ class PartsDelegate(QtWidgets.QStyledItemDelegate):
             font.setPointSize(8)
             painter.setFont(font)
             painter.setPen(QtCore.Qt.black)
-            painter.drawText(r.topRight()+QtCore.QPoint(-145,28),f"Visual: {status}")
+            painter.drawText(r.topRight()+QtCore.QPoint(-145,28),f"{status}")
         
         painter.setPen(lineMarkedPen)
         painter.drawLine(r.topLeft()+QtCore.QPoint(0,50),r.topRight()+QtCore.QPoint(0,50))
@@ -219,7 +220,7 @@ class PartsDelegate(QtWidgets.QStyledItemDelegate):
         
         text_offsetx1 = 15
         text_offsetx2 = r.width()/2+10
-        
+        # part_id, desc,fab_type,status,vendor, vendor_part_id,tooling_po, tooling_cost,cost_per,part_po,ecn, qty_on_hand, qty_incoming
         font = painter.font()
         font.setPointSize(18)
         font.setBold(True)
@@ -233,19 +234,23 @@ class PartsDelegate(QtWidgets.QStyledItemDelegate):
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,45),desc)
         font.setPointSize(8)
         painter.setFont(font)
-        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,15),f"Type: {part_type}")
-        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,30),f"Disposition: {disposition}")
-        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,45),f"Inspection: {Inspection}")
-        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,65),f"Manufacturer: {mfg}")
-        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,65),f"Mfg. Part: {mfg_part_id}")
-        if reference is not None:
-            if len(reference)>50:
-                reference = reference[:50] +" ..."
-        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,80),f"Reference: {reference}")
-        if replacing is not None:
-            if len(replacing)>100:
-                replacing = replacing[:100] +" ..."
-        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,95),f"Replacing: {replacing}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,15),f"Type: {fab_type}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,30),f"Vendor: {vendor}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,45),f"Vendor Part ID: {vendor_part_id}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,65),f"Tooling P.O: {tooling_po}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,65),f"Tooling Cost: {tooling_cost}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,80),f"Part P.O: {tooling_cost}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,80),f"Cost Per: {tooling_cost}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,95),f"Qty on Hand: {tooling_cost}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,95),f"Qty Incoming: {tooling_cost}")
+        # if reference is not None:
+        #     if len(reference)>50:
+        #         reference = reference[:50] +" ..."
+        # painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,80),f"Reference: {reference}")
+        # if replacing is not None:
+        #     if len(replacing)>100:
+        #         replacing = replacing[:100] +" ..."
+        # painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,95),f"Replacing: {replacing}")
         painter.restore()
 
     def sizeHint(self, option, index):
@@ -273,8 +278,8 @@ class PartsModel(QtCore.QAbstractListModel):
         del self.parts[row]
         self.layoutChanged.emit()
         
-    def update_part_data(self,row, part_id, desc, part_type, fab_type,status,vendor,tooling_po,part_po,ecn, qty_on_hand, qty_incoming):
-        self.parts[row]=(part_id, desc, part_type, fab_type,status,vendor,tooling_po,part_po,ecn, qty_on_hand, qty_incoming)
+    def update_part_data(self,row, part_id, desc,fab_type,status,vendor, vendor_part_id,tooling_po, tooling_cost,cost_per,note,part_po,ecn, qty_on_hand, qty_incoming):
+        self.parts[row]=(part_id, desc,fab_type,status,vendor, vendor_part_id,tooling_po, tooling_cost,cost_per,part_po,note,ecn, qty_on_hand, qty_incoming)
         self.layoutChanged.emit()
         
     def update_status(self,row,status):
@@ -320,9 +325,9 @@ class PartsModel(QtCore.QAbstractListModel):
     def get_inspection(self,row):
         return self.parts[row][8]
     
-    def add_part(self, part_id, desc, part_type, fab_type,status,vendor,tooling_po,part_po,ecn, qty_on_hand, qty_incoming):
+    def add_part(self, part_id, desc,fab_type,status,vendor, vendor_part_id,tooling_po, tooling_cost,cost_per,note,part_po,ecn, qty_on_hand, qty_incoming):
         # Access the list via the model.
-        self.parts.append((part_id, desc, part_type, fab_type,status,vendor,tooling_po,part_po,ecn, qty_on_hand, qty_incoming))
+        self.parts.append((part_id, desc,fab_type,status,vendor, vendor_part_id,tooling_po, tooling_cost,cost_per,note,part_po,ecn, qty_on_hand, qty_incoming))
         self.status.append(status)
         # Trigger refresh.
         self.layoutChanged.emit()

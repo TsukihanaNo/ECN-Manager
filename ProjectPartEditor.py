@@ -76,7 +76,7 @@ class ProjectPartEditor(QtWidgets.QWidget):
         form_layout.addRow("Description:", self.line_desc)
         form_layout.addRow("Type of Part:", self.box_type)
         form_layout.addRow("Status:", self.box_status)
-        form_layout.addRow("Vendor:", self.line_vedor)
+        form_layout.addRow("Vendor:", self.line_vendor)
         form_layout.addRow("Vendor. Part ID:", self.line_vendor_part)
         form_layout.addRow("Tooling P.O:", self.line_tooling_po)
         form_layout.addRow("Tooling Cost:", self.line_tooling_cost)
@@ -85,21 +85,25 @@ class ProjectPartEditor(QtWidgets.QWidget):
         form_layout.addRow(self.button_save)
                 
     def loadData(self,data):
+        # part_id, desc,fab_type,status,vendor, vendor_part_id,tooling_po, tooling_cost,cost_per,notes,part_po,ecn, qty_on_hand, qty_incoming
         self.line_part.setText(data[0])
         self.line_desc.setText(data[1])
         self.box_type.setCurrentText(data[2])
-        self.box_dispo.setCurrentText(data[3])
-        self.line_mfg.setText(data[4])
-        self.line_mfg_part.setText(data[5])
-        self.text_details.setText(data[6])
+        self.box_status.setCurrentText(data[3])
+        self.line_vendor.setText(data[4])
+        self.line_vendor_part.setText(data[5])
+        self.line_tooling_po.setText(data[6])
+        self.line_tooling_cost.setText(data[7])
+        self.line_cost_per.setText(data[8])
+        self.text_details.setText(data[9])
         self.button_save.setText("Update Part")
         
-    def checkEmptyFields(self,part_id,desc,part_type):
+    def checkEmptyFields(self,part_id,desc,fab_type):
         if part_id=="":
             return False
         if desc == "":
             return False
-        if part_type=="":
+        if fab_type=="":
             return False
         return True
         
@@ -107,29 +111,26 @@ class ProjectPartEditor(QtWidgets.QWidget):
         part_id = self.line_part.text()
         desc = self.line_desc.text()
         fab_type = self.box_type.currentText()
-        vendor = self.line_mfg.text()
-        vendor_part_id = self.line_mfg_part.text()
+        vendor = self.line_vendor.text()
+        vendor_part_id = self.line_vendor_part.text()
         status = self.box_status.currentText()
         tooling_po = self.line_tooling_po.text()
         tooling_cost = self.line_tooling_cost.text()
         cost_per = self.line_cost_per.text()
-        details = self.text_details.toPlainText()
+        notes = self.text_details.toPlainText()
+        ecn = ""
+        part_po = ""
+        qty_on_hand = ""
+        qty_incoming = ""
         if self.row is not None:
-            if self.checkEmptyFields(part_id, desc, part_type):
-                self.parent.model.update_part_data(self.row, part_id, desc, part_type, disposition, mfg, mfg_part_id,details)
-                if self.parent.parent.parent.visual is not None:
-                    status = self.parent.getStatus(part_id, part_type)
-                    self.parent.model.update_status(self.row, status)
+            if self.checkEmptyFields(part_id, desc, fab_type):
+                self.parent.model.update_part_data(self.row, part_id, desc,fab_type,status,vendor, vendor_part_id,tooling_po, tooling_cost,cost_per,part_po,notes,ecn, qty_on_hand, qty_incoming)
             else:
                 self.dispMsg("Update Failed. There are empty fields.")
         else:
             if not self.parent.model.exist_part(part_id):
-                if self.checkEmptyFields(part_id, desc, part_type, disposition):
-                    if self.parent.parent.parent.visual is not None:
-                        status = self.parent.getStatus(part_id, part_type)
-                    else:
-                        status = "NA"
-                    self.parent.model.add_part(part_id, desc, part_type, disposition, mfg, mfg_part_id,details,status)
+                if self.checkEmptyFields(part_id, desc, fab_type):
+                    self.parent.model.add_part(part_id, desc,fab_type,status,vendor, vendor_part_id,tooling_po, tooling_cost,cost_per,part_po,notes,ecn, qty_on_hand, qty_incoming)
                 else:
                     self.dispMsg("Save Failed. There are empty fields.")
             else:
