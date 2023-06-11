@@ -1,6 +1,8 @@
 from PySide6 import QtGui, QtCore, QtWidgets
 import sys, os
 
+from ScheduleTaskWindow import *
+
 if getattr(sys, 'frozen', False):
     # frozen
     program_location = os.path.dirname(sys.executable)
@@ -87,13 +89,12 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         
         
     def addTask(self):
-        pass
+        self.task_editor = ScheduleTaskWindow(self)
 
     def editTask(self):
-        index = self.tasks.currentIndex()
-        print(index.data(QtCore.Qt.DisplayRole))
-        doc_id = index.data(QtCore.Qt.DisplayRole)[0]
-        row = index.row()
+        index = self.parts.currentIndex()
+        self.task_editor = ScheduleTaskWindow(self,index)
+        
 
     def removeRow(self):
         index = self.tasks.selectionModel().selectedIndexes()
