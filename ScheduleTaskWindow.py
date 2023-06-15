@@ -25,6 +25,8 @@ class ScheduleTaskWindow(QtWidgets.QWidget):
         if item is not None:
             self.item = item
             self.loadData()
+        if self.parent.tasks.currentItem() is not None:
+            self.autoSetInitDate()
         self.show()
 
     def center(self):
@@ -84,6 +86,13 @@ class ScheduleTaskWindow(QtWidgets.QWidget):
         item.setText(2, self.dateedit_start.date().toString("MM/dd/yyyy"))
         item.setText(3,self.dateedit_end.date().toString("MM/dd/yyyy"))
         self.parent.bubbleDate(item)
+        
+    def autoSetInitDate(self):
+        childCount = self.parent.tasks.currentItem().childCount()
+        if childCount>0:
+            start_date = QtCore.QDate.fromString(self.parent.tasks.currentItem().child(childCount-1).text(3),"MM/dd/yyyy")
+            self.dateedit_start.setDate(start_date)
+            self.dateedit_end.setDate(start_date)
 
     def updateDate(self):
         pass
