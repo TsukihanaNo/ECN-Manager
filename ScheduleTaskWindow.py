@@ -83,6 +83,7 @@ class ScheduleTaskWindow(QtWidgets.QWidget):
         item.setText(0,self.line_desc.text())
         item.setText(2, self.dateedit_start.date().toString("MM/dd/yyyy"))
         item.setText(3,self.dateedit_end.date().toString("MM/dd/yyyy"))
+        self.parent.bubbleDate(item)
 
     def updateDate(self):
         pass

@@ -55,11 +55,18 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.button_edit.setIcon(QtGui.QIcon(icon_loc))
         self.button_edit.setDisabled(True)
         self.button_edit.clicked.connect(self.editTask)
+        
+        self.button_expand = QtWidgets.QPushButton("Expand All")
+        self.button_expand.clicked.connect(self.expandAll)
+        self.button_collapse = QtWidgets.QPushButton("Collapse All")
+        self.button_collapse.clicked.connect(self.collapseAll)
         self.button_timeline = QtWidgets.QPushButton("Show Timeline")
         
         self.toolbar.addWidget(self.button_add)
         self.toolbar.addWidget(self.button_remove)
         self.toolbar.addWidget(self.button_edit)
+        self.toolbar.addWidget(self.button_expand)
+        self.toolbar.addWidget(self.button_collapse)
         self.toolbar.addWidget(self.button_timeline)
         
         self.tasks = QtWidgets.QTreeWidget()
@@ -69,6 +76,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.setColumnWidth(0,350)
         self.tasks.itemDoubleClicked.connect(self.editTask)
         self.tasks.selectionModel().selectionChanged.connect(self.onRowSelect)
+        self.tasks.setSortingEnabled(True)
 
         mainlayout.addWidget(self.tasks)
         
@@ -92,6 +100,37 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             parent.removeChild(item)
         else:
             self.tasks.takeTopLevelItem(self.tasks.indexOfTopLevelItem(item))
+        
+    def expandAll(self):
+        for x in range(self.tasks.invisibleRootItem().childCount()):
+            if self.tasks.invisibleRootItem().child(x).childCount()>0:
+                self.tasks.expandItem(self.tasks.invisibleRootItem().child(x))
+    
+    def collapseAll(self):
+        for x in range(self.tasks.invisibleRootItem().childCount()):
+            if self.tasks.invisibleRootItem().child(x).childCount()>0:
+                self.tasks.collapseItem(self.tasks.invisibleRootItem().child(x))
+                
+                
+    def bubbleDate(self,item):
+        if item.parent() is not None:
+            start_date = ""
+            end_date = ""
+            for x in range(item.parent().childCount()):
+                if x == 0:
+                    start_date = QtCore.QDate.fromString(item.parent().child(x).text(2),"MM/dd/yyyy") 
+                    end_date = QtCore.QDate.fromString(item.parent().child(x).text(3),"MM/dd/yyyy") 
+                else:
+                    start_comp = QtCore.QDate.fromString(item.parent().child(x).text(2),"MM/dd/yyyy")
+                    end_comp = QtCore.QDate.fromString(item.parent().child(x).text(3),"MM/dd/yyyy")
+                    if start_comp<start_date:
+                        start_date=start_comp
+                    if end_comp>end_date:
+                        end_date=end_comp
+            item.parent().setText(2,start_date.toString("MM/dd/yyyy"))
+            item.parent().setText(3,end_date.toString("MM/dd/yyyy"))
+                
+            self.bubbleDate(item.parent())
         
             
     def repopulateTable(self):
