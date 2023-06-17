@@ -25,6 +25,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.ico = parent.ico
         self.visual = parent.visual
         self.doc_id = parent.doc_id
+        self.task_counter = 0
+        self.task_dict = {}
         self.initAtt()
         self.clipboard = QtGui.QGuiApplication.clipboard()
         self.menu = QtWidgets.QMenu(self)
@@ -50,11 +52,11 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.button_remove.setIcon(QtGui.QIcon(icon_loc))
         self.button_remove.clicked.connect(self.removeTask)
         self.button_remove.setDisabled(True)
-        self.button_edit = QtWidgets.QPushButton("Edit Task")
-        icon_loc = icon = os.path.join(program_location,"icons","edit.png")
-        self.button_edit.setIcon(QtGui.QIcon(icon_loc))
-        self.button_edit.setDisabled(True)
-        self.button_edit.clicked.connect(self.editTask)
+        self.button_insert = QtWidgets.QPushButton("insert Task")
+        icon_loc = icon = os.path.join(program_location,"icons","add.png")
+        self.button_insert.setIcon(QtGui.QIcon(icon_loc))
+        self.button_insert.setDisabled(True)
+        self.button_insert.clicked.connect(self.insertTask)
         
         self.button_expand = QtWidgets.QPushButton("Expand All")
         self.button_expand.clicked.connect(self.expandAll)
@@ -63,35 +65,92 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.button_timeline = QtWidgets.QPushButton("Show Timeline")
         
         self.toolbar.addWidget(self.button_add)
+        self.toolbar.addWidget(self.button_insert)
         self.toolbar.addWidget(self.button_remove)
-        self.toolbar.addWidget(self.button_edit)
         self.toolbar.addWidget(self.button_expand)
         self.toolbar.addWidget(self.button_collapse)
         self.toolbar.addWidget(self.button_timeline)
         
         self.tasks = QtWidgets.QTreeWidget()
-        headers = ["Task", "Owner", "Start Date", "Completion Date", "Status", "Duration"]
+        headers = ["Task", "Owner", "Start", "Finish", "Status", "Duration","Depends On","ID"]
         self.tasks.setColumnCount(len(headers))
         self.tasks.setHeaderLabels(headers)
-        self.tasks.setColumnWidth(0,350)
-        self.tasks.itemDoubleClicked.connect(self.editTask)
+        self.sizing()        
+        self.tasks.setSelectionMode(QtWidgets.QAbstractItemView.ContiguousSelection)
         self.tasks.selectionModel().selectionChanged.connect(self.onRowSelect)
         self.tasks.setSortingEnabled(True)
+        self.tasks.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        self.tasks.header().setStretchLastSection(False)
 
         mainlayout.addWidget(self.tasks)
         
         self.setLayout(mainlayout)              
         #self.repopulateTable()
         
-    def onRowSelect(self):
-        self.button_edit.setEnabled(bool(self.tasks.currentItem()))
-        self.button_remove.setEnabled(bool(self.tasks.currentItem()))
+    def sizing(self):
+        self.tasks.setColumnWidth(2,90)
+        self.tasks.setColumnWidth(3,90)
+        self.tasks.setColumnWidth(5,60)
+        self.tasks.setColumnWidth(6,80)
+        self.tasks.setColumnWidth(7,40)
+        
+    def onRowSelect(self,selected,deselected):
+        self.button_insert.setEnabled(bool(self.tasks.selectedItems()))
+        self.button_remove.setEnabled(bool(self.tasks.selectedItems()))
         
     def addTask(self):
-        self.task_editor = ScheduleTaskWindow(self)
-
-    def editTask(self,item):
-        self.task_editor = ScheduleTaskWindow(self,item)
+        self.task_counter+=1
+        if self.tasks.selectedItems() == []:
+            item = QtWidgets.QTreeWidgetItem(self.tasks)
+        else:
+            item = QtWidgets.QTreeWidgetItem(self.tasks.currentItem())
+            self.tasks.itemWidget(self.tasks.currentItem(),1).setEnabled(False)
+            self.tasks.itemWidget(self.tasks.currentItem(),2).setEnabled(False)
+            self.tasks.itemWidget(self.tasks.currentItem(),3).setEnabled(False)
+            self.tasks.itemWidget(self.tasks.currentItem(),4).setEnabled(False)
+            self.tasks.itemWidget(self.tasks.currentItem(),5).setEnabled(False)
+            self.tasks.expandItem(self.tasks.currentItem())
+        self.generateWidgets(item)
+        
+    def insertTask(self):
+        self.task_counter+=1
+        item = QtWidgets.QTreeWidgetItem()
+        if self.tasks.currentItem().parent() is None:
+            index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
+            self.tasks.invisibleRootItem().insertChild(index,item)
+        else:
+            index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
+            self.tasks.currentItem().parent().insertChild(index,item)
+        self.generateWidgets(item)
+        
+        
+    def generateWidgets(self,item):
+        line_edit = QtWidgets.QLineEdit()
+        line_edit.setPlaceholderText("new task...")
+        self.tasks.setItemWidget(item,0,line_edit)
+        users = QtWidgets.QComboBox()
+        users.addItems(["","lily", "paul","deven"])
+        self.tasks.setItemWidget(item,1,users)
+        dateedit_start = QtWidgets.QDateEdit(calendarPopup=True)
+        dateedit_start.setDate(QtCore.QDate.currentDate())
+        dateedit_start.dateChanged.connect(self.showDate)
+        self.tasks.setItemWidget(item,2,dateedit_start)
+        dateedit_end = QtWidgets.QDateEdit(calendarPopup=True)
+        dateedit_end.setDate(QtCore.QDate.currentDate())
+        dateedit_end.dateChanged.connect(self.showDate)
+        self.tasks.setItemWidget(item,3,dateedit_end)
+        status = QtWidgets.QComboBox()
+        status.addItems(["Pending","Started","Completed"])
+        self.tasks.setItemWidget(item,4,status)
+        line_duration = QtWidgets.QLineEdit()
+        line_duration.setValidator(QtGui.QIntValidator(1,999))
+        self.tasks.setItemWidget(item,5,line_duration)
+        line_predecessor = QtWidgets.QLineEdit()
+        self.tasks.setItemWidget(item,6,line_predecessor)
+        line_id = QtWidgets.QLineEdit()
+        line_id.setReadOnly(True)
+        line_id.setText(str(self.task_counter))
+        self.tasks.setItemWidget(item,7,line_id)
 
     def removeTask(self):
         item = self.tasks.currentItem()
@@ -100,6 +159,11 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             parent.removeChild(item)
         else:
             self.tasks.takeTopLevelItem(self.tasks.indexOfTopLevelItem(item))
+            
+    def showDate(self,date):
+        print(date)
+        self.bubbleDate(self.tasks.currentItem())
+            
         
     def expandAll(self):
         for x in range(self.tasks.invisibleRootItem().childCount()):
@@ -114,28 +178,33 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 
     def bubbleDate(self,item):
         if item.parent() is not None:
+            print("bubbling")
             start_date = ""
             end_date = ""
             for x in range(item.parent().childCount()):
                 if x == 0:
-                    start_date = QtCore.QDate.fromString(item.parent().child(x).text(2),"MM/dd/yyyy") 
-                    end_date = QtCore.QDate.fromString(item.parent().child(x).text(3),"MM/dd/yyyy") 
+                    start_date = self.tasks.itemWidget(item.parent().child(x),2).date()
+                    end_date = self.tasks.itemWidget(item.parent().child(x),3).date()
                 else:
-                    start_comp = QtCore.QDate.fromString(item.parent().child(x).text(2),"MM/dd/yyyy")
-                    end_comp = QtCore.QDate.fromString(item.parent().child(x).text(3),"MM/dd/yyyy")
+                    start_comp = self.tasks.itemWidget(item.parent().child(x),2).date()
+                    end_comp = self.tasks.itemWidget(item.parent().child(x),3).date()
                     if start_comp<start_date:
                         start_date=start_comp
                     if end_comp>end_date:
                         end_date=end_comp
-            item.parent().setText(2,start_date.toString("MM/dd/yyyy"))
-            item.parent().setText(3,end_date.toString("MM/dd/yyyy"))
+            self.tasks.itemWidget(item.parent(),2).setDate(start_date)
+            self.tasks.itemWidget(item.parent(),3).setDate(end_date)
+            # item.parent().setText(2,start_date.toString("MM/dd/yyyy"))
+            # item.parent().setText(3,end_date.toString("MM/dd/yyyy"))
                 
             self.bubbleDate(item.parent())
         
             
     def repopulateTable(self):
-        pass             
-                
+        pass     
+    
+    def resizeEvent(self, e):        
+        self.sizing()
             
     def dispMsg(self,msg):
         msgbox = QtWidgets.QMessageBox()

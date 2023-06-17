@@ -27,6 +27,7 @@ class ScheduleTaskWindow(QtWidgets.QWidget):
             self.loadData()
         if self.parent.tasks.currentItem() is not None:
             self.autoSetInitDate()
+        self.setDuration()
         self.show()
 
     def center(self):
@@ -58,12 +59,17 @@ class ScheduleTaskWindow(QtWidgets.QWidget):
         self.box_status.addItems(["","Pending","Started","Completed"])
         self.dateedit_start = QtWidgets.QDateEdit(calendarPopup=True)
         self.dateedit_start.setDate(QtCore.QDate.currentDate())
+        self.dateedit_start.editingFinished.connect(self.setDuration)
         self.dateedit_end = QtWidgets.QDateEdit(calendarPopup=True)
         self.dateedit_end.setDate(QtCore.QDate.currentDate())
+        self.dateedit_end.editingFinished.connect(self.setDuration)
         self.line_duration = QtWidgets.QLineEdit()
         self.line_duration.setValidator(QtGui.QIntValidator(1,999))
+        self.line_duration.setReadOnly(True)
         self.box_assigned_to = QtWidgets.QComboBox()
         self.text_notes = QtWidgets.QTextEdit()
+        self.list_depends = QtWidgets.QListWidget()
+        self.button_depends = QtWidgets.QPushButton("Add Depedencies")
         self.button_save = QtWidgets.QPushButton("Add Task")
         self.button_save.clicked.connect(self.saveData)
         
@@ -74,6 +80,8 @@ class ScheduleTaskWindow(QtWidgets.QWidget):
         form_layout.addRow("Duration (Days):", self.line_duration)
         form_layout.addRow("Assigned To:", self.box_assigned_to)
         form_layout.addRow("Notes:", self.text_notes)
+        form_layout.addRow("Dependencies:",self.list_depends)
+        form_layout.addRow(self.button_depends)
         form_layout.addRow(self.button_save)
         
     def saveData(self):
@@ -96,6 +104,12 @@ class ScheduleTaskWindow(QtWidgets.QWidget):
 
     def updateDate(self):
         pass
+    
+    def setDuration(self):
+        end_date = self.dateedit_end.date()
+        start_date = self.dateedit_start.date()
+        duration = start_date.daysTo(end_date)
+        self.line_duration.setText(str(duration))
 
     def loadData(self):
         self.line_desc.setText(self.item.text(0))

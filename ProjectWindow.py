@@ -28,7 +28,7 @@ class ProjectWindow(QtWidgets.QWidget):
         self.stageDictPRQ = parent.stageDictPRQ
         self.windowWidth =  950
         self.windowHeight = 580
-        self.setFixedSize(self.windowWidth,self.windowHeight)
+        # self.setFixedSize(self.windowWidth,self.windowHeight)
         self.doc_id = doc_id
         self.tablist = []
         self.initAtt()
@@ -47,6 +47,7 @@ class ProjectWindow(QtWidgets.QWidget):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         self.setMinimumWidth(self.windowWidth)
+        self.setMinimumHeight(self.windowHeight)
         #self.setWindowModality(QtCore.Qt.ApplicationModal)
         
 
