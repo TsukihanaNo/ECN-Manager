@@ -124,7 +124,7 @@ class ProjectWindow(QtWidgets.QWidget):
 
     
     def checkID(self):
-        self.cursor.execute(f"select DOC_ID from DOCUMENT where DOC_ID='{self.line_id}'")
+        self.cursor.execute(f"select DOC_ID from DOCUMENT where DOC_ID='{self.line_id.text()}'")
         result = self.cursor.fetchone()
         if result is not None:
             return True
@@ -153,12 +153,26 @@ class ProjectWindow(QtWidgets.QWidget):
             data = (self.doc_id,doc_type,status,title,author,modifieddate,first_released)
             self.cursor.execute("INSERT INTO DOCUMENT(DOC_ID,DOC_TYPE,STATUS,DOC_TITLE,AUTHOR,LAST_MODIFIED,FIRST_RELEASE) VALUES(?,?,?,?,?,?,?)",(data))
             self.db.commit()
+            self.tab_schedule.saveData()
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data insertion (insertData)!\n Error: {e}")
             
     def updateData(self):
-        pass
+        try:
+            doc_type = "Project"
+            status = self.line_status.text()
+            title = self.line_title.text()
+            modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            first_released = modifieddate
+            author = self.user_info['user']
+            data = (self.doc_id,doc_type,status,title,author,modifieddate,first_released)
+            # self.cursor.execute("INSERT INTO DOCUMENT(DOC_ID,DOC_TYPE,STATUS,DOC_TITLE,AUTHOR,LAST_MODIFIED,FIRST_RELEASE) VALUES(?,?,?,?,?,?,?)",(data))
+            # self.db.commit()
+            self.tab_schedule.saveData()
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error occured during data insertion (insertData)!\n Error: {e}")
     
     def loadData(self):
         self.cursor.execute(f"select * from DOCUMENT where DOC_ID='{self.doc_id}'")
@@ -167,6 +181,7 @@ class ProjectWindow(QtWidgets.QWidget):
         self.line_title.setText(result["DOC_TITLE"])
         self.line_status.setText(result["STATUS"])
         self.tab_purch_req.repopulateTable()
+        self.tab_schedule.loadData()
         
     def addParts(self):
         # part_id, desc,fab_type,status,vendor, vendor_part_id,tooling_po, tooling_cost,cost_per,notes,part_po,ecn, qty_on_hand, qty_incoming

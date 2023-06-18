@@ -104,19 +104,13 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         if self.tasks.selectedItems() == []:
             item = QtWidgets.QTreeWidgetItem(self.tasks)
         else:
-            item = QtWidgets.QTreeWidgetItem(self.tasks.currentItem())
-            self.tasks.itemWidget(self.tasks.currentItem(),1).setEnabled(False)
-            self.tasks.itemWidget(self.tasks.currentItem(),2).setEnabled(False)
-            self.tasks.itemWidget(self.tasks.currentItem(),3).setEnabled(False)
-            self.tasks.itemWidget(self.tasks.currentItem(),4).setEnabled(False)
-            self.tasks.itemWidget(self.tasks.currentItem(),5).setEnabled(False)
-            self.tasks.itemWidget(self.tasks.currentItem(),6).setText("")
-            self.tasks.itemWidget(self.tasks.currentItem(),6).setEnabled(False)
-            self.updateDependents()
-            self.tasks.expandItem(self.tasks.currentItem())
-        self.task_items[self.task_counter]=item
+            parent = self.tasks.currentItem()
+            item = QtWidgets.QTreeWidgetItem(parent)
+            self.disableWidgets(parent)
+            self.tasks.expandItem(parent)
+        self.task_items[str(self.task_counter)]=item
 
-        self.generateWidgets(item)
+        self.generateWidgets(item,self.task_counter)
         
     def insertTask(self):
         self.task_counter+=1
@@ -127,11 +121,11 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         else:
             index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
             self.tasks.currentItem().parent().insertChild(index,item)
-        self.task_items[self.task_counter]=item
-        self.generateWidgets(item)
+        self.task_items[str(self.task_counter)]=item
+        self.generateWidgets(item,self.task_counter)
         
         
-    def generateWidgets(self,item):
+    def generateWidgets(self,item,counter):
         line_edit = QtWidgets.QLineEdit()
         line_edit.setPlaceholderText("new task...")
         self.tasks.setItemWidget(item,0,line_edit)
@@ -140,7 +134,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.setItemWidget(item,1,users)
         dateedit_start = QtWidgets.QDateEdit(calendarPopup=True)
         dateedit_start.setDate(QtCore.QDate.currentDate())
-        # dateedit_start.dateChanged.connect(self.showDate)
+        dateedit_start.editingFinished.connect(self.showDate)
         self.tasks.setItemWidget(item,2,dateedit_start)
         dateedit_end = QtWidgets.QDateEdit(calendarPopup=True)
         dateedit_end.setDate(QtCore.QDate.currentDate().addDays(1))
@@ -161,12 +155,12 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.setItemWidget(item,6,line_predecessor)
         line_id = QtWidgets.QLineEdit()
         line_id.setReadOnly(True)
-        line_id.setText(str(self.task_counter))
+        line_id.setText(str(counter))
         self.tasks.setItemWidget(item,7,line_id)
 
     def removeTask(self):
         item = self.tasks.currentItem()
-        del self.task_items[int(self.tasks.itemWidget(item,7).text())]
+        del self.task_items[self.tasks.itemWidget(item,7).text()]
         self.tasks.itemWidget(self.tasks.currentItem(),6).setText("")
         self.updateDependents()
         parent = item.parent()
@@ -182,9 +176,9 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         # print(self.sender().parent().text(0))
         self.updateDuration()
         self.calculateDates()
-        # self.calculateDates()
+        self.calculateDates()
         # self.showItems()
-        self.bubbleDate(self.tasks.currentItem())
+        # self.bubbleDate(self.tasks.currentItem())
         
     def showItems(self):
         for key in self.task_items.keys():
@@ -198,30 +192,36 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             if task_id in self.task_dependents_flipped.keys():
                 affected_tasks = self.task_dependents_flipped[task_id]
                 # print("affected tasks", affected_tasks)
-                if len(affected_tasks)==1:
-                    duration = self.tasks.itemWidget(self.task_items[int(affected_tasks[0])],5).text()
-                    start_date = self.tasks.itemWidget(self.task_items[int(task_id)],3).date()
+                for affected_task in affected_tasks:
+                    # print("propagating")
+                    
+                    duration = self.tasks.itemWidget(self.task_items[affected_task],5).text()
+                    start_date = self.tasks.itemWidget(self.task_items[task_id],3).date()
                     end_date = start_date.addDays(int(duration))
-                    self.tasks.itemWidget(self.task_items[int(affected_tasks[0])],2).setDate(start_date)
-                    self.tasks.itemWidget(self.task_items[int(affected_tasks[0])],3).setDate(end_date)
-                    self.bubbleDate(self.task_items[int(affected_tasks[0])])
-                else:
-                    pass
+                    self.tasks.itemWidget(self.task_items[affected_task],2).setDate(start_date)
+                    self.tasks.itemWidget(self.task_items[affected_task],3).setDate(end_date)
+                    self.bubbleDate(self.task_items[affected_task])
+                
+            self.bubbleDate(iterator.value())
                 
             iterator+=1
             
-    def updateDependents(self):
-        task_id = self.tasks.itemWidget(self.tasks.currentItem(),7).text()
-        depends = self.tasks.itemWidget(self.tasks.currentItem(),6).text()
+    def checkDepends(self,task_id):
+        for key in self.task_dependents.keys():
+            pass
+            
+    def updateDependents(self,item):
+        task_id = self.tasks.itemWidget(item,7).text()
+        depends = self.tasks.itemWidget(item,6).text()
         if depends =="":
             if task_id in self.task_dependents.keys():
                 del self.task_dependents[task_id]
         else:
             self.task_dependents[task_id]=depends.split(",")
-        # print(self.task_dependents)
+        print(self.task_dependents)
         
     def setDependents(self):
-        self.updateDependents()
+        self.updateDependents(self.tasks.currentItem())
         self.generateDependents()
         self.showDate()
         
@@ -246,7 +246,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                     self.task_dependents_flipped[task].append(key)
                 else:
                     self.task_dependents_flipped[task] = [key]
-        # print(self.task_dependents_flipped)
+        print(self.task_dependents_flipped)
         
     def updateDuration(self):
         current_item = self.tasks.currentItem()
@@ -273,6 +273,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 
                 
     def bubbleDate(self,item):
+        # print("bubbling")
         if item.parent() is not None:
             # print("bubbling")
             start_date = ""
@@ -284,6 +285,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 else:
                     start_comp = self.tasks.itemWidget(item.parent().child(x),2).date()
                     end_comp = self.tasks.itemWidget(item.parent().child(x),3).date()
+                    # print("start",start_date,start_comp)
+                    # print("end",end_date,end_comp)
                     if start_comp<start_date:
                         start_date=start_comp
                     if end_comp>end_date:
@@ -291,6 +294,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             self.tasks.itemWidget(item.parent(),2).setDate(start_date)
             self.tasks.itemWidget(item.parent(),3).setDate(end_date)
             duration = start_date.daysTo(end_date)
+            # print(start_date,end_date,str(duration))
             self.tasks.itemWidget(item.parent(),5).setText(str(duration))
             # item.parent().setText(2,start_date.toString("MM/dd/yyyy"))
             # item.parent().setText(3,end_date.toString("MM/dd/yyyy"))
@@ -306,29 +310,73 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             item = iterator.value()
             task_name = self.tasks.itemWidget(item,0).text()
             owner = self.tasks.itemWidget(item,1).currentText()
-            start_date = self.tasks.itemWidget(item,2).date().toString("MM/dd/yy")
-            end_date = self.tasks.itemWidget(item,3).date().toString("MM/dd/yy")
+            start_date = self.tasks.itemWidget(item,2).date().toString("MM/dd/yyyy")
+            end_date = self.tasks.itemWidget(item,3).date().toString("MM/dd/yyyy")
             status = self.tasks.itemWidget(item,4).currentText()
             duration = self.tasks.itemWidget(item,5).text()
             predecessors = self.tasks.itemWidget(item,6).text()
             task_id = self.tasks.itemWidget(item,7).text()
             if item.childCount()>0:
                 task_type = "parent"
-                print("has children:")
+                # print("has children:")
                 for x in range(item.childCount()):
-                    print(self.tasks.itemWidget(item.child(x),7).text())
+                    # print(self.tasks.itemWidget(item.child(x),7).text())
                     data = (self.doc_id,self.tasks.itemWidget(item,7).text(),self.tasks.itemWidget(item.child(x),7).text())
                     self.cursor.execute(f"INSERT INTO TASK_LINK(PROJECT_ID, PARENT_TASK_ID, CHILD_TASK_ID) VALUES(?,?,?)",(data))
             else:
                 task_type = "child"
             data = (self.doc_id,task_name,owner,start_date,end_date,status,duration,predecessors,task_id,task_type)
-            print(data)
+            # print(data)
             self.cursor.execute(f"INSERT INTO PROJECT_TASKS(PROJECT_ID,TASK_NAME,ASSIGNED_TO,START_DATE,END_DATE,STATUS,DURATION,PREDECESSORS,TASK_ID,TYPE) VALUES(?,?,?,?,?,?,?,?,?,?)",(data))
             iterator+=1
         self.db.commit()
     
     def loadData(self):
-        pass
+        self.cursor.execute(f"select * from PROJECT_TASKS where PROJECT_ID='{self.doc_id}'")
+        results = self.cursor.fetchall()
+        for result in results:
+            # print(result["TASK_ID"])
+            parent = self.getParentTask(result["TASK_ID"])
+            if parent is None:
+                item = QtWidgets.QTreeWidgetItem(self.tasks)
+            else:
+                item = QtWidgets.QTreeWidgetItem(self.task_items[parent[0]])
+            self.task_items[result["TASK_ID"]]=item
+            self.generateWidgets(item,result["TASK_ID"])
+            #setting data
+            self.tasks.itemWidget(item,0).setText(result["TASK_NAME"])
+            self.tasks.itemWidget(item,1).setCurrentText(result["ASSIGNED_TO"])
+            self.tasks.itemWidget(item,2).setDate(QtCore.QDate.fromString(result["START_DATE"],"MM/dd/yyyy"))
+            self.tasks.itemWidget(item,3).setDate(QtCore.QDate.fromString(result["END_DATE"],"MM/dd/yyyy"))
+            self.tasks.itemWidget(item,4).setCurrentText(result["STATUS"])
+            self.tasks.itemWidget(item,5).setText(result["DURATION"])
+            self.tasks.itemWidget(item,6).setText(result["PREDECESSORS"])
+            self.updateDependents(item)
+            if result["TYPE"]=="parent":
+                self.disableWidgets(item)
+        self.generateDependents()
+        self.loadCounter()
+        self.expandAll()
+        
+    def loadCounter(self):
+        self.cursor.execute(f"select max(TASK_ID) from PROJECT_TASKS where PROJECT_ID='{self.doc_id}'")
+        result = self.cursor.fetchone()
+        self.task_counter=int(result[0])
+    
+    def disableWidgets(self,item):
+        self.tasks.itemWidget(item,1).setEnabled(False)
+        self.tasks.itemWidget(item,2).setEnabled(False)
+        self.tasks.itemWidget(item,3).setEnabled(False)
+        self.tasks.itemWidget(item,4).setEnabled(False)
+        self.tasks.itemWidget(item,5).setEnabled(False)
+        self.tasks.itemWidget(item,6).setText("")
+        self.tasks.itemWidget(item,6).setEnabled(False)
+        self.updateDependents(item)
+    
+    def getParentTask(self,task_id):
+        self.cursor.execute(f"select PARENT_TASK_ID from TASK_LINK where PROJECT_ID ='{self.doc_id}' and CHILD_TASK_ID='{task_id}'")
+        result = self.cursor.fetchone()
+        return result
             
     def repopulateTable(self):
         pass     
