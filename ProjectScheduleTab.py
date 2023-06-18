@@ -232,7 +232,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
     def setDependents(self):
         self.updateDependents(self.tasks.currentItem())
         self.generateDependents()
-        self.showDate()
+        self.propagateDates()
         
     def updateColor(self):
         today = QtCore.QDate.currentDate()
