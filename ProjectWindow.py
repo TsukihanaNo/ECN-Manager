@@ -120,6 +120,7 @@ class ProjectWindow(QtWidgets.QWidget):
                 if not msg:
                     self.dispMsg("Project has been updated!")
                 self.parent.repopulateTable()
+            self.tab_schedule.saveData()
 
     
     def checkID(self):

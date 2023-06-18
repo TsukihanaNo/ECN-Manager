@@ -297,6 +297,38 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 
             self.bubbleDate(item.parent())
         
+    def saveData(self):
+        self.cursor.execute(f"delete from PROJECT_TASKS where PROJECT_ID='{self.doc_id}'")
+        self.cursor.execute(f"delete from TASK_LINK where PROJECT_ID='{self.doc_id}'")
+        self.db.commit()
+        iterator = QtWidgets.QTreeWidgetItemIterator(self.tasks)
+        while iterator.value():
+            item = iterator.value()
+            task_name = self.tasks.itemWidget(item,0).text()
+            owner = self.tasks.itemWidget(item,1).currentText()
+            start_date = self.tasks.itemWidget(item,2).date().toString("MM/dd/yy")
+            end_date = self.tasks.itemWidget(item,3).date().toString("MM/dd/yy")
+            status = self.tasks.itemWidget(item,4).currentText()
+            duration = self.tasks.itemWidget(item,5).text()
+            predecessors = self.tasks.itemWidget(item,6).text()
+            task_id = self.tasks.itemWidget(item,7).text()
+            if item.childCount()>0:
+                task_type = "parent"
+                print("has children:")
+                for x in range(item.childCount()):
+                    print(self.tasks.itemWidget(item.child(x),7).text())
+                    data = (self.doc_id,self.tasks.itemWidget(item,7).text(),self.tasks.itemWidget(item.child(x),7).text())
+                    self.cursor.execute(f"INSERT INTO TASK_LINK(PROJECT_ID, PARENT_TASK_ID, CHILD_TASK_ID) VALUES(?,?,?)",(data))
+            else:
+                task_type = "child"
+            data = (self.doc_id,task_name,owner,start_date,end_date,status,duration,predecessors,task_id,task_type)
+            print(data)
+            self.cursor.execute(f"INSERT INTO PROJECT_TASKS(PROJECT_ID,TASK_NAME,ASSIGNED_TO,START_DATE,END_DATE,STATUS,DURATION,PREDECESSORS,TASK_ID,TYPE) VALUES(?,?,?,?,?,?,?,?,?,?)",(data))
+            iterator+=1
+        self.db.commit()
+    
+    def loadData(self):
+        pass
             
     def repopulateTable(self):
         pass     
