@@ -142,7 +142,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.setItemWidget(item,3,dateedit_end)
         status = QtWidgets.QComboBox()
         status.addItems(["Pending","Started","Completed"])
-        status.currentTextChanged.connect(self.updateColor)
+        status.currentTextChanged.connect(self.updateStatus)
         self.tasks.setItemWidget(item,4,status)
         line_duration = QtWidgets.QLineEdit()
         line_duration.setValidator(QtGui.QIntValidator(1,999))
@@ -277,9 +277,10 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         current_item = self.tasks.currentItem()
         date_widget =self.tasks.itemWidget(current_item,3)
         duration = int(self.tasks.itemWidget(current_item,5).text())
-        end_date = date_widget.date().addDays(duration)
+        start_date = self.tasks.itemWidget(current_item,2).date()
+        end_date = start_date.addDays(duration)
         date_widget.setDate(end_date)
-        self.calculateDates()
+        self.propagateDates()
         
     def expandAll(self):
         iterator = QtWidgets.QTreeWidgetItemIterator(self.tasks)
@@ -294,9 +295,26 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             if iterator.value().childCount()>0:
                 self.tasks.collapseItem(iterator.value())
             iterator+=1
+            
+    def updateStatus(self):
+        item = self.tasks.currentItem()
+        if item is not None:
+            self.bubbleStatus(item)
+            self.updateColor()
                 
     def bubbleStatus(self,item):
-        pass
+        parent = item.parent()
+        if parent is not None:
+            completed = True
+            for x in range(parent.childCount()):
+                if self.tasks.itemWidget(parent.child(x),4).currentText() != "Completed":
+                    completed = False
+                    break;
+            if completed:
+                self.tasks.itemWidget(parent,4).setCurrentText("Completed")
+            else:
+                self.tasks.itemWidget(parent,4).setCurrentText("Pending")
+            self.bubbleStatus(parent)
                 
     def bubbleDate(self,item):
         # print("bubbling")
@@ -366,9 +384,9 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             if parent is None:
                 item = QtWidgets.QTreeWidgetItem(self.tasks)
             else:
-                item = QtWidgets.QTreeWidgetItem(self.task_items[parent[0]])
-            self.task_items[result["TASK_ID"]]=item
-            self.generateWidgets(item,result["TASK_ID"])
+                item = QtWidgets.QTreeWidgetItem(self.task_items[str(parent[0])])
+            self.task_items[str(result["TASK_ID"])]=item
+            self.generateWidgets(item,str(result["TASK_ID"]))
             #setting data
             self.tasks.itemWidget(item,0).setText(result["TASK_NAME"])
             self.tasks.itemWidget(item,1).setCurrentText(result["ASSIGNED_TO"])
@@ -390,6 +408,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         result = self.cursor.fetchone()
         if result[0] is not None:
             self.task_counter=int(result[0])
+            print(self.task_counter)
     
     def disableWidgets(self,item):
         self.tasks.itemWidget(item,1).setEnabled(False)
