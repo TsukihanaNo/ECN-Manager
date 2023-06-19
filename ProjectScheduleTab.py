@@ -161,8 +161,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
     def removeTask(self):
         item = self.tasks.currentItem()
         del self.task_items[self.tasks.itemWidget(item,7).text()]
-        self.tasks.itemWidget(self.tasks.currentItem(),6).setText("")
-        self.updateDependents()
+        self.tasks.itemWidget(item,6).setText("")
+        self.updateDependents(item)
         parent = item.parent()
         if parent:
             parent.removeChild(item)
@@ -241,17 +241,17 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             item = iterator.value()
             text = self.tasks.itemWidget(item,4).currentText()
             if text =="Completed":
-                item.setBackground(0,QtGui.QColor("#CAFFBF"))
+                self.tasks.itemWidget(item,0).setStyleSheet("background-color:#CAFFBF")
             if text == "Started":
                 if self.tasks.itemWidget(item,3).date()<today:
-                    item.setBackground(0,QtGui.QColor("#FFADAD"))
+                    self.tasks.itemWidget(item,0).setStyleSheet("background-color:#FFADAD")
                 else:
-                    item.setBackground(0,QtGui.QColor("#FDFFB6"))
+                    self.tasks.itemWidget(item,0).setStyleSheet("background-color:#FDFFB6")
             if text == "Pending":
                 if self.tasks.itemWidget(item,3).date()<today:
-                    item.setBackground(0,QtGui.QColor("#FFADAD"))
+                    self.tasks.itemWidget(item,0).setStyleSheet("background-color:#FFADAD")
                 else:
-                    item.setBackground(0,item.background(1))
+                    self.tasks.itemWidget(item,0).setStyleSheet("")
             iterator+=1
         
     def generateDependents(self):
@@ -268,6 +268,10 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         current_item = self.tasks.currentItem()
         duration = self.tasks.itemWidget(current_item,2).date().daysTo(self.tasks.itemWidget(current_item,3).date())
         self.tasks.itemWidget(current_item,5).setText(str(duration))
+        if duration<0:
+            self.tasks.itemWidget(current_item,3).setStyleSheet("background-color:#FFADAD")
+        else:
+            self.tasks.itemWidget(current_item,3).setStyleSheet("")
         
     def updateDateFromDuration(self):
         current_item = self.tasks.currentItem()
@@ -291,6 +295,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 self.tasks.collapseItem(iterator.value())
             iterator+=1
                 
+    def bubbleStatus(self,item):
+        pass
                 
     def bubbleDate(self,item):
         # print("bubbling")
@@ -382,7 +388,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
     def loadCounter(self):
         self.cursor.execute(f"select max(TASK_ID) from PROJECT_TASKS where PROJECT_ID='{self.doc_id}'")
         result = self.cursor.fetchone()
-        self.task_counter=int(result[0])
+        if result[0] is not None:
+            self.task_counter=int(result[0])
     
     def disableWidgets(self,item):
         self.tasks.itemWidget(item,1).setEnabled(False)
@@ -401,7 +408,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         return result
             
     def repopulateTable(self):
-        pass     
+        pass
+    
     
     def resizeEvent(self, e):        
         self.sizing()
