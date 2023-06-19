@@ -386,6 +386,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
     
     def disableWidgets(self,item):
         self.tasks.itemWidget(item,1).setEnabled(False)
+        self.tasks.itemWidget(item,1).setCurrentText("")
         self.tasks.itemWidget(item,2).setEnabled(False)
         self.tasks.itemWidget(item,3).setEnabled(False)
         self.tasks.itemWidget(item,4).setEnabled(False)
