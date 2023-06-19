@@ -82,7 +82,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.setSortingEnabled(True)
         self.tasks.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         self.tasks.header().setStretchLastSection(False)
-        self.tasks.setStyleSheet("QTreeView::item:selected {background-color:#A0C4FF;} QTreeView::item {border-bottom: 1px solid gray} QLineEdit {border:0; background-color: transparent} QComboBox {border: 0; margin: 0; background-color: transparent} QDateTimeEdit {border:0; background-color: transparent}")
+        self.tasks.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
+        self.tasks.setStyleSheet("QTreeView::item {border-bottom: 1px solid gray;} QLineEdit {border:0; background-color: transparent} QComboBox {border: 0; margin: 0; background-color: transparent} QDateTimeEdit {border:0; background-color: transparent}")
 
         mainlayout.addWidget(self.tasks)
         
@@ -147,16 +148,19 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.setItemWidget(item,4,status)
         line_duration = QtWidgets.QLineEdit()
         line_duration.setValidator(QtGui.QIntValidator(1,999))
+        line_duration.setAlignment(QtCore.Qt.AlignCenter)
         duration = dateedit_start.date().daysTo(dateedit_end.date())
         line_duration.setText(str(duration))
         line_duration.editingFinished.connect(self.updateDateFromDuration)
         self.tasks.setItemWidget(item,5,line_duration)
         line_predecessor = QtWidgets.QLineEdit()
+        line_predecessor.setAlignment(QtCore.Qt.AlignCenter)
         line_predecessor.editingFinished.connect(self.setDependents)
         self.tasks.setItemWidget(item,6,line_predecessor)
         line_id = QtWidgets.QLineEdit()
         line_id.setReadOnly(True)
         line_id.setText(str(counter))
+        line_id.setAlignment(QtCore.Qt.AlignCenter)
         self.tasks.setItemWidget(item,7,line_id)
 
     def removeTask(self):
@@ -228,6 +232,9 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 del self.task_dependents[task_id]
         else:
             self.task_dependents[task_id]=depends.split(",")
+            if task_id in self.task_dependents[task_id]:
+                self.task_dependents[task_id].remove(task_id)
+                self.tasks.itemWidget(item,6).setText(",".join(self.task_dependents[task_id]))
         # print(self.task_dependents)
         
     def setDependents(self):
