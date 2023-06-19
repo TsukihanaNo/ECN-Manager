@@ -1,6 +1,8 @@
 from PySide6 import QtGui, QtCore, QtWidgets
 import sys, os
 
+from ProjectTimeline import *
+
 if getattr(sys, 'frozen', False):
     # frozen
     program_location = os.path.dirname(sys.executable)
@@ -100,6 +102,9 @@ class ProjectScheduleTab(QtWidgets.QWidget):
     def onRowSelect(self,selected,deselected):
         self.button_insert.setEnabled(bool(self.tasks.selectedItems()))
         self.button_remove.setEnabled(bool(self.tasks.selectedItems()))
+
+    def showTimeline(self):
+        self.timeline = ProjectTimeline(self)
         
     def addTask(self):
         self.task_counter+=1
