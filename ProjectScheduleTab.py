@@ -82,6 +82,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.setSortingEnabled(True)
         self.tasks.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         self.tasks.header().setStretchLastSection(False)
+        self.tasks.setStyleSheet("QTreeView::item:selected {background-color:#A0C4FF;} QTreeView::item {border-bottom: 1px solid gray} QLineEdit {border:0; background-color: transparent} QComboBox {border: 0; margin: 0; background-color: transparent} QDateTimeEdit {border:0; background-color: transparent}")
 
         mainlayout.addWidget(self.tasks)
         
