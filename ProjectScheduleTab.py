@@ -55,11 +55,16 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.button_remove.setIcon(QtGui.QIcon(icon_loc))
         self.button_remove.clicked.connect(self.removeTask)
         self.button_remove.setDisabled(True)
-        self.button_insert = QtWidgets.QPushButton("insert Task")
+        self.button_insert = QtWidgets.QPushButton("Insert Before")
         icon_loc = icon = os.path.join(program_location,"icons","add.png")
         self.button_insert.setIcon(QtGui.QIcon(icon_loc))
         self.button_insert.setDisabled(True)
         self.button_insert.clicked.connect(self.insertTask)
+        self.button_insert_after = QtWidgets.QPushButton("Insert After")
+        icon_loc = icon = os.path.join(program_location,"icons","add.png")
+        self.button_insert_after.setIcon(QtGui.QIcon(icon_loc))
+        self.button_insert_after.setDisabled(True)
+        self.button_insert_after.clicked.connect(self.insertTaskAfter)
         
         self.button_expand = QtWidgets.QPushButton("Expand All")
         self.button_expand.clicked.connect(self.expandAll)
@@ -71,6 +76,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         
         self.toolbar.addWidget(self.button_add)
         self.toolbar.addWidget(self.button_insert)
+        self.toolbar.addWidget(self.button_insert_after)
         self.toolbar.addWidget(self.button_remove)
         self.toolbar.addWidget(self.button_expand)
         self.toolbar.addWidget(self.button_collapse)
@@ -104,6 +110,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         
     def onRowSelect(self,selected,deselected):
         self.button_insert.setEnabled(bool(self.tasks.selectedItems()))
+        self.button_insert_after.setEnabled(bool(self.tasks.selectedItems()))
         self.button_remove.setEnabled(bool(self.tasks.selectedItems()))
 
     def showTimeline(self):
@@ -134,6 +141,17 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.task_items[str(self.task_counter)]=item
         self.generateWidgets(item,self.task_counter)
         
+    def insertTaskAfter(self):
+        self.task_counter+=1
+        item = QtWidgets.QTreeWidgetItem()
+        if self.tasks.currentItem().parent() is None:
+            index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
+            self.tasks.invisibleRootItem().insertChild(index+1,item)
+        else:
+            index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
+            self.tasks.currentItem().parent().insertChild(index+1,item)
+        self.task_items[str(self.task_counter)]=item
+        self.generateWidgets(item,self.task_counter)
         
     def generateWidgets(self,item,counter):
         line_edit = QtWidgets.QLineEdit()
@@ -179,6 +197,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         parent = item.parent()
         if parent:
             parent.removeChild(item)
+            if parent.childCount()==0:
+                self.enableWidgets(parent)
         else:
             self.tasks.takeTopLevelItem(self.tasks.indexOfTopLevelItem(item))
         # print(self.task_items)
@@ -436,6 +456,15 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.itemWidget(item,6).setText("")
         self.tasks.itemWidget(item,6).setEnabled(False)
         self.updateDependents(item)
+        
+    def enableWidgets(self,item):
+        self.tasks.itemWidget(item,1).setEnabled(True)
+        self.tasks.itemWidget(item,2).setEnabled(True)
+        self.tasks.itemWidget(item,3).setEnabled(True)
+        self.tasks.itemWidget(item,4).setEnabled(True)
+        self.tasks.itemWidget(item,5).setEnabled(True)
+        self.tasks.itemWidget(item,6).setEnabled(True)
+        self.updateDependents(item)
     
     def getParentTask(self,task_id):
         self.cursor.execute(f"select PARENT_TASK_ID from TASK_LINK where PROJECT_ID ='{self.doc_id}' and CHILD_TASK_ID='{task_id}'")
@@ -449,15 +478,15 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         # print(total_days)
         main_list = []
         #list template: task name, owner, start date, end date, duration, depends on, task id, gants
-        gants_year = ["","","","","","",""]
-        gants_months = ["","","","","","",""]
+        gants_year = ["","","","","","","",""]
+        gants_months = ["","","","","","","",""]
         gants_days = []
         for day in range(total_days):
             new_date = starting_date.addDays(day)
             gants_year.append(str(new_date.year()))
             gants_months.append(str(new_date.month()))
             gants_days.append(str(new_date.day()))
-        main_headers = ["task name","owner","start date","end date","duration","depends on","task id"]
+        main_headers = ["task name","owner","start date","end date","duration","status","depends on","task id"]
         main_headers.extend(gants_days)
         main_list.append(gants_year)
         main_list.append(gants_months)
@@ -476,7 +505,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             duration = self.tasks.itemWidget(item,5).text()
             predecessors = self.tasks.itemWidget(item,6).text()
             task_id = self.tasks.itemWidget(item,7).text()
-            line = [task_name,owner,start_date,end_date,duration,predecessors,task_id]
+            line = [task_name,owner,start_date,end_date,duration,status,predecessors,task_id]
             start = self.tasks.itemWidget(item,2).date()
             end = self.tasks.itemWidget(item,3).date()
             for x in range(total_days):
@@ -484,7 +513,12 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 if date<start:
                     line.append("")
                 elif date>=start and date<=end:
-                    line.append("x")
+                    if status == "Pending":
+                        line.append("x")
+                    elif status == "Started":
+                        line.append("y")
+                    else:
+                        line.append("z")
                 else:
                     line.append("")
             main_list.append(line)
