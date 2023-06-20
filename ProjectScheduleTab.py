@@ -66,6 +66,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.button_collapse = QtWidgets.QPushButton("Collapse All")
         self.button_collapse.clicked.connect(self.collapseAll)
         self.button_timeline = QtWidgets.QPushButton("Show Timeline")
+        self.button_export_csv = QtWidgets.QPushButton("Export CSV")
+        self.button_export_csv.clicked.connect(self.export)
         
         self.toolbar.addWidget(self.button_add)
         self.toolbar.addWidget(self.button_insert)
@@ -73,6 +75,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_expand)
         self.toolbar.addWidget(self.button_collapse)
         self.toolbar.addWidget(self.button_timeline)
+        self.toolbar.addWidget(self.button_export_csv)
         
         self.tasks = QtWidgets.QTreeWidget()
         headers = ["Task", "Owner", "Start", "Finish", "Status", "Duration","Depends On","ID"]
@@ -438,7 +441,79 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.cursor.execute(f"select PARENT_TASK_ID from TASK_LINK where PROJECT_ID ='{self.doc_id}' and CHILD_TASK_ID='{task_id}'")
         result = self.cursor.fetchone()
         return result
-            
+    
+    
+    def export(self):
+        starting_date, ending_date = self.getStartEndDates()
+        total_days = starting_date.daysTo(ending_date)
+        print(total_days)
+        main_list = []
+        #list template: task name, owner, start date, end date, duration, depends on, task id, gants
+        gants_year = ["","","","","","",""]
+        gants_months = ["","","","","","",""]
+        gants_days = []
+        for day in range(total_days):
+            new_date = starting_date.addDays(day)
+            gants_year.append(str(new_date.year()))
+            gants_months.append(str(new_date.month()))
+            gants_days.append(str(new_date.day()))
+        main_headers = ["task name","owner","start date","end date","duration","depends on","task id"]
+        main_headers.extend(gants_days)
+        main_list.append(gants_year)
+        main_list.append(gants_months)
+        main_list.append(main_headers)
+        iterator = QtWidgets.QTreeWidgetItemIterator(self.tasks)
+        while iterator.value():
+            item = iterator.value()
+            task_name = self.tasks.itemWidget(item,0).text()
+            owner = self.tasks.itemWidget(item,1).currentText()
+            start_date = self.tasks.itemWidget(item,2).date().toString("MM/dd/yyyy")
+            end_date = self.tasks.itemWidget(item,3).date().toString("MM/dd/yyyy")
+            status = self.tasks.itemWidget(item,4).currentText()
+            duration = self.tasks.itemWidget(item,5).text()
+            predecessors = self.tasks.itemWidget(item,6).text()
+            task_id = self.tasks.itemWidget(item,7).text()
+            line = [task_name,owner,start_date,end_date,duration,predecessors,task_id]
+            start = self.tasks.itemWidget(item,2).date()
+            end = self.tasks.itemWidget(item,3).date()
+            for x in range(total_days):
+                date = starting_date.addDays(x)
+                if date<start:
+                    line.append("")
+                elif date>=start and date<=end:
+                    line.append("x")
+                else:
+                    line.append("")
+            main_list.append(line)
+            iterator+=1
+        f = open(f"{self.doc_id} schedule.csv", "w")
+        for line in main_list:
+            text = ",".join(line)
+            text+="\n"
+            f.write(text)
+        f.close()
+        self.dispMsg("export completed!")
+        
+    def getStartEndDates(self):
+        starting_date = ""
+        ending_date = ""
+        iterator = QtWidgets.QTreeWidgetItemIterator(self.tasks)
+        while iterator.value():
+            item = iterator.value()
+            if starting_date=="":
+                starting_date = self.tasks.itemWidget(item,2).date()
+                ending_date = self.tasks.itemWidget(item,3).date()
+            else:
+                start_date = self.tasks.itemWidget(item,2).date()
+                end_date = self.tasks.itemWidget(item,3).date()
+                if start_date<starting_date:
+                    starting_date=starting_date
+                if end_date>ending_date:
+                    ending_date=end_date
+            iterator+=1
+        print(starting_date,ending_date)
+        return starting_date,ending_date
+        
     def repopulateTable(self):
         pass
     
