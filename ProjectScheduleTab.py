@@ -1,5 +1,9 @@
+from typing import Optional, Union
 from PySide6 import QtGui, QtCore, QtWidgets
 import sys, os
+
+import PySide6.QtCore
+import PySide6.QtWidgets
 
 from ProjectTimeline import *
 
@@ -107,6 +111,9 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         self.tasks.header().setStretchLastSection(False)
         self.tasks.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
+        self.tasks.setItemDelegate(TreeDelegate())
+        self.tasks.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked | 
+                                QtWidgets.QAbstractItemView.SelectedClicked)
         self.tasks.setStyleSheet("QTreeView::item {border-bottom: 1px solid gray;} QLineEdit {border:0; background-color: transparent} QComboBox {border: 0; margin: 0; background-color: transparent} QDateTimeEdit {border:0; background-color: transparent}")
 
         mainlayout.addWidget(self.tasks)
@@ -133,14 +140,16 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.task_counter+=1
         if self.tasks.selectedItems() == []:
             item = QtWidgets.QTreeWidgetItem(self.tasks)
+            item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
         else:
             parent = self.tasks.currentItem()
             item = QtWidgets.QTreeWidgetItem(parent)
-            self.disableWidgets(parent)
+            item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
+            # self.disableWidgets(parent)
             self.tasks.expandItem(parent)
         self.task_items[str(self.task_counter)]=item
 
-        self.generateWidgets(item,self.task_counter)
+        # self.generateWidgets(item,self.task_counter)
     
     def cut(self):
         if self.tasks.currentItem().parent() is None:
@@ -610,3 +619,43 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         msgbox = QtWidgets.QMessageBox()
         msgbox.setText(msg+"        ")
         msgbox.exec()
+
+
+class TreeDelegate(QtWidgets.QStyledItemDelegate):
+    
+    def __init__(self,parent=None):
+        super(TreeDelegate,self).__init__(parent)
+        self.editing = False
+    
+    def paint(self, painter, option, index):
+        # painter.save()
+        color = QtGui.QColor("#BDB2FF")
+        r = option.rect
+        # print(index.data())
+        painter.setBrush(color)
+        painter.drawRoundedRect(r, 5, 5)
+        if self.editing==False:
+            painter.drawText(r.topLeft()+QtCore.QPoint(10,15),index.data())
+            
+        # painter.restore()
+        
+    def createEditor(self,parent,option,index):
+        print(index.column())
+        if index.column()==0:
+            editor = QtWidgets.QLineEdit(parent)
+            return editor
+        
+    def setEditorData(self,editor,index):
+        print("setting editor data")
+        if index.column()==0:
+            editor.setText(index.data())
+            self.editing=True
+        
+    def setModelData(self, editor,model,index):
+        if index.column()==0:
+            print("setting model data",editor.text())
+            model.setData(index,editor.text())
+            self.editing=False
+    
+    def sizeHint(self, option, index):
+        return QtCore.QSize(option.rect.width()-50,25)
