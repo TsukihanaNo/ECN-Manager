@@ -24,37 +24,58 @@ class ProjectTimeline(QtWidgets.QWidget):
             self.ico = parent.ico
             self.visual = parent.visual
             self.doc_id = parent.doc_id
+        self.grid_size = 25
+        total_days = 31*4
+        task_count = 30
+        self.offset = 10
         self.window_height = 600
         self.window_width = 1000
+        self.scene_height = task_count * self.grid_size + self.offset*2
+        self.scene_width = total_days * self.grid_size + self.offset*2
         self.initAtt()
         self.initUI()
+        self.center()
         self.show()
 
     def initAtt(self):
+        self.setGeometry(100,50,self.window_width,self.window_height)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
     def initUI(self): 
         main_layout = QtWidgets.QHBoxLayout(self)
-        self.graphic_scene = QtWidgets.QGraphicsScene(0,0,self.window_width,self.window_height)
+        self.graphic_scene = QtWidgets.QGraphicsScene(0,0,self.scene_width,self.scene_height)
         self.graphic_scene.setBackgroundBrush(QtGui.Qt.white)
         vert_lines = []
-        grid_size = 20
-        for x in range(int(self.window_width/grid_size)):
-            vert_lines.append(QtCore.QLineF((x+1)*grid_size,0,(x+1)*grid_size,self.window_height))
+        for x in range(int((self.scene_width-self.offset*2)/self.grid_size)+1):
+            vert_lines.append(QtCore.QLineF((x)*self.grid_size+self.offset,self.offset,(x)*self.grid_size+self.offset,self.scene_height-self.offset))
             
         hor_lines = []
-        for y in range(int(self.window_height/grid_size)):
-            hor_lines.append(QtCore.QLineF(0,(y+1)*grid_size,self.window_width,(y+1)*grid_size))
+        for y in range(int((self.scene_height-self.offset*2)/self.grid_size)+1):
+            hor_lines.append(QtCore.QLineF(self.offset,(y)*self.grid_size+self.offset,self.scene_width-self.offset,(y)*self.grid_size+self.offset))
             
         for line in vert_lines:
             self.graphic_scene.addLine(line)
         for line in hor_lines:
             self.graphic_scene.addLine(line)
             
+        rect = QtWidgets.QGraphicsRectItem(self.offset,self.offset,self.grid_size*10,self.grid_size)
+        rect.setBrush(QtGui.QBrush(QtGui.Qt.red))
+        self.graphic_scene.addItem(rect)
+            
         self.graphics_view = QtWidgets.QGraphicsView(self.graphic_scene)
         self.graphics_view.show()
         main_layout.addWidget(self.graphics_view)
     
+    def center(self):
+        window = self.window()
+        window.setGeometry(
+            QtWidgets.QStyle.alignedRect(
+            QtCore.Qt.LeftToRight,
+            QtCore.Qt.AlignCenter,
+            window.size(),
+            QtGui.QGuiApplication.primaryScreen().availableGeometry(),
+        ),
+    )
     
 # execute the program
 def main():
