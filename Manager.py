@@ -561,7 +561,11 @@ class Manager(QtWidgets.QWidget):
         self.statusbar.showMessage(f"Showing {counter} of {data_size}")
 
     def loadMoreTable(self):
-        percent = self.docs.verticalScrollBar().value()/self.docs.verticalScrollBar().maximum()
+        # print(self.docs.verticalScrollBar().value(),self.docs.verticalScrollBar().maximum())
+        if self.docs.verticalScrollBar().maximum()>0:
+            percent = self.docs.verticalScrollBar().value()/self.docs.verticalScrollBar().maximum()
+        else:
+            percent = 0
         rowcount = self.rowCount()
         total_count= len(self.table_data)
         #table_type = self.dropdown_type.currentText()

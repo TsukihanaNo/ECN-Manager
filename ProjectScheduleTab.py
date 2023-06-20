@@ -30,6 +30,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.task_items = {}
         self.task_dependents = {}
         self.task_dependents_flipped = {}
+        self.item_clip = ()
         self.initAtt()
         self.clipboard = QtGui.QGuiApplication.clipboard()
         self.menu = QtWidgets.QMenu(self)
@@ -65,6 +66,14 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.button_insert_after.setIcon(QtGui.QIcon(icon_loc))
         self.button_insert_after.setDisabled(True)
         self.button_insert_after.clicked.connect(self.insertTaskAfter)
+        # self.button_cut = QtWidgets.QPushButton("Cut")
+        # self.button_cut.clicked.connect(self.cut)
+        # self.button_copy = QtWidgets.QPushButton("Copy")
+        # self.button_copy.clicked.connect(self.copy)
+        # self.button_paste = QtWidgets.QPushButton("Paste")
+        # self.button_paste.clicked.connect(self.paste)
+        # self.button_paste_child = QtWidgets.QPushButton("Paste As Child")
+        # self.button_paste_child.clicked.connect(self.pasteAsChild)
         
         self.button_expand = QtWidgets.QPushButton("Expand All")
         self.button_expand.clicked.connect(self.expandAll)
@@ -82,6 +91,10 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_collapse)
         self.toolbar.addWidget(self.button_timeline)
         self.toolbar.addWidget(self.button_export_csv)
+        # self.toolbar.addWidget(self.button_copy)
+        # self.toolbar.addWidget(self.button_cut)
+        # self.toolbar.addWidget(self.button_paste)
+        # self.toolbar.addWidget(self.button_paste_child)
         
         self.tasks = QtWidgets.QTreeWidget()
         headers = ["Task", "Owner", "Start", "Finish", "Status", "Duration","Depends On","ID"]
@@ -128,6 +141,34 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.task_items[str(self.task_counter)]=item
 
         self.generateWidgets(item,self.task_counter)
+    
+    def cut(self):
+        if self.tasks.currentItem().parent() is None:
+                index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
+        else:
+            index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
+        self.item_clip = (self.tasks.currentItem().parent().takeChild(index),1)
+        print(self.item_clip)
+        
+    def copy(self):
+        item = self.tasks.currentItem()
+        self.item_clip = (item,0)
+        
+    def paste(self):
+        item = self.item_clip[0]
+        print(item)
+        if self.item_clip[1]==1:
+            if self.tasks.currentItem().parent() is None:
+                index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
+                self.tasks.invisibleRootItem().insertChild(index,item)
+                print("pasting, parent none")
+            else:
+                index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
+                self.tasks.currentItem().parent().insertChild(index,item)
+                print("pasting")
+    
+    def pasteAsChild(self):
+        pass
         
     def insertTask(self):
         self.task_counter+=1
@@ -152,10 +193,12 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             self.tasks.currentItem().parent().insertChild(index+1,item)
         self.task_items[str(self.task_counter)]=item
         self.generateWidgets(item,self.task_counter)
+        self.tasks.itemWidget(item,0).setFocus()
         
     def generateWidgets(self,item,counter):
         line_edit = QtWidgets.QLineEdit()
         line_edit.setPlaceholderText("new task...")
+        line_edit.returnPressed.connect(self.insertTaskAfter)
         self.tasks.setItemWidget(item,0,line_edit)
         users = QtWidgets.QComboBox()
         users.addItems(["","lily", "paul","deven"])
@@ -548,17 +591,17 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             else:
                 start_date = self.tasks.itemWidget(item,2).date()
                 end_date = self.tasks.itemWidget(item,3).date()
+                print(start_date,end_date)
                 if start_date<starting_date:
-                    starting_date=starting_date
+                    starting_date=start_date
                 if end_date>ending_date:
                     ending_date=end_date
             iterator+=1
-        # print(starting_date,ending_date)
+        print(starting_date,ending_date)
         return starting_date,ending_date
         
     def repopulateTable(self):
-        pass
-    
+        pass 
     
     def resizeEvent(self, e):        
         self.sizing()

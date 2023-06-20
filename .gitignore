@@ -7,5 +7,7 @@ build/
 setting.ini
 test.py
 db_inquiries.py
+*.csv
+*.xlsx
 
 .vscode
