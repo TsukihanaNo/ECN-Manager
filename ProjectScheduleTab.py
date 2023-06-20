@@ -446,7 +446,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
     def export(self):
         starting_date, ending_date = self.getStartEndDates()
         total_days = starting_date.daysTo(ending_date)
-        print(total_days)
+        # print(total_days)
         main_list = []
         #list template: task name, owner, start date, end date, duration, depends on, task id, gants
         gants_year = ["","","","","","",""]
@@ -465,7 +465,10 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         iterator = QtWidgets.QTreeWidgetItemIterator(self.tasks)
         while iterator.value():
             item = iterator.value()
+            self.indent_level = 0
             task_name = self.tasks.itemWidget(item,0).text()
+            self.getIndentLevel(item)
+            task_name = self.indent_level*":" + " " + task_name
             owner = self.tasks.itemWidget(item,1).currentText()
             start_date = self.tasks.itemWidget(item,2).date().toString("MM/dd/yyyy")
             end_date = self.tasks.itemWidget(item,3).date().toString("MM/dd/yyyy")
@@ -494,6 +497,11 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         f.close()
         self.dispMsg("export completed!")
         
+    def getIndentLevel(self,item):
+        if item.parent() is not None:
+            self.indent_level+=1
+            self.getIndentLevel(item.parent())
+        
     def getStartEndDates(self):
         starting_date = ""
         ending_date = ""
@@ -511,7 +519,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 if end_date>ending_date:
                     ending_date=end_date
             iterator+=1
-        print(starting_date,ending_date)
+        # print(starting_date,ending_date)
         return starting_date,ending_date
         
     def repopulateTable(self):
