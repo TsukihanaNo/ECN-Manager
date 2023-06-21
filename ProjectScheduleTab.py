@@ -78,6 +78,12 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         # self.button_paste.clicked.connect(self.paste)
         # self.button_paste_child = QtWidgets.QPushButton("Paste As Child")
         # self.button_paste_child.clicked.connect(self.pasteAsChild)
+        self.button_move_up = QtWidgets.QPushButton("Move Up")
+        self.button_move_up.setEnabled(False)
+        self.button_move_up.clicked.connect(self.moveUp)
+        self.button_move_down = QtWidgets.QPushButton("Move Down")
+        self.button_move_down.clicked.connect(self.moveDown)
+        self.button_move_down.setEnabled(False)
         
         self.button_expand = QtWidgets.QPushButton("Expand All")
         self.button_expand.clicked.connect(self.expandAll)
@@ -91,6 +97,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_insert)
         self.toolbar.addWidget(self.button_insert_after)
         self.toolbar.addWidget(self.button_remove)
+        self.toolbar.addWidget(self.button_move_up)
+        self.toolbar.addWidget(self.button_move_down)
         self.toolbar.addWidget(self.button_expand)
         self.toolbar.addWidget(self.button_collapse)
         self.toolbar.addWidget(self.button_timeline)
@@ -107,12 +115,17 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.sizing()        
         self.tasks.setSelectionMode(QtWidgets.QAbstractItemView.ContiguousSelection)
         self.tasks.selectionModel().selectionChanged.connect(self.onRowSelect)
-        self.tasks.setSortingEnabled(True)
+        # self.tasks.setSortingEnabled(True)
         self.tasks.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         self.tasks.header().setStretchLastSection(False)
         self.tasks.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
         self.tasks.setItemDelegate(TreeDelegate(self))
         self.tasks.setEditTriggers(QtWidgets.QAbstractItemView.AllEditTriggers)
+        self.tasks.setDragEnabled(True)
+        self.tasks.viewport().setAcceptDrops(True)
+        self.tasks.setDropIndicatorShown(True)
+        self.tasks.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+        # print(self.tasks.dragDropMode(),self.tasks.dropIndicatorPosition())
         # self.tasks.setStyleSheet("QTreeView::item {border-bottom: 1px solid gray;} QLineEdit {border:0; background-color: transparent} QComboBox {border: 0; margin: 0; background-color: transparent} QDateTimeEdit {border:0; background-color: transparent}")
 
         mainlayout.addWidget(self.tasks)
@@ -128,9 +141,12 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.setColumnWidth(7,40)
         
     def onRowSelect(self,selected,deselected):
-        self.button_insert.setEnabled(bool(self.tasks.selectedItems()))
-        self.button_insert_after.setEnabled(bool(self.tasks.selectedItems()))
-        self.button_remove.setEnabled(bool(self.tasks.selectedItems()))
+        toggle = bool(self.tasks.selectedItems())
+        self.button_insert.setEnabled(toggle)
+        self.button_insert_after.setEnabled(toggle)
+        self.button_remove.setEnabled(toggle)
+        self.button_move_up.setEnabled(toggle)
+        self.button_move_down.setEnabled(toggle)
 
     def showTimeline(self):
         self.timeline = ProjectTimeline(self)
@@ -139,17 +155,14 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.task_counter+=1
         if self.tasks.selectedItems() == []:
             item = QtWidgets.QTreeWidgetItem(self.tasks)
-            item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
-            self.tasks.editItem(item,0)
         else:
             parent = self.tasks.currentItem()
             item = QtWidgets.QTreeWidgetItem(parent)
-            item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
-            # self.disableWidgets(parent)
             self.tasks.expandItem(parent)
+        item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
+        self.tasks.setCurrentItem(item)
+        # self.tasks.editItem(item,0)
         self.task_items[str(self.task_counter)]=item
-
-        # self.generateWidgets(item,self.task_counter)
     
     def cut(self):
         if self.tasks.currentItem().parent() is None:
@@ -178,6 +191,27 @@ class ProjectScheduleTab(QtWidgets.QWidget):
     
     def pasteAsChild(self):
         pass
+    
+    def moveUp(self):
+        item = self.tasks.currentItem()
+        parent = item.parent()
+        current_index = parent.indexOfChild(item)
+        if current_index>0:
+            # print("moving up")
+            parent.takeChild(current_index)
+            parent.insertChild(current_index-1,item)
+            self.tasks.setCurrentItem(item)
+    
+    def moveDown(self):
+        item = self.tasks.currentItem()
+        print(item.text(0))
+        parent = item.parent()
+        current_index = parent.indexOfChild(item)
+        if current_index<parent.childCount()-1:
+            # print("moving down")
+            parent.takeChild(current_index)
+            parent.insertChild(current_index+1,item)
+            self.tasks.setCurrentItem(item)
         
     def insertTask(self):
         self.task_counter+=1
@@ -188,8 +222,11 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         else:
             index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
             self.tasks.currentItem().parent().insertChild(index,item)
+        item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
+        self.tasks.setCurrentItem(item)
+        # self.tasks.editItem(item,0)
         self.task_items[str(self.task_counter)]=item
-        self.generateWidgets(item,self.task_counter)
+        # self.generateWidgets(item,self.task_counter)
         
     def insertTaskAfter(self):
         self.task_counter+=1
@@ -200,46 +237,11 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         else:
             index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
             self.tasks.currentItem().parent().insertChild(index+1,item)
+        item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
+        # print(item.flags())
+        self.tasks.setCurrentItem(item)
+        # self.tasks.editItem(item,0)
         self.task_items[str(self.task_counter)]=item
-        self.generateWidgets(item,self.task_counter)
-        self.tasks.itemWidget(item,0).setFocus()
-        
-    def generateWidgets(self,item,counter):
-        line_edit = QtWidgets.QLineEdit()
-        line_edit.setPlaceholderText("new task...")
-        line_edit.returnPressed.connect(self.insertTaskAfter)
-        self.tasks.setItemWidget(item,0,line_edit)
-        users = QtWidgets.QComboBox()
-        users.addItems(["","lily", "paul","deven"])
-        self.tasks.setItemWidget(item,1,users)
-        dateedit_start = QtWidgets.QDateEdit(calendarPopup=True)
-        dateedit_start.setDate(QtCore.QDate.currentDate())
-        dateedit_start.editingFinished.connect(self.propagateDates)
-        self.tasks.setItemWidget(item,2,dateedit_start)
-        dateedit_end = QtWidgets.QDateEdit(calendarPopup=True)
-        dateedit_end.setDate(QtCore.QDate.currentDate().addDays(1))
-        dateedit_end.editingFinished.connect(self.propagateDates)
-        self.tasks.setItemWidget(item,3,dateedit_end)
-        status = QtWidgets.QComboBox()
-        status.addItems(["Pending","Started","Completed"])
-        status.currentTextChanged.connect(self.updateStatus)
-        self.tasks.setItemWidget(item,4,status)
-        line_duration = QtWidgets.QLineEdit()
-        line_duration.setValidator(QtGui.QIntValidator(1,999))
-        line_duration.setAlignment(QtCore.Qt.AlignCenter)
-        duration = dateedit_start.date().daysTo(dateedit_end.date())
-        line_duration.setText(str(duration))
-        line_duration.editingFinished.connect(self.updateDateFromDuration)
-        self.tasks.setItemWidget(item,5,line_duration)
-        line_predecessor = QtWidgets.QLineEdit()
-        line_predecessor.setAlignment(QtCore.Qt.AlignCenter)
-        line_predecessor.editingFinished.connect(self.setDependents)
-        self.tasks.setItemWidget(item,6,line_predecessor)
-        line_id = QtWidgets.QLineEdit()
-        line_id.setReadOnly(True)
-        line_id.setText(str(counter))
-        line_id.setAlignment(QtCore.Qt.AlignCenter)
-        self.tasks.setItemWidget(item,7,line_id)
 
     def removeTask(self):
         item = self.tasks.currentItem()
@@ -258,8 +260,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             
     def propagateDates(self):
         # print(date)
-        # print(self.sender())
-        self.showData()
+        print(self.sender())
+        # self.showData()
         # print(self.sender().parent().text(0))
         # self.updateDuration()
         # self.calculateDates()
@@ -471,6 +473,34 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             iterator+=1
         self.db.commit()
     
+    # def loadData(self):
+    #     self.cursor.execute(f"select * from PROJECT_TASKS where PROJECT_ID='{self.doc_id}'")
+    #     results = self.cursor.fetchall()
+    #     for result in results:
+    #         # print(result["TASK_ID"])
+    #         parent = self.getParentTask(result["TASK_ID"])
+    #         if parent is None:
+    #             item = QtWidgets.QTreeWidgetItem(self.tasks)
+    #         else:
+    #             item = QtWidgets.QTreeWidgetItem(self.task_items[str(parent[0])])
+    #         self.task_items[str(result["TASK_ID"])]=item
+    #         self.generateWidgets(item,str(result["TASK_ID"]))
+    #         #setting data
+    #         self.tasks.itemWidget(item,0).setText(result["TASK_NAME"])
+    #         self.tasks.itemWidget(item,1).setCurrentText(result["ASSIGNED_TO"])
+    #         self.tasks.itemWidget(item,2).setDate(QtCore.QDate.fromString(result["START_DATE"],"MM/dd/yyyy"))
+    #         self.tasks.itemWidget(item,3).setDate(QtCore.QDate.fromString(result["END_DATE"],"MM/dd/yyyy"))
+    #         self.tasks.itemWidget(item,4).setCurrentText(result["STATUS"])
+    #         self.tasks.itemWidget(item,5).setText(result["DURATION"])
+    #         self.tasks.itemWidget(item,6).setText(result["PREDECESSORS"])
+    #         self.updateDependents(item)
+    #         if result["TYPE"]=="parent":
+    #             self.disableWidgets(item)
+    #     self.generateDependents()
+    #     self.loadCounter()
+    #     self.updateColor()
+    #     self.expandAll()
+    
     def loadData(self):
         self.cursor.execute(f"select * from PROJECT_TASKS where PROJECT_ID='{self.doc_id}'")
         results = self.cursor.fetchall()
@@ -482,21 +512,31 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             else:
                 item = QtWidgets.QTreeWidgetItem(self.task_items[str(parent[0])])
             self.task_items[str(result["TASK_ID"])]=item
-            self.generateWidgets(item,str(result["TASK_ID"]))
+            # self.generateWidgets(item,str(result["TASK_ID"]))
             #setting data
-            self.tasks.itemWidget(item,0).setText(result["TASK_NAME"])
-            self.tasks.itemWidget(item,1).setCurrentText(result["ASSIGNED_TO"])
-            self.tasks.itemWidget(item,2).setDate(QtCore.QDate.fromString(result["START_DATE"],"MM/dd/yyyy"))
-            self.tasks.itemWidget(item,3).setDate(QtCore.QDate.fromString(result["END_DATE"],"MM/dd/yyyy"))
-            self.tasks.itemWidget(item,4).setCurrentText(result["STATUS"])
-            self.tasks.itemWidget(item,5).setText(result["DURATION"])
-            self.tasks.itemWidget(item,6).setText(result["PREDECESSORS"])
-            self.updateDependents(item)
-            if result["TYPE"]=="parent":
-                self.disableWidgets(item)
-        self.generateDependents()
+            if result["TYPE"]!="parent":
+                item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
+            item.setText(0,result["TASK_NAME"])
+            item.setText(1,result["ASSIGNED_TO"])
+            item.setText(2,result["START_DATE"])
+            item.setText(3,result["END_DATE"])
+            item.setText(4,result["STATUS"])
+            item.setText(5,result["DURATION"])
+            item.setText(6,result["PREDECESSORS"])
+            item.setText(7,str(result["TASK_ID"]))
+            # self.tasks.itemWidget(item,0).setText(result["TASK_NAME"])
+            # self.tasks.itemWidget(item,1).setCurrentText(result["ASSIGNED_TO"])
+            # self.tasks.itemWidget(item,2).setDate(QtCore.QDate.fromString(result["START_DATE"],"MM/dd/yyyy"))
+            # self.tasks.itemWidget(item,3).setDate(QtCore.QDate.fromString(result["END_DATE"],"MM/dd/yyyy"))
+            # self.tasks.itemWidget(item,4).setCurrentText(result["STATUS"])
+            # self.tasks.itemWidget(item,5).setText(result["DURATION"])
+            # self.tasks.itemWidget(item,6).setText(result["PREDECESSORS"])
+        #     self.updateDependents(item)
+        #     if result["TYPE"]=="parent":
+        #         self.disableWidgets(item)
+        # self.generateDependents()
         self.loadCounter()
-        self.updateColor()
+        # self.updateColor()
         self.expandAll()
         
     def loadCounter(self):
@@ -640,41 +680,52 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
         color = QtGui.QColor("#BDB2FF")
         r = option.rect
         # print(index.data())
+        pen = painter.pen()
         painter.setBrush(color)
-        painter.drawRoundedRect(r, 5, 5)
+        if QtCore.Qt.ItemIsEditable not in index.flags():
+            painter.setPen(QtGui.Qt.NoPen)
+            painter.drawRect(r)
+        painter.setPen(pen)
+        painter.drawLine(r.bottomLeft(),r.bottomRight())
         painter.drawText(r.topLeft()+QtCore.QPoint(10,15),index.data())
             
         # painter.restore()
         
     def createEditor(self,parent,option,index):
-        print(index.column())
-        if index.column()==0:
+        # print(index.column())
+        if index.column() == 0:
             editor = QtWidgets.QLineEdit(parent)
-        elif index.column()==1:
+            editor.returnPressed.connect(self.parent.insertTaskAfter)
+        elif index.column() in [5,6,7]:
+            editor = QtWidgets.QLineEdit(parent)
+        elif index.column() ==1:
             editor = QtWidgets.QComboBox(parent)
-            editor.addItems(["lily","paul","deven"])
-        elif index.column()==2 or index.column()==3:
+            editor.addItems(["","lily","paul","deven"])
+        elif index.column() ==4:
+            editor = QtWidgets.QComboBox(parent)
+            editor.addItems(["","Pending","Started","Completed"])
+        else:
             editor = QtWidgets.QDateEdit(parent,calendarPopup=True)
             editor.setDate(QtCore.QDate.currentDate())
-            editor.editingFinished.connect(self.parent.propagateDates)    
+            editor.editingFinished.connect(self.parent.propagateDates)
         editor.setAutoFillBackground(True)
         return editor
         
     def setEditorData(self,editor,index):
-        if index.column()==0:
+        if index.column() in [0,5,6,7]:
             editor.setText(index.data())
-        elif index.column()==1:
+        elif index.column() in [1,4]:
             editor.setCurrentText(index.data())
-        elif index.column()==2 or index.column()==3:
+        else:
             editor.setDate(QtCore.QDate.fromString(index.data(),"MM/dd/yyyy"))
         
         
     def setModelData(self, editor,model,index):
-        if index.column()==0:
+        if index.column() in [0,5,6,7]:
             model.setData(index,editor.text())
-        elif index.column()==1:
+        elif index.column() in [1,4]:
             model.setData(index,editor.currentText())
-        elif index.column()==2 or index.column()==3:
+        else:
             model.setData(index,editor.date().toString("MM/dd/yyyy"))
             
     def updateEditorGeometry(self, editor, option, index):

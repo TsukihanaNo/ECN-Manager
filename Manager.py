@@ -1003,7 +1003,7 @@ class DocModel(QtCore.QAbstractListModel):
     def add_doc(self, doc_id, title, doc_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count):
         # Access the list via the model.
         self.docs.append((doc_id, title, doc_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count))
-        # Trigger refresh.
+        # Trigger refresh. 
         self.layoutChanged.emit()
 
 # execute the program
