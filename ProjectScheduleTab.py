@@ -111,10 +111,9 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         self.tasks.header().setStretchLastSection(False)
         self.tasks.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
-        self.tasks.setItemDelegate(TreeDelegate())
-        self.tasks.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked | 
-                                QtWidgets.QAbstractItemView.SelectedClicked)
-        self.tasks.setStyleSheet("QTreeView::item {border-bottom: 1px solid gray;} QLineEdit {border:0; background-color: transparent} QComboBox {border: 0; margin: 0; background-color: transparent} QDateTimeEdit {border:0; background-color: transparent}")
+        self.tasks.setItemDelegate(TreeDelegate(self))
+        self.tasks.setEditTriggers(QtWidgets.QAbstractItemView.AllEditTriggers)
+        # self.tasks.setStyleSheet("QTreeView::item {border-bottom: 1px solid gray;} QLineEdit {border:0; background-color: transparent} QComboBox {border: 0; margin: 0; background-color: transparent} QDateTimeEdit {border:0; background-color: transparent}")
 
         mainlayout.addWidget(self.tasks)
         
@@ -141,6 +140,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         if self.tasks.selectedItems() == []:
             item = QtWidgets.QTreeWidgetItem(self.tasks)
             item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
+            self.tasks.editItem(item,0)
         else:
             parent = self.tasks.currentItem()
             item = QtWidgets.QTreeWidgetItem(parent)
@@ -258,13 +258,21 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             
     def propagateDates(self):
         # print(date)
+        # print(self.sender())
+        self.showData()
         # print(self.sender().parent().text(0))
-        self.updateDuration()
-        self.calculateDates()
-        self.calculateDates()
-        self.updateColor()
+        # self.updateDuration()
+        # self.calculateDates()
+        # self.calculateDates()
+        # self.updateColor()
         # self.showItems()
         # self.bubbleDate(self.tasks.currentItem())
+        
+    def showData(self):
+        iterator = QtWidgets.QTreeWidgetItemIterator(self.tasks)
+        while iterator.value():
+            print(iterator.value().text(0))
+            iterator+=1
         
     def showItems(self):
         for key in self.task_items.keys():
@@ -625,7 +633,7 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
     
     def __init__(self,parent=None):
         super(TreeDelegate,self).__init__(parent)
-        self.editing = False
+        self.parent = parent
     
     def paint(self, painter, option, index):
         # painter.save()
@@ -634,8 +642,7 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
         # print(index.data())
         painter.setBrush(color)
         painter.drawRoundedRect(r, 5, 5)
-        if self.editing==False:
-            painter.drawText(r.topLeft()+QtCore.QPoint(10,15),index.data())
+        painter.drawText(r.topLeft()+QtCore.QPoint(10,15),index.data())
             
         # painter.restore()
         
@@ -643,19 +650,35 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
         print(index.column())
         if index.column()==0:
             editor = QtWidgets.QLineEdit(parent)
-            return editor
+        elif index.column()==1:
+            editor = QtWidgets.QComboBox(parent)
+            editor.addItems(["lily","paul","deven"])
+        elif index.column()==2 or index.column()==3:
+            editor = QtWidgets.QDateEdit(parent,calendarPopup=True)
+            editor.setDate(QtCore.QDate.currentDate())
+            editor.editingFinished.connect(self.parent.propagateDates)    
+        editor.setAutoFillBackground(True)
+        return editor
         
     def setEditorData(self,editor,index):
-        print("setting editor data")
         if index.column()==0:
             editor.setText(index.data())
-            self.editing=True
+        elif index.column()==1:
+            editor.setCurrentText(index.data())
+        elif index.column()==2 or index.column()==3:
+            editor.setDate(QtCore.QDate.fromString(index.data(),"MM/dd/yyyy"))
+        
         
     def setModelData(self, editor,model,index):
         if index.column()==0:
-            print("setting model data",editor.text())
             model.setData(index,editor.text())
-            self.editing=False
+        elif index.column()==1:
+            model.setData(index,editor.currentText())
+        elif index.column()==2 or index.column()==3:
+            model.setData(index,editor.date().toString("MM/dd/yyyy"))
+            
+    def updateEditorGeometry(self, editor, option, index):
+            editor.setGeometry(option.rect)
     
     def sizeHint(self, option, index):
         return QtCore.QSize(option.rect.width()-50,25)
