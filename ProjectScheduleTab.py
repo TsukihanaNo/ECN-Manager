@@ -157,8 +157,10 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             item = QtWidgets.QTreeWidgetItem(self.tasks)
         else:
             parent = self.tasks.currentItem()
+            self.disableWidgets(parent)
             item = QtWidgets.QTreeWidgetItem(parent)
             self.tasks.expandItem(parent)
+        self.initItemValues(item)
         item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
         self.tasks.setCurrentItem(item)
         # self.tasks.editItem(item,0)
@@ -212,6 +214,12 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             parent.takeChild(current_index)
             parent.insertChild(current_index+1,item)
             self.tasks.setCurrentItem(item)
+            
+    def moveLeft(self):
+        pass
+    
+    def moveRight(self):
+        pass
         
     def insertTask(self):
         self.task_counter+=1
@@ -222,6 +230,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         else:
             index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
             self.tasks.currentItem().parent().insertChild(index,item)
+        self.initItemValues(item)
         item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
         self.tasks.setCurrentItem(item)
         # self.tasks.editItem(item,0)
@@ -237,6 +246,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         else:
             index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
             self.tasks.currentItem().parent().insertChild(index+1,item)
+        self.initItemValues(item)
         item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
         # print(item.flags())
         self.tasks.setCurrentItem(item)
@@ -245,8 +255,10 @@ class ProjectScheduleTab(QtWidgets.QWidget):
 
     def removeTask(self):
         item = self.tasks.currentItem()
-        del self.task_items[self.tasks.itemWidget(item,7).text()]
-        self.tasks.itemWidget(item,6).setText("")
+        del self.task_items[item.text(7)]
+        item.setText(6,"")
+        # del self.task_items[self.tasks.itemWidget(item,7).text()]
+        # self.tasks.itemWidget(item,6).setText("")
         self.updateDependents(item)
         parent = item.parent()
         if parent:
@@ -257,15 +269,24 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             self.tasks.takeTopLevelItem(self.tasks.indexOfTopLevelItem(item))
         # print(self.task_items)
         
+    def initItemValues(self,item):
+        date = QtCore.QDate.currentDate()
+        date = date.toString("MM/dd/yyyy")
+        item.setText(2,date)
+        item.setText(3,date)
+        item.setText(4,"Pending")
+        item.setText(5,"0")
+        item.setText(7,str(self.task_counter))
+        
             
     def propagateDates(self):
         # print(date)
-        print(self.sender())
+        # print(self.sender())
         # self.showData()
         # print(self.sender().parent().text(0))
-        # self.updateDuration()
-        # self.calculateDates()
-        # self.calculateDates()
+        self.updateDuration()
+        self.calculateDates()
+        self.calculateDates()
         # self.updateColor()
         # self.showItems()
         # self.bubbleDate(self.tasks.currentItem())
@@ -283,7 +304,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
     def calculateDates(self):
         iterator = QtWidgets.QTreeWidgetItemIterator(self.tasks)
         while iterator.value():
-            task_id = self.tasks.itemWidget(iterator.value(),7).text()
+            item = iterator.value()
+            task_id = item.text(7)
             # print(task_id)
             if task_id in self.task_dependents_flipped.keys():
                 affected_tasks = self.task_dependents_flipped[task_id]
@@ -291,32 +313,32 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 for affected_task in affected_tasks:
                     # print("propagating")
                     if self.checkDepends(task_id,affected_task):
-                        duration = self.tasks.itemWidget(self.task_items[affected_task],5).text()
-                        start_date = self.tasks.itemWidget(self.task_items[task_id],3).date()
+                        duration = self.task_items[affected_task].text(5)
+                        start_date = QtCore.QDate.fromString(self.task_items[task_id].text(3),"MM/dd/yyyy")
                         end_date = start_date.addDays(int(duration))
-                        self.tasks.itemWidget(self.task_items[affected_task],2).setDate(start_date)
-                        self.tasks.itemWidget(self.task_items[affected_task],3).setDate(end_date)
+                        self.task_items[affected_task].setText(2,start_date.toString("MM/dd/yyyy"))
+                        self.task_items[affected_task].setText(3,end_date.toString("MM/dd/yyyy"))
                         self.bubbleDate(self.task_items[affected_task])
                 
-            self.bubbleDate(iterator.value())
+            self.bubbleDate(item)
                 
             iterator+=1
             
     def checkDepends(self,task_id,affected_task_id):
         check_ids = self.task_dependents[affected_task_id]
-        end_date = self.tasks.itemWidget(self.task_items[task_id],3).date()
+        end_date = QtCore.QDate.fromString(self.task_items[task_id].text(3),"MM/dd/yyy")
         good = True
         for check_id in check_ids:
             if check_id != task_id:
-                if self.tasks.itemWidget(self.task_items[check_id],3).date()>end_date:
+                if QtCore.QDate.fromString(self.task_items[check_id].text(3),"MM/dd/yyyy")>end_date:
                     good = False
                     break
         return good
     
             
     def updateDependents(self,item):
-        task_id = self.tasks.itemWidget(item,7).text()
-        depends = self.tasks.itemWidget(item,6).text()
+        task_id = item.text(7)
+        depends = item.text(6)
         if depends =="":
             if task_id in self.task_dependents.keys():
                 del self.task_dependents[task_id]
@@ -324,7 +346,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             self.task_dependents[task_id]=depends.split(",")
             if task_id in self.task_dependents[task_id]:
                 self.task_dependents[task_id].remove(task_id)
-                self.tasks.itemWidget(item,6).setText(",".join(self.task_dependents[task_id]))
+                item.setText(6,",".join(self.task_dependents[task_id]))
         # print(self.task_dependents)
         
     def setDependents(self):
@@ -364,20 +386,27 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         
     def updateDuration(self):
         current_item = self.tasks.currentItem()
-        duration = self.tasks.itemWidget(current_item,2).date().daysTo(self.tasks.itemWidget(current_item,3).date())
-        self.tasks.itemWidget(current_item,5).setText(str(duration))
-        if duration<0:
-            self.tasks.itemWidget(current_item,3).setStyleSheet("background-color:#FFADAD")
-        else:
-            self.tasks.itemWidget(current_item,3).setStyleSheet("")
+        start_date = QtCore.QDate.fromString(current_item.text(2),"MM/dd/yyyy")
+        end_date = QtCore.QDate.fromString(current_item.text(3),"MM/dd/yyyy")
+        duration = start_date.daysTo(end_date)
+        current_item.setText(5,str(duration))
+        # if duration<0:
+        #     self.tasks.itemWidget(current_item,3).setStyleSheet("background-color:#FFADAD")
+        # else:
+        #     self.tasks.itemWidget(current_item,3).setStyleSheet("")
         
     def updateDateFromDuration(self):
         current_item = self.tasks.currentItem()
-        date_widget =self.tasks.itemWidget(current_item,3)
-        duration = int(self.tasks.itemWidget(current_item,5).text())
-        start_date = self.tasks.itemWidget(current_item,2).date()
+        duration = int(current_item.text(5))
+        start_date = QtCore.QDate.fromString(current_item.text(2),"MM/dd/yyyy")
         end_date = start_date.addDays(duration)
-        date_widget.setDate(end_date)
+        end_date=end_date.toString("MM/dd/yyyy")
+        current_item.setText(3,end_date)
+        # date_widget =self.tasks.itemWidget(current_item,3)
+        # duration = int(self.tasks.itemWidget(current_item,5).text())
+        # start_date = self.tasks.itemWidget(current_item,2).date()
+        # end_date = start_date.addDays(duration)
+        # date_widget.setDate(end_date)
         self.propagateDates()
         
     def expandAll(self):
@@ -398,50 +427,65 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         item = self.tasks.currentItem()
         if item is not None:
             self.bubbleStatus(item)
-            self.updateColor()
+            # self.updateColor()
                 
     def bubbleStatus(self,item):
         parent = item.parent()
         if parent is not None:
             completed = True
             for x in range(parent.childCount()):
-                if self.tasks.itemWidget(parent.child(x),4).currentText() != "Completed":
+                if parent.child(x).text(4)!="Completed":
                     completed = False
-                    break;
+                    break
+                # if self.tasks.itemWidget(parent.child(x),4).currentText() != "Completed":
+                #     completed = False
+                #     break;
+            # if completed:
+            #     self.tasks.itemWidget(parent,4).setCurrentText("Completed")
             if completed:
-                self.tasks.itemWidget(parent,4).setCurrentText("Completed")
+                parent.setText(4,"Completed")
             else:
-                self.tasks.itemWidget(parent,4).setCurrentText("Pending")
+                parent.setText(4,"Pending")
+            # else:
+            #     self.tasks.itemWidget(parent,4).setCurrentText("Pending")
             self.bubbleStatus(parent)
                 
     def bubbleDate(self,item):
         # print("bubbling")
         if item.parent() is not None:
             # print("bubbling")
+            parent = item.parent()
             start_date = ""
             end_date = ""
             for x in range(item.parent().childCount()):
                 if x == 0:
-                    start_date = self.tasks.itemWidget(item.parent().child(x),2).date()
-                    end_date = self.tasks.itemWidget(item.parent().child(x),3).date()
+                    start_date = QtCore.QDate.fromString(parent.child(x).text(2),"MM/dd/yyyy")
+                    end_date = QtCore.QDate.fromString(parent.child(x).text(3),"MM/dd/yyyy")
+                    # start_date = self.tasks.itemWidget(item.parent().child(x),2).date()
+                    # end_date = self.tasks.itemWidget(item.parent().child(x),3).date()
                 else:
-                    start_comp = self.tasks.itemWidget(item.parent().child(x),2).date()
-                    end_comp = self.tasks.itemWidget(item.parent().child(x),3).date()
+                    start_comp = QtCore.QDate.fromString(parent.child(x).text(2),"MM/dd/yyyy")
+                    end_comp = QtCore.QDate.fromString(parent.child(x).text(3),"MM/dd/yyyy")
+                    # start_comp = self.tasks.itemWidget(item.parent().child(x),2).date()
+                    # end_comp = self.tasks.itemWidget(item.parent().child(x),3).date()
                     # print("start",start_date,start_comp)
                     # print("end",end_date,end_comp)
                     if start_comp<start_date:
                         start_date=start_comp
                     if end_comp>end_date:
                         end_date=end_comp
-            self.tasks.itemWidget(item.parent(),2).setDate(start_date)
-            self.tasks.itemWidget(item.parent(),3).setDate(end_date)
+            parent.setText(2,start_date.toString("MM/dd/yyyy"))
+            parent.setText(3,end_date.toString("MM/dd/yyyy"))
+            # self.tasks.itemWidget(item.parent(),2).setDate(start_date)
+            # self.tasks.itemWidget(item.parent(),3).setDate(end_date)
             duration = start_date.daysTo(end_date)
             # print(start_date,end_date,str(duration))
-            self.tasks.itemWidget(item.parent(),5).setText(str(duration))
+            parent.setText(5,str(duration))
+            # self.tasks.itemWidget(item.parent(),5).setText(str(duration))
             # item.parent().setText(2,start_date.toString("MM/dd/yyyy"))
             # item.parent().setText(3,end_date.toString("MM/dd/yyyy"))
                 
-            self.bubbleDate(item.parent())
+            self.bubbleDate(parent)
         
     def saveData(self):
         self.cursor.execute(f"delete from PROJECT_TASKS where PROJECT_ID='{self.doc_id}'")
@@ -450,20 +494,20 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         iterator = QtWidgets.QTreeWidgetItemIterator(self.tasks)
         while iterator.value():
             item = iterator.value()
-            task_name = self.tasks.itemWidget(item,0).text()
-            owner = self.tasks.itemWidget(item,1).currentText()
-            start_date = self.tasks.itemWidget(item,2).date().toString("MM/dd/yyyy")
-            end_date = self.tasks.itemWidget(item,3).date().toString("MM/dd/yyyy")
-            status = self.tasks.itemWidget(item,4).currentText()
-            duration = self.tasks.itemWidget(item,5).text()
-            predecessors = self.tasks.itemWidget(item,6).text()
-            task_id = self.tasks.itemWidget(item,7).text()
+            task_name = item.text(0)
+            owner = item.text(1)
+            start_date = item.text(2)
+            end_date = item.text(3)
+            status = item.text(4)
+            duration = item.text(5)
+            predecessors = item.text(6)
+            task_id = item.text(7)
             if item.childCount()>0:
                 task_type = "parent"
                 # print("has children:")
                 for x in range(item.childCount()):
                     # print(self.tasks.itemWidget(item.child(x),7).text())
-                    data = (self.doc_id,self.tasks.itemWidget(item,7).text(),self.tasks.itemWidget(item.child(x),7).text())
+                    data = (self.doc_id,task_id,item.child(x).text(7))
                     self.cursor.execute(f"INSERT INTO TASK_LINK(PROJECT_ID, PARENT_TASK_ID, CHILD_TASK_ID) VALUES(?,?,?)",(data))
             else:
                 task_type = "child"
@@ -472,34 +516,6 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             self.cursor.execute(f"INSERT INTO PROJECT_TASKS(PROJECT_ID,TASK_NAME,ASSIGNED_TO,START_DATE,END_DATE,STATUS,DURATION,PREDECESSORS,TASK_ID,TYPE) VALUES(?,?,?,?,?,?,?,?,?,?)",(data))
             iterator+=1
         self.db.commit()
-    
-    # def loadData(self):
-    #     self.cursor.execute(f"select * from PROJECT_TASKS where PROJECT_ID='{self.doc_id}'")
-    #     results = self.cursor.fetchall()
-    #     for result in results:
-    #         # print(result["TASK_ID"])
-    #         parent = self.getParentTask(result["TASK_ID"])
-    #         if parent is None:
-    #             item = QtWidgets.QTreeWidgetItem(self.tasks)
-    #         else:
-    #             item = QtWidgets.QTreeWidgetItem(self.task_items[str(parent[0])])
-    #         self.task_items[str(result["TASK_ID"])]=item
-    #         self.generateWidgets(item,str(result["TASK_ID"]))
-    #         #setting data
-    #         self.tasks.itemWidget(item,0).setText(result["TASK_NAME"])
-    #         self.tasks.itemWidget(item,1).setCurrentText(result["ASSIGNED_TO"])
-    #         self.tasks.itemWidget(item,2).setDate(QtCore.QDate.fromString(result["START_DATE"],"MM/dd/yyyy"))
-    #         self.tasks.itemWidget(item,3).setDate(QtCore.QDate.fromString(result["END_DATE"],"MM/dd/yyyy"))
-    #         self.tasks.itemWidget(item,4).setCurrentText(result["STATUS"])
-    #         self.tasks.itemWidget(item,5).setText(result["DURATION"])
-    #         self.tasks.itemWidget(item,6).setText(result["PREDECESSORS"])
-    #         self.updateDependents(item)
-    #         if result["TYPE"]=="parent":
-    #             self.disableWidgets(item)
-    #     self.generateDependents()
-    #     self.loadCounter()
-    #     self.updateColor()
-    #     self.expandAll()
     
     def loadData(self):
         self.cursor.execute(f"select * from PROJECT_TASKS where PROJECT_ID='{self.doc_id}'")
@@ -524,17 +540,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             item.setText(5,result["DURATION"])
             item.setText(6,result["PREDECESSORS"])
             item.setText(7,str(result["TASK_ID"]))
-            # self.tasks.itemWidget(item,0).setText(result["TASK_NAME"])
-            # self.tasks.itemWidget(item,1).setCurrentText(result["ASSIGNED_TO"])
-            # self.tasks.itemWidget(item,2).setDate(QtCore.QDate.fromString(result["START_DATE"],"MM/dd/yyyy"))
-            # self.tasks.itemWidget(item,3).setDate(QtCore.QDate.fromString(result["END_DATE"],"MM/dd/yyyy"))
-            # self.tasks.itemWidget(item,4).setCurrentText(result["STATUS"])
-            # self.tasks.itemWidget(item,5).setText(result["DURATION"])
-            # self.tasks.itemWidget(item,6).setText(result["PREDECESSORS"])
-        #     self.updateDependents(item)
-        #     if result["TYPE"]=="parent":
-        #         self.disableWidgets(item)
-        # self.generateDependents()
+            self.updateDependents(item)
+        self.generateDependents()
         self.loadCounter()
         # self.updateColor()
         self.expandAll()
@@ -547,23 +554,13 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             print(self.task_counter)
     
     def disableWidgets(self,item):
-        self.tasks.itemWidget(item,1).setEnabled(False)
-        self.tasks.itemWidget(item,1).setCurrentText("")
-        self.tasks.itemWidget(item,2).setEnabled(False)
-        self.tasks.itemWidget(item,3).setEnabled(False)
-        self.tasks.itemWidget(item,4).setEnabled(False)
-        self.tasks.itemWidget(item,5).setEnabled(False)
-        self.tasks.itemWidget(item,6).setText("")
-        self.tasks.itemWidget(item,6).setEnabled(False)
+        item.setText(1,"")
+        item.setText(6,"")
+        item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
         self.updateDependents(item)
         
     def enableWidgets(self,item):
-        self.tasks.itemWidget(item,1).setEnabled(True)
-        self.tasks.itemWidget(item,2).setEnabled(True)
-        self.tasks.itemWidget(item,3).setEnabled(True)
-        self.tasks.itemWidget(item,4).setEnabled(True)
-        self.tasks.itemWidget(item,5).setEnabled(True)
-        self.tasks.itemWidget(item,6).setEnabled(True)
+        item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
         self.updateDependents(item)
     
     def getParentTask(self,task_id):
@@ -595,16 +592,16 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         while iterator.value():
             item = iterator.value()
             self.indent_level = 0
-            task_name = self.tasks.itemWidget(item,0).text()
+            task_name = item.text(0)
             self.getIndentLevel(item)
             task_name = self.indent_level*":" + " " + task_name
-            owner = self.tasks.itemWidget(item,1).currentText()
-            start_date = self.tasks.itemWidget(item,2).date().toString("MM/dd/yyyy")
-            end_date = self.tasks.itemWidget(item,3).date().toString("MM/dd/yyyy")
-            status = self.tasks.itemWidget(item,4).currentText()
-            duration = self.tasks.itemWidget(item,5).text()
-            predecessors = self.tasks.itemWidget(item,6).text()
-            task_id = self.tasks.itemWidget(item,7).text()
+            owner = item.text(1)
+            start_date = item.text(2)
+            end_date = item.text(3)
+            status = item.text(4)
+            duration = item.text(5)
+            predecessors = item.text(6)
+            task_id = item.text(7)
             line = [task_name,owner,start_date,end_date,duration,status,predecessors,task_id]
             start = self.tasks.itemWidget(item,2).date()
             end = self.tasks.itemWidget(item,3).date()
@@ -643,11 +640,15 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         while iterator.value():
             item = iterator.value()
             if starting_date=="":
-                starting_date = self.tasks.itemWidget(item,2).date()
-                ending_date = self.tasks.itemWidget(item,3).date()
+                starting_date = QtCore.QDate.fromString(item.text(2),"MM/dd/yyyy")
+                ending_date = QtCore.QDate.fromString(item.text(3),"MM/dd/yyyy")
+                # starting_date = self.tasks.itemWidget(item,2).date()
+                # ending_date = self.tasks.itemWidget(item,3).date()
             else:
-                start_date = self.tasks.itemWidget(item,2).date()
-                end_date = self.tasks.itemWidget(item,3).date()
+                start_date = QtCore.QDate.fromString(item.text(2),"MM/dd/yyyy")
+                end_date = QtCore.QDate.fromString(item.text(3),"MM/dd/yyyy")
+                # start_date = self.tasks.itemWidget(item,2).date()
+                # end_date = self.tasks.itemWidget(item,3).date()
                 print(start_date,end_date)
                 if start_date<starting_date:
                     starting_date=start_date
@@ -687,7 +688,10 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
             painter.drawRect(r)
         painter.setPen(pen)
         painter.drawLine(r.bottomLeft(),r.bottomRight())
-        painter.drawText(r.topLeft()+QtCore.QPoint(10,15),index.data())
+        if index.column()==0:
+            painter.drawText(r,QtCore.Qt.AlignLeft,index.data())
+        else:
+            painter.drawText(r,QtCore.Qt.AlignCenter,index.data())
             
         # painter.restore()
         
@@ -696,14 +700,18 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
         if index.column() == 0:
             editor = QtWidgets.QLineEdit(parent)
             editor.returnPressed.connect(self.parent.insertTaskAfter)
-        elif index.column() in [5,6,7]:
-            editor = QtWidgets.QLineEdit(parent)
         elif index.column() ==1:
             editor = QtWidgets.QComboBox(parent)
             editor.addItems(["","lily","paul","deven"])
         elif index.column() ==4:
             editor = QtWidgets.QComboBox(parent)
             editor.addItems(["","Pending","Started","Completed"])
+        elif index.column() ==5:
+            editor = QtWidgets.QLineEdit(parent)
+            editor.editingFinished.connect(self.parent.updateDateFromDuration)
+        elif index.column()==6:
+            editor = QtWidgets.QLineEdit(parent)
+            editor.editingFinished.connect(self.parent.setDependents)
         else:
             editor = QtWidgets.QDateEdit(parent,calendarPopup=True)
             editor.setDate(QtCore.QDate.currentDate())
