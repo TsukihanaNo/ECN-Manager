@@ -112,7 +112,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         # self.toolbar.addWidget(self.button_paste_child)
         
         self.tasks = QtWidgets.QTreeWidget()
-        headers = ["Task", "Owner", "Start", "Finish", "Status", "Duration","Depends On","ID"]
+        headers = ["Task", "Owner", "Start", "Finish", "Status", "Duration","Depends On","ID","◆"]
         self.tasks.setColumnCount(len(headers))
         self.tasks.setHeaderLabels(headers)
         self.sizing()        
@@ -194,6 +194,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.setColumnWidth(5,60)
         self.tasks.setColumnWidth(6,80)
         self.tasks.setColumnWidth(7,40)
+        self.tasks.setColumnWidth(8,20)
         
     def onRowSelect(self,selected,deselected):
         toggle = bool(self.tasks.selectedItems())
@@ -359,7 +360,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         # self.tasks.itemWidget(item,6).setText("")
         # self.updateDependents(item)
         self.findChildIds(item,tally)
-        print(tally)
+        # print(tally)
         parent = item.parent()
         if parent:
             parent.removeChild(item)
@@ -367,7 +368,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 self.enableWidgets(parent)
         else:
             self.tasks.takeTopLevelItem(self.tasks.indexOfTopLevelItem(item))
-        print(tally)
+        # print(tally)
         self.removeChildIds(tally)
         self.cleanUpDepedents(tally)
         self.generateDependents()
@@ -425,7 +426,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         # print(self.sender())
         # self.showData()
         # print(self.sender().parent().text(0))
-        print(propagateFrom)
+        # print(propagateFrom)
         self.changed_start_dates = []
         self.changed_end_dates = []
         if propagateFrom=="start":
@@ -435,7 +436,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.calculateDates()
         self.calculateDates()
         self.calculateDates()
-        print(self.changed_start_dates,self.changed_end_dates)
+        # print(self.changed_start_dates,self.changed_end_dates)
         # self.updateColor()
         # self.showItems()
         # self.bubbleDate(self.tasks.currentItem())
@@ -873,7 +874,7 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
             editor.addItems(["","lily","paul","deven"])
         elif index.column() ==4:
             editor = QtWidgets.QComboBox(parent)
-            editor.addItems(["","Pending","Started","Completed"])
+            editor.addItems(["Pending","Started","Completed"])
         elif index.column() ==5:
             editor = QtWidgets.QLineEdit(parent)
             editor.editingFinished.connect(self.parent.updateDateFromDuration)
@@ -882,6 +883,9 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
             editor.editingFinished.connect(self.parent.setDependents)
         elif index.column()==7:
             return None
+        elif index.column()==8:
+            editor = QtWidgets.QComboBox(parent)
+            editor.addItems(["","◆"])
         else:
             editor = QtWidgets.QDateEdit(parent,calendarPopup=True)
             editor.setDate(QtCore.QDate.currentDate())
@@ -892,7 +896,7 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
     def setEditorData(self,editor,index):
         if index.column() in [0,5,6,7]:
             editor.setText(index.data())
-        elif index.column() in [1,4]:
+        elif index.column() in [1,4,8]:
             editor.setCurrentText(index.data())
         else:
             editor.setDate(QtCore.QDate.fromString(index.data(),"MM/dd/yyyy"))
@@ -901,7 +905,7 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
     def setModelData(self, editor,model,index):
         if index.column() in [0,5,6,7]:
             model.setData(index,editor.text())
-        elif index.column() in [1,4]:
+        elif index.column() in [1,4,8]:
             model.setData(index,editor.currentText())
         else:
             model.setData(index,editor.date().toString("MM/dd/yyyy"))
