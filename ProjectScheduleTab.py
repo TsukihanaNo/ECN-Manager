@@ -155,6 +155,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         move_up_action.setShortcut(QtGui.QKeySequence("Ctrl+Up"))
         move_down_action = QtGui.QAction("Move Down",self)
         move_down_action.setShortcut(QtGui.QKeySequence("Ctrl+Down"))
+        milestone_action = QtGui.QAction("Toggle Milestone",self)
         copy_task_action.triggered.connect(self.copy)
         cut_task_action.triggered.connect(self.cut)
         paste_action.triggered.connect(self.paste)
@@ -167,6 +168,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         collapse_action.triggered.connect(self.collapseAll)
         move_up_action.triggered.connect(self.moveUp)
         move_down_action.triggered.connect(self.moveDown)
+        milestone_action.triggered.connect(self.toggleMilestone)
         self.addAction(copy_task_action)
         self.addAction(cut_task_action)
         self.addAction(paste_action)
@@ -178,6 +180,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.menu.addAction(cut_task_action)
         self.menu.addAction(paste_action)
         self.menu.addAction(paste_as_child_action)
+        self.menu.addSeparator()
+        self.menu.addAction(milestone_action)
         self.menu.addSeparator()
         self.menu.addAction(add_action)
         self.menu.addAction(insert_action)
@@ -194,7 +198,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.setColumnWidth(5,60)
         self.tasks.setColumnWidth(6,80)
         self.tasks.setColumnWidth(7,40)
-        self.tasks.setColumnWidth(8,20)
+        self.tasks.setColumnWidth(8,15)
         
     def onRowSelect(self,selected,deselected):
         toggle = bool(self.tasks.selectedItems())
@@ -566,6 +570,13 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 self.tasks.collapseItem(iterator.value())
             iterator+=1
             
+    def toggleMilestone(self):
+        item = self.tasks.currentItem()
+        if item.text(8)=="":
+            item.setText(8,"◆")
+        else:
+            item.setText(8,"")
+            
     def updateStatus(self):
         item = self.tasks.currentItem()
         if item is not None:
@@ -634,6 +645,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             duration = item.text(5)
             predecessors = item.text(6)
             task_id = item.text(7)
+            milestone = item.text(8)
             if item.childCount()>0:
                 task_type = "parent"
                 # print("has children:")
@@ -643,9 +655,9 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                     self.cursor.execute(f"INSERT INTO TASK_LINK(PROJECT_ID, PARENT_TASK_ID, CHILD_TASK_ID) VALUES(?,?,?)",(data))
             else:
                 task_type = "child"
-            data = (self.doc_id,task_name,owner,start_date,end_date,status,duration,predecessors,task_id,task_type)
+            data = (self.doc_id,task_name,owner,start_date,end_date,status,duration,predecessors,task_id,task_type,milestone)
             # print(data)
-            self.cursor.execute(f"INSERT INTO PROJECT_TASKS(PROJECT_ID,TASK_NAME,ASSIGNED_TO,START_DATE,END_DATE,STATUS,DURATION,PREDECESSORS,TASK_ID,TYPE) VALUES(?,?,?,?,?,?,?,?,?,?)",(data))
+            self.cursor.execute(f"INSERT INTO PROJECT_TASKS(PROJECT_ID,TASK_NAME,ASSIGNED_TO,START_DATE,END_DATE,STATUS,DURATION,PREDECESSORS,TASK_ID,TYPE,MILESTONE) VALUES(?,?,?,?,?,?,?,?,?,?,?)",(data))
             iterator+=1
         self.db.commit()
     
@@ -672,6 +684,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             item.setText(5,result["DURATION"])
             item.setText(6,result["PREDECESSORS"])
             item.setText(7,str(result["TASK_ID"]))
+            item.setText(8,result["MILESTONE"])
             self.updateDependents(item)
         self.generateDependents()
         self.loadCounter()
@@ -881,11 +894,8 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
         elif index.column()==6:
             editor = QtWidgets.QLineEdit(parent)
             editor.editingFinished.connect(self.parent.setDependents)
-        elif index.column()==7:
+        elif index.column()==7 or index.column()==8:
             return None
-        elif index.column()==8:
-            editor = QtWidgets.QComboBox(parent)
-            editor.addItems(["","◆"])
         else:
             editor = QtWidgets.QDateEdit(parent,calendarPopup=True)
             editor.setDate(QtCore.QDate.currentDate())
@@ -896,7 +906,7 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
     def setEditorData(self,editor,index):
         if index.column() in [0,5,6,7]:
             editor.setText(index.data())
-        elif index.column() in [1,4,8]:
+        elif index.column() in [1,4]:
             editor.setCurrentText(index.data())
         else:
             editor.setDate(QtCore.QDate.fromString(index.data(),"MM/dd/yyyy"))
@@ -905,7 +915,7 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
     def setModelData(self, editor,model,index):
         if index.column() in [0,5,6,7]:
             model.setData(index,editor.text())
-        elif index.column() in [1,4,8]:
+        elif index.column() in [1,4]:
             model.setData(index,editor.currentText())
         else:
             model.setData(index,editor.date().toString("MM/dd/yyyy"))
