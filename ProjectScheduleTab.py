@@ -123,13 +123,13 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.header().setStretchLastSection(False)
         self.tasks.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
         self.tasks.setItemDelegate(TreeDelegate(self))
-        self.tasks.setEditTriggers(QtWidgets.QAbstractItemView.AllEditTriggers)
+        self.tasks.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked|QtWidgets.QAbstractItemView.SelectedClicked)
         self.tasks.setDragEnabled(True)
         self.tasks.viewport().setAcceptDrops(True)
         self.tasks.setDropIndicatorShown(True)
         self.tasks.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
         # print(self.tasks.dragDropMode(),self.tasks.dropIndicatorPosition())
-        # self.tasks.setStyleSheet("QTreeView::item {border-bottom: 1px solid gray;} QLineEdit {border:0; background-color: transparent} QComboBox {border: 0; margin: 0; background-color: transparent} QDateTimeEdit {border:0; background-color: transparent}")
+        self.tasks.setStyleSheet("QTreeView::item:selected {background-color:lightgray;}")
 
         mainlayout.addWidget(self.tasks)
         
@@ -139,17 +139,22 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         copy_task_action = QtGui.QAction("Copy",self)
         # copy_task_action.setShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Copy))
         cut_task_action = QtGui.QAction("Cut",self)
-        # cut_task_action.setShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Cut))
+        cut_task_action.setShortcut(QtGui.QKeySequence("Ctrl+X"))
         paste_action = QtGui.QAction("Paste",self)
-        # paste_action.setShortcut(QtGui.QKeySequence.Paste)
+        paste_action.setShortcut(QtGui.QKeySequence("Ctrl+V"))
         paste_as_child_action = QtGui.QAction("Paste As Child",self)
         add_action = QtGui.QAction("Add Task",self)
         insert_action = QtGui.QAction("Insert Before",self)
         insert_after_action = QtGui.QAction("Insert After",self)
+        insert_after_action.setShortcut(QtGui.QKeySequence("Ctrl+I"))
         remove_action = QtGui.QAction("Remove Task",self)
+        remove_action.setShortcut(QtGui.QKeySequence("Ctrl+D"))
         expand_action = QtGui.QAction("Expand All",self)
         collapse_action = QtGui.QAction("Collapse All",self)
-        # move_up_action = QtGui.QAction("Move Up",self)
+        move_up_action = QtGui.QAction("Move Up",self)
+        move_up_action.setShortcut(QtGui.QKeySequence("Ctrl+Up"))
+        move_down_action = QtGui.QAction("Move Down",self)
+        move_down_action.setShortcut(QtGui.QKeySequence("Ctrl+Down"))
         copy_task_action.triggered.connect(self.copy)
         cut_task_action.triggered.connect(self.cut)
         paste_action.triggered.connect(self.paste)
@@ -160,7 +165,15 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         remove_action.triggered.connect(self.removeTask)
         expand_action.triggered.connect(self.expandAll)
         collapse_action.triggered.connect(self.collapseAll)
-        # move_up_action.triggered.connect(self.moveUp)
+        move_up_action.triggered.connect(self.moveUp)
+        move_down_action.triggered.connect(self.moveDown)
+        self.addAction(copy_task_action)
+        self.addAction(cut_task_action)
+        self.addAction(paste_action)
+        self.addAction(remove_action)
+        self.addAction(move_up_action)
+        self.addAction(move_down_action)
+        self.addAction(insert_after_action)
         self.menu.addAction(copy_task_action)
         self.menu.addAction(cut_task_action)
         self.menu.addAction(paste_action)
@@ -169,11 +182,10 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.menu.addAction(add_action)
         self.menu.addAction(insert_action)
         self.menu.addAction(insert_after_action)
-        self.menu.addAction(remove_action)      
-        self.menu.addSeparator() 
+        self.menu.addAction(remove_action)
+        self.menu.addSeparator()
         self.menu.addAction(expand_action)
-        self.menu.addAction(collapse_action)  
-        # self.menu.addAction(move_up_action)  
+        self.menu.addAction(collapse_action)
         
     def sizing(self):
         self.tasks.setColumnWidth(2,90)
@@ -211,11 +223,12 @@ class ProjectScheduleTab(QtWidgets.QWidget):
     
     def cut(self):
         if self.tasks.currentItem().parent() is None:
-                index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
+            index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
+            self.item_clip = (self.tasks.invisibleRootItem().takeChild(index),1)
         else:
             index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
-        self.item_clip = (self.tasks.currentItem().parent().takeChild(index),1)
-        print(self.item_clip)
+            self.item_clip = (self.tasks.currentItem().parent().takeChild(index),1)
+        # print(self.item_clip)
         
     def copy(self):
         item = self.tasks.currentItem()
@@ -223,19 +236,59 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         
     def paste(self):
         item = self.item_clip[0]
-        print(item)
+        # print(item)
         if self.item_clip[1]==1:
             if self.tasks.currentItem().parent() is None:
                 index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
-                self.tasks.invisibleRootItem().insertChild(index,item)
-                print("pasting, parent none")
+                self.tasks.invisibleRootItem().insertChild(index+1,item)
+                # print("pasting, parent none")
             else:
                 index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
-                self.tasks.currentItem().parent().insertChild(index,item)
-                print("pasting")
+                self.tasks.currentItem().parent().insertChild(index+1,item)
+                # print("pasting")
+        else:
+            # new_item = QtWidgets.QTreeWidgetItem()
+            # new_item.setText(0,item.text(0))
+            # self.task_counter+=1
+            # self.initItemValues(new_item)
+            # self.task_items[str(self.task_counter)]=new_item
+            # self.addChild(item,new_item)
+            new_item = QtWidgets.QTreeWidgetItem()
+            new_item.setText(0,item.text(0))
+            self.task_counter+=1
+            self.initItemValues(new_item)
+            self.task_items[str(self.task_counter)]=new_item
+            self.generateCopy(item,new_item)
+            if self.tasks.currentItem().parent() is None:
+                index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
+                self.tasks.invisibleRootItem().insertChild(index+1,new_item)
+            else:
+                index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
+                self.tasks.currentItem().parent().insertChild(index+1,new_item)
+            self.expandAll()
+                
+    def generateCopy(self,item,parent):
+        if item.childCount()>0:
+            for x in range(item.childCount()):
+                child = QtWidgets.QTreeWidgetItem(parent)
+                child.setText(0,item.child(x).text(0))
+                self.task_counter+=1
+                self.initItemValues(child)
+                self.task_items[str(self.task_counter)]=child
+                if item.child(x).childCount()>0:
+                    self.generateCopy(item.child(x),child)
+                else:
+                    child.setFlags(child.flags()|QtCore.Qt.ItemIsEditable)
+            
     
     def pasteAsChild(self):
-        pass
+        item = self.item_clip[0]
+        # print(item)
+        if self.item_clip[1]==1:
+            self.tasks.currentItem().insertChild(0,item)
+            self.tasks.currentItem().setExpanded(True)
+        else:
+            pass
     
     def moveUp(self):
         item = self.tasks.currentItem()
@@ -303,6 +356,9 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         # del self.task_items[self.tasks.itemWidget(item,7).text()]
         # self.tasks.itemWidget(item,6).setText("")
         self.updateDependents(item)
+        tally = []
+        self.findChildIds(item,tally)
+        print(tally)
         parent = item.parent()
         if parent:
             parent.removeChild(item)
@@ -310,7 +366,19 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 self.enableWidgets(parent)
         else:
             self.tasks.takeTopLevelItem(self.tasks.indexOfTopLevelItem(item))
-        # print(self.task_items)
+        self.removeChildIds(tally)
+        print(self.task_items)
+        
+    def findChildIds(self, item, tally):
+        if item.childCount()>0:
+            for x in range(item.childCount()):
+                tally.append(item.child(x).text(7))
+                if item.child(x).childCount()>0:
+                    self.findChildIds(item.child(x),tally)
+
+    def removeChildIds(self,tally):
+        for child_id in tally:
+            del self.task_items[child_id]
         
     def initItemValues(self,item):
         date = QtCore.QDate.currentDate()
