@@ -351,12 +351,13 @@ class ProjectScheduleTab(QtWidgets.QWidget):
 
     def removeTask(self):
         item = self.tasks.currentItem()
+        tally = []
         del self.task_items[item.text(7)]
+        tally.append(item.text(7))
         item.setText(6,"")
         # del self.task_items[self.tasks.itemWidget(item,7).text()]
         # self.tasks.itemWidget(item,6).setText("")
-        self.updateDependents(item)
-        tally = []
+        # self.updateDependents(item)
         self.findChildIds(item,tally)
         print(tally)
         parent = item.parent()
@@ -366,8 +367,15 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 self.enableWidgets(parent)
         else:
             self.tasks.takeTopLevelItem(self.tasks.indexOfTopLevelItem(item))
+        print(tally)
         self.removeChildIds(tally)
-        print(self.task_items)
+        self.cleanUpDepedents(tally)
+        self.generateDependents()
+        # print(self.task_dependents)
+        # print(self.task_dependents_flipped)
+        self.propagateDates("removal")
+        # print(self.task_items)
+        # print(self.task_dependents)
         
     def findChildIds(self, item, tally):
         if item.childCount()>0:
@@ -378,7 +386,29 @@ class ProjectScheduleTab(QtWidgets.QWidget):
 
     def removeChildIds(self,tally):
         for child_id in tally:
-            del self.task_items[child_id]
+            if child_id in self.task_items.keys():
+                del self.task_items[child_id]
+            # if child_id in self.task_dependents.keys():
+            #     del self.task_dependents[child_id]
+                
+    def cleanUpDepedents(self,tally):
+        self.task_dependents = {}
+        iterator = QtWidgets.QTreeWidgetItemIterator(self.tasks)
+        while iterator.value():
+            item = iterator.value()
+            if item.text(6)!="":
+                tasks = item.text(6).split(",")
+                # print(tasks)
+                to_remove = []
+                for task in tasks:
+                    if task in tally:
+                        to_remove.append(task)
+                for task in to_remove:
+                    tasks.remove(task)
+                # print("tasks",tasks)
+                item.setText(6,",".join(tasks))
+                self.updateDependents(item)
+            iterator+=1
         
     def initItemValues(self,item):
         date = QtCore.QDate.currentDate()
