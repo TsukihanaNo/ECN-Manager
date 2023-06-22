@@ -124,10 +124,11 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.header().setDefaultAlignment(QtCore.Qt.AlignCenter)
         self.tasks.setItemDelegate(TreeDelegate(self))
         self.tasks.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked|QtWidgets.QAbstractItemView.SelectedClicked)
-        self.tasks.setDragEnabled(True)
-        self.tasks.viewport().setAcceptDrops(True)
-        self.tasks.setDropIndicatorShown(True)
-        self.tasks.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+        # self.tasks.setDragEnabled(True)
+        # self.tasks.viewport().setAcceptDrops(True)
+        # self.tasks.setDropIndicatorShown(True)
+        # self.tasks.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+        self.tasks.itemSelectionChanged.connect(self.currentItemCheck)
         # print(self.tasks.dragDropMode(),self.tasks.dropIndicatorPosition())
         self.tasks.setStyleSheet("QTreeView::item:selected {background-color:lightgray;}")
 
@@ -252,12 +253,6 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 self.tasks.currentItem().parent().insertChild(index+1,item)
                 # print("pasting")
         else:
-            # new_item = QtWidgets.QTreeWidgetItem()
-            # new_item.setText(0,item.text(0))
-            # self.task_counter+=1
-            # self.initItemValues(new_item)
-            # self.task_items[str(self.task_counter)]=new_item
-            # self.addChild(item,new_item)
             new_item = QtWidgets.QTreeWidgetItem()
             new_item.setText(0,item.text(0))
             self.task_counter+=1
@@ -353,34 +348,40 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.setCurrentItem(item)
         # self.tasks.editItem(item,0)
         self.task_items[str(self.task_counter)]=item
+        
+    def currentItemCheck(self):
+        if self.tasks.selectedItems()==[]:
+            self.tasks.setCurrentItem(None)
 
     def removeTask(self):
         item = self.tasks.currentItem()
-        tally = []
-        del self.task_items[item.text(7)]
-        tally.append(item.text(7))
-        item.setText(6,"")
-        # del self.task_items[self.tasks.itemWidget(item,7).text()]
-        # self.tasks.itemWidget(item,6).setText("")
-        # self.updateDependents(item)
-        self.findChildIds(item,tally)
-        # print(tally)
-        parent = item.parent()
-        if parent:
-            parent.removeChild(item)
-            if parent.childCount()==0:
-                self.enableWidgets(parent)
-        else:
-            self.tasks.takeTopLevelItem(self.tasks.indexOfTopLevelItem(item))
-        # print(tally)
-        self.removeChildIds(tally)
-        self.cleanUpDepedents(tally)
-        self.generateDependents()
-        # print(self.task_dependents)
-        # print(self.task_dependents_flipped)
-        self.propagateDates("removal")
-        # print(self.task_items)
-        # print(self.task_dependents)
+        if item is not None:
+            tally = []
+            del self.task_items[item.text(7)]
+            tally.append(item.text(7))
+            item.setText(6,"")
+            # del self.task_items[self.tasks.itemWidget(item,7).text()]
+            # self.tasks.itemWidget(item,6).setText("")
+            # self.updateDependents(item)
+            self.findChildIds(item,tally)
+            # print(tally)
+            parent = item.parent()
+            if parent:
+                parent.removeChild(item)
+                if parent.childCount()==0:
+                    self.enableWidgets(parent)
+            else:
+                self.tasks.takeTopLevelItem(self.tasks.indexOfTopLevelItem(item))
+            # print(tally)
+            self.tasks.currentItem().setSelected(True)
+            self.removeChildIds(tally)
+            self.cleanUpDepedents(tally)
+            self.generateDependents()
+            # print(self.task_dependents)
+            # print(self.task_dependents_flipped)
+            self.propagateDates("removal")
+            # print(self.task_items)
+            # print(self.task_dependents)
         
     def findChildIds(self, item, tally):
         if item.childCount()>0:
