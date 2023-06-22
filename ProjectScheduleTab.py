@@ -40,6 +40,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.initAtt()
         self.clipboard = QtGui.QGuiApplication.clipboard()
         self.menu = QtWidgets.QMenu(self)
+        self.createMenu()
         self.initUI()
 
     def initAtt(self):
@@ -58,18 +59,18 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.addTask)
         self.button_remove = QtWidgets.QPushButton("Remove Task")
-        icon_loc = icon = os.path.join(program_location,"icons","minus.png")
-        self.button_remove.setIcon(QtGui.QIcon(icon_loc))
+        # icon_loc = icon = os.path.join(program_location,"icons","minus.png")
+        # self.button_remove.setIcon(QtGui.QIcon(icon_loc))
         self.button_remove.clicked.connect(self.removeTask)
         self.button_remove.setDisabled(True)
         self.button_insert = QtWidgets.QPushButton("Insert Before")
-        icon_loc = icon = os.path.join(program_location,"icons","add.png")
-        self.button_insert.setIcon(QtGui.QIcon(icon_loc))
+        # icon_loc = icon = os.path.join(program_location,"icons","add.png")
+        # self.button_insert.setIcon(QtGui.QIcon(icon_loc))
         self.button_insert.setDisabled(True)
         self.button_insert.clicked.connect(self.insertTask)
         self.button_insert_after = QtWidgets.QPushButton("Insert After")
-        icon_loc = icon = os.path.join(program_location,"icons","add.png")
-        self.button_insert_after.setIcon(QtGui.QIcon(icon_loc))
+        # icon_loc = icon = os.path.join(program_location,"icons","add.png")
+        # self.button_insert_after.setIcon(QtGui.QIcon(icon_loc))
         self.button_insert_after.setDisabled(True)
         self.button_insert_after.clicked.connect(self.insertTaskAfter)
         # self.button_cut = QtWidgets.QPushButton("Cut")
@@ -87,10 +88,10 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.button_move_down.clicked.connect(self.moveDown)
         self.button_move_down.setEnabled(False)
         
-        self.button_expand = QtWidgets.QPushButton("Expand All")
-        self.button_expand.clicked.connect(self.expandAll)
-        self.button_collapse = QtWidgets.QPushButton("Collapse All")
-        self.button_collapse.clicked.connect(self.collapseAll)
+        # self.button_expand = QtWidgets.QPushButton("Expand All")
+        # self.button_expand.clicked.connect(self.expandAll)
+        # self.button_collapse = QtWidgets.QPushButton("Collapse All")
+        # self.button_collapse.clicked.connect(self.collapseAll)
         self.button_timeline = QtWidgets.QPushButton("Show Timeline")
         self.button_export_csv = QtWidgets.QPushButton("Export CSV")
         self.button_export_csv.clicked.connect(self.export)
@@ -101,8 +102,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_remove)
         self.toolbar.addWidget(self.button_move_up)
         self.toolbar.addWidget(self.button_move_down)
-        self.toolbar.addWidget(self.button_expand)
-        self.toolbar.addWidget(self.button_collapse)
+        # self.toolbar.addWidget(self.button_expand)
+        # self.toolbar.addWidget(self.button_collapse)
         self.toolbar.addWidget(self.button_timeline)
         self.toolbar.addWidget(self.button_export_csv)
         # self.toolbar.addWidget(self.button_copy)
@@ -132,7 +133,47 @@ class ProjectScheduleTab(QtWidgets.QWidget):
 
         mainlayout.addWidget(self.tasks)
         
-        self.setLayout(mainlayout)              
+        self.setLayout(mainlayout)   
+        
+    def createMenu(self):
+        copy_task_action = QtGui.QAction("Copy",self)
+        # copy_task_action.setShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Copy))
+        cut_task_action = QtGui.QAction("Cut",self)
+        # cut_task_action.setShortcut(QtGui.QKeySequence(QtGui.QKeySequence.Cut))
+        paste_action = QtGui.QAction("Paste",self)
+        # paste_action.setShortcut(QtGui.QKeySequence.Paste)
+        paste_as_child_action = QtGui.QAction("Paste As Child",self)
+        add_action = QtGui.QAction("Add Task",self)
+        insert_action = QtGui.QAction("Insert Before",self)
+        insert_after_action = QtGui.QAction("Insert After",self)
+        remove_action = QtGui.QAction("Remove Task",self)
+        expand_action = QtGui.QAction("Expand All",self)
+        collapse_action = QtGui.QAction("Collapse All",self)
+        # move_up_action = QtGui.QAction("Move Up",self)
+        copy_task_action.triggered.connect(self.copy)
+        cut_task_action.triggered.connect(self.cut)
+        paste_action.triggered.connect(self.paste)
+        paste_as_child_action.triggered.connect(self.pasteAsChild)
+        add_action.triggered.connect(self.addTask)
+        insert_action.triggered.connect(self.insertTask)
+        insert_after_action.triggered.connect(self.insertTaskAfter)
+        remove_action.triggered.connect(self.removeTask)
+        expand_action.triggered.connect(self.expandAll)
+        collapse_action.triggered.connect(self.collapseAll)
+        # move_up_action.triggered.connect(self.moveUp)
+        self.menu.addAction(copy_task_action)
+        self.menu.addAction(cut_task_action)
+        self.menu.addAction(paste_action)
+        self.menu.addAction(paste_as_child_action)
+        self.menu.addSeparator()
+        self.menu.addAction(add_action)
+        self.menu.addAction(insert_action)
+        self.menu.addAction(insert_after_action)
+        self.menu.addAction(remove_action)      
+        self.menu.addSeparator() 
+        self.menu.addAction(expand_action)
+        self.menu.addAction(collapse_action)  
+        # self.menu.addAction(move_up_action)  
         
     def sizing(self):
         self.tasks.setColumnWidth(2,90)
@@ -653,6 +694,9 @@ class ProjectScheduleTab(QtWidgets.QWidget):
     def repopulateTable(self):
         pass 
     
+    def contextMenuEvent(self,event):
+        self.menu.exec_(event.globalPos())
+    
     def resizeEvent(self, e):        
         self.sizing()
             
@@ -738,6 +782,8 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
         elif index.column()==6:
             editor = QtWidgets.QLineEdit(parent)
             editor.editingFinished.connect(self.parent.setDependents)
+        elif index.column()==7:
+            return None
         else:
             editor = QtWidgets.QDateEdit(parent,calendarPopup=True)
             editor.setDate(QtCore.QDate.currentDate())
