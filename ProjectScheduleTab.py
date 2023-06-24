@@ -92,9 +92,13 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         # self.button_expand.clicked.connect(self.expandAll)
         # self.button_collapse = QtWidgets.QPushButton("Collapse All")
         # self.button_collapse.clicked.connect(self.collapseAll)
-        self.button_timeline = QtWidgets.QPushButton("Show Timeline")
+        # self.button_timeline = QtWidgets.QPushButton("Show Timeline")
         self.button_export_csv = QtWidgets.QPushButton("Export CSV")
         self.button_export_csv.clicked.connect(self.export)
+        self.button_save_template = QtWidgets.QPushButton("Save as Template")
+        self.button_save_template.clicked.connect(self.generateTemplate)
+        self.button_load_template = QtWidgets.QPushButton("Load Template")
+        self.button_load_template.clicked.connect(self.loadTemplate)
         
         self.toolbar.addWidget(self.button_add)
         self.toolbar.addWidget(self.button_insert)
@@ -104,8 +108,10 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_move_down)
         # self.toolbar.addWidget(self.button_expand)
         # self.toolbar.addWidget(self.button_collapse)
-        self.toolbar.addWidget(self.button_timeline)
+        # self.toolbar.addWidget(self.button_timeline)
         self.toolbar.addWidget(self.button_export_csv)
+        self.toolbar.addWidget(self.button_save_template)
+        self.toolbar.addWidget(self.button_load_template)
         # self.toolbar.addWidget(self.button_copy)
         # self.toolbar.addWidget(self.button_cut)
         # self.toolbar.addWidget(self.button_paste)
@@ -424,6 +430,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         item.setText(4,"Pending")
         item.setText(5,"0")
         item.setText(7,str(self.task_counter))
+        item.setText(8,"")
         
             
     def propagateDates(self,propagateFrom):
@@ -691,6 +698,71 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.loadCounter()
         # self.updateColor()
         self.expandAll()
+        
+    def generateTemplate(self):
+        filename, ok = QtWidgets.QFileDialog.getSaveFileName(self,("Save File"),"template.csv",".csv")
+        if filename !="" and ok:
+            iterator = QtWidgets.QTreeWidgetItemIterator(self.tasks)
+            template = []
+            #task id, task name, milestone, parent id, item_type
+            while iterator.value():
+                item = iterator.value()
+                if item.childCount()>0:
+                    item_type = "parent"
+                else:
+                    item_type = "child"
+                if item.parent() is None:
+                    template.append((item.text(7),item.text(0),item.text(8),"None",item_type))
+                else:
+                    template.append((item.text(7),item.text(0),item.text(8),item.parent().text(7),item_type))
+                iterator+=1
+            # print(template)
+            f = open(filename, "w")
+            for line in template:
+                text = ",".join(line)
+                text+="\n"
+                f.write(text)
+            f.close()
+            self.dispMsg("Template Saved!")
+        
+    def loadTemplate(self):
+        filename,ok = QtWidgets.QFileDialog.getOpenFileName(self,self.tr("Open Template"),program_location,self.tr("Template Files (*.csv)"))
+        if filename!="" and ok:
+            f = open(filename, "r")
+            counter = 0
+            for line in f:
+                # print(line.strip("\n").split(","))
+                data = line.strip("\n").split(",")
+                task_id = data[0]
+                task_name = data[1]
+                milestone = data[2]
+                parent = data[3]
+                item_type = data[4]
+                if int(task_id)>counter:
+                    counter=int(task_id)
+                if parent=="None":
+                    item = QtWidgets.QTreeWidgetItem(self.tasks)
+                else:
+                    item = QtWidgets.QTreeWidgetItem(self.task_items[parent])
+                self.task_items[task_id]=item
+                # self.generateWidgets(item,str(result["TASK_ID"]))
+                #setting data
+                if item_type!="parent":
+                    item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
+                current_date = QtCore.QDate.currentDate().toString("MM/dd/yyyy")
+                item.setText(0,task_name)
+                item.setText(1,"")
+                item.setText(2,current_date)
+                item.setText(3,current_date)
+                item.setText(4,"Pending")
+                item.setText(5,"0")
+                item.setText(6,"")
+                item.setText(7,task_id)
+                item.setText(8,milestone)
+                self.updateDependents(item)
+            self.task_counter=counter
+            self.generateDependents()
+            self.expandAll()
         
     def loadCounter(self):
         self.cursor.execute(f"select max(TASK_ID) from PROJECT_TASKS where PROJECT_ID='{self.doc_id}'")
