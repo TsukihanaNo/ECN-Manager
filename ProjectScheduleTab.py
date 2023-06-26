@@ -136,7 +136,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         # self.tasks.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
         self.tasks.itemSelectionChanged.connect(self.currentItemCheck)
         # print(self.tasks.dragDropMode(),self.tasks.dropIndicatorPosition())
-        self.tasks.setStyleSheet("QTreeView::item:selected {background-color:lightgray;}")
+        self.tasks.setStyleSheet("QTreeView::item:selected {background-color:#f4ebf7;}")
 
         mainlayout.addWidget(self.tasks)
         
@@ -247,31 +247,32 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.item_clip = (item,0)
         
     def paste(self):
-        item = self.item_clip[0]
-        # print(item)
-        if self.item_clip[1]==1:
-            if self.tasks.currentItem().parent() is None:
-                index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
-                self.tasks.invisibleRootItem().insertChild(index+1,item)
-                # print("pasting, parent none")
-            else:
-                index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
-                self.tasks.currentItem().parent().insertChild(index+1,item)
-                # print("pasting")
-        else:
-            new_item = QtWidgets.QTreeWidgetItem()
-            new_item.setText(0,item.text(0))
-            self.task_counter+=1
-            self.initItemValues(new_item)
-            self.task_items[str(self.task_counter)]=new_item
-            self.generateCopy(item,new_item)
-            if self.tasks.currentItem().parent() is None:
-                index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
-                self.tasks.invisibleRootItem().insertChild(index+1,new_item)
-            else:
-                index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
-                self.tasks.currentItem().parent().insertChild(index+1,new_item)
-            self.expandAll()
+        if self.tasks.currentItem() is not None:
+            item = self.item_clip[0]
+            # print(item)
+            if self.item_clip[1]==1: #paste from cut
+                if self.tasks.currentItem().parent() is None:
+                    index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
+                    self.tasks.invisibleRootItem().insertChild(index+1,item)
+                    # print("pasting, parent none")
+                else:
+                    index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
+                    self.tasks.currentItem().parent().insertChild(index+1,item)
+                    # print("pasting")
+            else: #paste from copy
+                new_item = QtWidgets.QTreeWidgetItem()
+                new_item.setText(0,item.text(0))
+                self.task_counter+=1
+                self.initItemValues(new_item)
+                self.task_items[str(self.task_counter)]=new_item
+                self.generateCopy(item,new_item)
+                if self.tasks.currentItem().parent() is None:
+                    index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
+                    self.tasks.invisibleRootItem().insertChild(index+1,new_item)
+                else:
+                    index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
+                    self.tasks.currentItem().parent().insertChild(index+1,new_item)
+                self.expandAll()
                 
     def generateCopy(self,item,parent):
         if item.childCount()>0:
@@ -288,34 +289,37 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             
     
     def pasteAsChild(self):
-        item = self.item_clip[0]
-        # print(item)
-        if self.item_clip[1]==1:
-            self.tasks.currentItem().insertChild(0,item)
-            self.tasks.currentItem().setExpanded(True)
-        else:
-            pass
+        if self.tasks.currentItem() is not None:
+            item = self.item_clip[0]
+            # print(item)
+            if self.item_clip[1]==1:
+                self.tasks.currentItem().insertChild(0,item)
+                self.tasks.currentItem().setExpanded(True)
+            else:
+                self.dispMsg("not implemented yet")
     
     def moveUp(self):
         item = self.tasks.currentItem()
-        parent = item.parent()
-        current_index = parent.indexOfChild(item)
-        if current_index>0:
-            # print("moving up")
-            parent.takeChild(current_index)
-            parent.insertChild(current_index-1,item)
-            self.tasks.setCurrentItem(item)
+        if item is not None:
+            parent = item.parent()
+            current_index = parent.indexOfChild(item)
+            if current_index>0:
+                # print("moving up")
+                parent.takeChild(current_index)
+                parent.insertChild(current_index-1,item)
+                self.tasks.setCurrentItem(item)
     
     def moveDown(self):
         item = self.tasks.currentItem()
         # print(item.text(0))
-        parent = item.parent()
-        current_index = parent.indexOfChild(item)
-        if current_index<parent.childCount()-1:
-            # print("moving down")
-            parent.takeChild(current_index)
-            parent.insertChild(current_index+1,item)
-            self.tasks.setCurrentItem(item)
+        if item is not None:
+            parent = item.parent()
+            current_index = parent.indexOfChild(item)
+            if current_index<parent.childCount()-1:
+                # print("moving down")
+                parent.takeChild(current_index)
+                parent.insertChild(current_index+1,item)
+                self.tasks.setCurrentItem(item)
             
     def moveLeft(self):
         pass
@@ -324,36 +328,38 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         pass
         
     def insertTask(self):
-        self.task_counter+=1
-        item = QtWidgets.QTreeWidgetItem()
-        if self.tasks.currentItem().parent() is None:
-            index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
-            self.tasks.invisibleRootItem().insertChild(index,item)
-        else:
-            index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
-            self.tasks.currentItem().parent().insertChild(index,item)
-        self.initItemValues(item)
-        item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
-        self.tasks.setCurrentItem(item)
-        # self.tasks.editItem(item,0)
-        self.task_items[str(self.task_counter)]=item
-        # self.generateWidgets(item,self.task_counter)
+        if self.tasks.currentItem() is not None:
+            self.task_counter+=1
+            item = QtWidgets.QTreeWidgetItem()
+            if self.tasks.currentItem().parent() is None:
+                index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
+                self.tasks.invisibleRootItem().insertChild(index,item)
+            else:
+                index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
+                self.tasks.currentItem().parent().insertChild(index,item)
+            self.initItemValues(item)
+            item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
+            self.tasks.setCurrentItem(item)
+            # self.tasks.editItem(item,0)
+            self.task_items[str(self.task_counter)]=item
+            # self.generateWidgets(item,self.task_counter)
         
     def insertTaskAfter(self):
-        self.task_counter+=1
-        item = QtWidgets.QTreeWidgetItem()
-        if self.tasks.currentItem().parent() is None:
-            index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
-            self.tasks.invisibleRootItem().insertChild(index+1,item)
-        else:
-            index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
-            self.tasks.currentItem().parent().insertChild(index+1,item)
-        self.initItemValues(item)
-        item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
-        # print(item.flags())
-        self.tasks.setCurrentItem(item)
-        # self.tasks.editItem(item,0)
-        self.task_items[str(self.task_counter)]=item
+        if self.tasks.currentItem() is not None:
+            self.task_counter+=1
+            item = QtWidgets.QTreeWidgetItem()
+            if self.tasks.currentItem().parent() is None:
+                index = self.tasks.invisibleRootItem().indexOfChild(self.tasks.currentItem())
+                self.tasks.invisibleRootItem().insertChild(index+1,item)
+            else:
+                index = self.tasks.currentItem().parent().indexOfChild(self.tasks.currentItem())
+                self.tasks.currentItem().parent().insertChild(index+1,item)
+            self.initItemValues(item)
+            item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
+            # print(item.flags())
+            self.tasks.setCurrentItem(item)
+            # self.tasks.editItem(item,0)
+            self.task_items[str(self.task_counter)]=item
         
     def currentItemCheck(self):
         if self.tasks.selectedItems()==[]:
@@ -379,7 +385,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             else:
                 self.tasks.takeTopLevelItem(self.tasks.indexOfTopLevelItem(item))
             # print(tally)
-            self.tasks.currentItem().setSelected(True)
+            if self.tasks.currentItem() is not None:
+                self.tasks.currentItem().setSelected(True)
             self.removeChildIds(tally)
             self.cleanUpDepedents(tally)
             self.generateDependents()
@@ -540,11 +547,12 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         # print(self.task_dependents_flipped)
         
     def updateDuration(self):
-        current_item = self.tasks.currentItem()
-        start_date = QtCore.QDate.fromString(current_item.text(2),"MM/dd/yyyy")
-        end_date = QtCore.QDate.fromString(current_item.text(3),"MM/dd/yyyy")
-        duration = start_date.daysTo(end_date)
-        current_item.setText(5,str(duration))
+        if self.tasks.currentItem() is not None:
+            current_item = self.tasks.currentItem()
+            start_date = QtCore.QDate.fromString(current_item.text(2),"MM/dd/yyyy")
+            end_date = QtCore.QDate.fromString(current_item.text(3),"MM/dd/yyyy")
+            duration = start_date.daysTo(end_date)
+            current_item.setText(5,str(duration))
         # if duration<0:
         #     self.tasks.itemWidget(current_item,3).setStyleSheet("background-color:#FFADAD")
         # else:
@@ -910,6 +918,9 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
         font = painter.font()
         painter.setBrush(color)
         painter.setPen(QtGui.Qt.NoPen)
+        # if option.state & QtWidgets.QStyle.State_Selected:
+        #     if index.column()==0:
+        #         painter.drawRect(r.topLeft().x(),r.topLeft().y(),5,r.height())
         if index.column()==0:
             status = index.siblingAtColumn(4).data()
             if status=="Completed":
