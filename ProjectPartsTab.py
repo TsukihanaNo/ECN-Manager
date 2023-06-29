@@ -28,30 +28,29 @@ class ProjectPartsTab(QtWidgets.QWidget):
         
         mainlayout.addWidget(self.toolbar)
 
-        self.button_add = QtWidgets.QPushButton("Add Part")
+        self.button_add = QtWidgets.QPushButton("Add Row")
         icon_loc = os.path.join(program_location,"icons","add.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
-        self.button_add.clicked.connect(self.addPart)
-        self.button_remove = QtWidgets.QPushButton("Remove Part")
+        self.button_add.clicked.connect(self.addRow)
+        self.button_remove = QtWidgets.QPushButton("Remove Row")
         icon_loc = os.path.join(program_location,"icons","minus.png")
         self.button_remove.setIcon(QtGui.QIcon(icon_loc))
         self.button_remove.setDisabled(True)
         self.button_remove.clicked.connect(self.removeRow)
-        self.button_edit = QtWidgets.QPushButton("Edit Part")
-        icon_loc = os.path.join(program_location,"icons","edit.png")
-        self.button_edit.setIcon(QtGui.QIcon(icon_loc))
-        self.button_edit.setDisabled(True)
-        self.button_edit.clicked.connect(self.editPart)
+        self.button_po_info = QtWidgets.QPushButton("PO Info")
         
         self.toolbar.addWidget(self.button_add)
         self.toolbar.addWidget(self.button_remove)
-        self.toolbar.addWidget(self.button_edit)
+        self.toolbar.addWidget(self.button_po_info)
         
-        self.parts = QtWidgets.QTableWidget()
-        self.parts.setStyleSheet("QListView{background-color:#f0f0f0}")
+        headers = ["Part ID","Description","Status","Part Type","Draw Made","Quoted","Vendor","Tooling Cost", "Tooling PO", "Product PO", "Cost Per","Qty Per", "ECN?","Qty On Hand","Notes"]
+        self.parts = QtWidgets.QTableWidget(0,len(headers),self)
+        self.parts.setHorizontalHeaderLabels(headers)
+        self.parts.selectionModel().selectionChanged.connect(self.onRowSelect)
         mainlayout.addWidget(self.parts)
+        self.addRow()
         
-        self.setLayout(mainlayout)              
+        self.setLayout(mainlayout)
         #self.repopulateTable()
         
     def createMenu(self):
@@ -62,17 +61,14 @@ class ProjectPartsTab(QtWidgets.QWidget):
         
     def onRowSelect(self):
         self.button_remove.setEnabled(bool(self.parts.selectionModel().selectedIndexes()))
-        self.button_edit.setEnabled(bool(self.parts.selectionModel().selectedIndexes()))
         
-        
-    def addPart(self):
-        pass
-        
-    def editPart(self):
-        pass
+    def addRow(self):
+        row = self.parts.rowCount()
+        self.parts.insertRow(row)
 
     def removeRow(self):
-        pass
+        current_row = self.parts.currentRow()
+        self.parts.removeRow(current_row)
         
             
     def dispMsg(self,msg):
