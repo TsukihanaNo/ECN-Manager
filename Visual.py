@@ -19,8 +19,8 @@ class Visual():
             print("Visual Connection Established")
             self.cur = self.con.cursor()
         except Exception as e:
-           print(e)
-           self.parent.dispMsg(f"Error: Connection could not be established to Visual. (error code - {e})")
+            print(e)
+            self.parent.dispMsg(f"Error: Connection could not be established to Visual. (error code - {e})")
 
     def checkPartSetup(self,part,ptype):
         #planner id, buyer id, safety stock, min-max (not required), order policy, warehouse, inspection, vendor pricing
@@ -89,6 +89,14 @@ class Visual():
         result = self.cur.fetchone()
         for item in result:
             print(item)
+        return result
+    
+    def getPartQty(self,part):
+        self.cur.execute(f"Select QTY_ON_HAND, QTY_ON_ORDER, QTY_IN_DEMAND from PART where ID='{part}'")
+        result = self.cur.fetchone()
+        for item in result:
+            print(item)
+        return result
 
     def partExist(self,part):
         self.cur.execute(f"Select ID from PART where ID='{part}'")
@@ -123,4 +131,13 @@ class Visual():
             
         # return items
         return results
+    
+    def getPONotation(self,PO):
+        self.cur.execute(f"select NOTE from NOTATION where TYPE='PO' and OWNER_ID='{PO}'")
+        result = self.cur.fetchone()
+        if result is not None:
+            return result[0].read().decode("ascii")  
+        else:
+            return None
+        # print(note)
     

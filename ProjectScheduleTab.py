@@ -829,8 +829,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             predecessors = item.text(6)
             task_id = item.text(7)
             line = [task_name,owner,start_date,end_date,duration,status,predecessors,task_id]
-            start = self.tasks.itemWidget(item,2).date()
-            end = self.tasks.itemWidget(item,3).date()
+            start = QtCore.QDate.fromString(start_date,"MM/dd/yyyy")
+            end = QtCore.QDate.fromString(end_date,"MM/dd/yyyy")
             for x in range(total_days):
                 date = starting_date.addDays(x)
                 if date<start:
@@ -875,13 +875,13 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 end_date = QtCore.QDate.fromString(item.text(3),"MM/dd/yyyy")
                 # start_date = self.tasks.itemWidget(item,2).date()
                 # end_date = self.tasks.itemWidget(item,3).date()
-                print(start_date,end_date)
+                # print(start_date,end_date)
                 if start_date<starting_date:
                     starting_date=start_date
                 if end_date>ending_date:
                     ending_date=end_date
             iterator+=1
-        print(starting_date,ending_date)
+        # print(starting_date,ending_date)
         return starting_date,ending_date
         
     def repopulateTable(self):
