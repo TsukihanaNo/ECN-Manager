@@ -153,6 +153,7 @@ class ProjectWindow(QtWidgets.QWidget):
             data = (self.doc_id,doc_type,status,title,author,modifieddate,first_released)
             self.cursor.execute("INSERT INTO DOCUMENT(DOC_ID,DOC_TYPE,STATUS,DOC_TITLE,AUTHOR,LAST_MODIFIED,FIRST_RELEASE) VALUES(?,?,?,?,?,?,?)",(data))
             self.db.commit()
+            self.tab_parts.saveData()
             self.tab_schedule.saveData()
         except Exception as e:
             print(e)
@@ -169,6 +170,7 @@ class ProjectWindow(QtWidgets.QWidget):
             data = (self.doc_id,doc_type,status,title,author,modifieddate,first_released)
             # self.cursor.execute("INSERT INTO DOCUMENT(DOC_ID,DOC_TYPE,STATUS,DOC_TITLE,AUTHOR,LAST_MODIFIED,FIRST_RELEASE) VALUES(?,?,?,?,?,?,?)",(data))
             # self.db.commit()
+            self.tab_parts.saveData()
             self.tab_schedule.saveData()
         except Exception as e:
             print(e)
@@ -181,6 +183,7 @@ class ProjectWindow(QtWidgets.QWidget):
         self.line_title.setText(result["DOC_TITLE"])
         self.line_status.setText(result["STATUS"])
         self.tab_purch_req.repopulateTable()
+        self.tab_parts.loadData()
         self.tab_schedule.loadData()
         
     # def addParts(self):

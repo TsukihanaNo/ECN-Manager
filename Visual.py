@@ -87,15 +87,15 @@ class Visual():
     def getPartInfo(self,part):
         self.cur.execute(f"Select * from PART where ID='{part}'")
         result = self.cur.fetchone()
-        for item in result:
-            print(item)
+        # for item in result:
+        #     print(item)
         return result
     
     def getPartQty(self,part):
         self.cur.execute(f"Select QTY_ON_HAND, QTY_ON_ORDER, QTY_IN_DEMAND from PART where ID='{part}'")
         result = self.cur.fetchone()
-        for item in result:
-            print(item)
+        # for item in result:
+        #     print(item)
         return result
 
     def partExist(self,part):
@@ -140,4 +140,15 @@ class Visual():
         else:
             return None
         # print(note)
-    
+        
+    def getPurchLineInfo(self,part):
+        self.cur.execute(f"select PURC_ORDER_ID, LINE_NO, PART_ID, VENDOR_PART_ID, ORDER_QTY, PURCHASE_UM, UNIT_PRICE, PROMISE_DATE from PURC_ORDER_LINE where PART_ID='{part}' or VENDOR_PART_ID='{part}'")
+        results = self.cur.fetchall()
+        # for result in results:
+        #     print(result)
+        return results
+            
+    def getPurchOrderInfo(self,PO):
+        self.cur.execute(f"select ID, VENDOR_ID, STATUS,DESIRED_RECV_DATE, PROMISE_DATE from PURCHASE_ORDER where ID='{PO}'")
+        result = self.cur.fetchone()
+        return result

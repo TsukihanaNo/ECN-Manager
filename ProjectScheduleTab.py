@@ -1,9 +1,10 @@
+import os
+import sys
 from typing import Optional, Union
-from PySide6 import QtGui, QtCore, QtWidgets
-import sys, os
 
 import PySide6.QtCore
 import PySide6.QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 
 from ProjectTimeline import *
 
