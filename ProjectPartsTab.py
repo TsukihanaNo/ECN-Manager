@@ -56,17 +56,26 @@ class ProjectPartsTab(QtWidgets.QWidget):
         self.parts = QtWidgets.QTableWidget(0,len(headers),self)
         self.parts.setHorizontalHeaderLabels(headers)
         self.parts.selectionModel().selectionChanged.connect(self.onRowSelect)
+        self.sizing()
         mainlayout.addWidget(self.parts)
         # self.addRow()
         
         self.setLayout(mainlayout)
         #self.repopulateTable()
         
+    def sizing(self):
+        self.parts.setColumnWidth(0,150)
+        self.parts.setColumnWidth(1,200)
+        self.parts.setColumnWidth(2,100)
+        
     def createMenu(self):
         pass
         
     def contextMenuEvent(self,event):
         self.menu.exec_(event.globalPos())
+        
+    def resizeEvent(self, e):        
+        self.sizing()
         
     def onRowSelect(self):
         self.button_remove.setEnabled(bool(self.parts.selectionModel().selectedIndexes()))

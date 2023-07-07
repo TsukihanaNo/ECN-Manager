@@ -239,7 +239,7 @@ class SettingsWindow(QtWidgets.QWidget):
             
     def getPRQStageDict(self):
         if "PRQ_Stage" in self.settings.keys():
-            self.PCNstageDict = {}
+            self.PRQstageDict = {}
             stages = self.settings["PRQ_Stage"].split(",")
             for stage in stages:
                 key,value = stage.split("-")
