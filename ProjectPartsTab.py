@@ -1,5 +1,6 @@
 import os
 import sys
+from POWindow import *
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
@@ -43,6 +44,8 @@ class ProjectPartsTab(QtWidgets.QWidget):
         self.button_remove.setDisabled(True)
         self.button_remove.clicked.connect(self.removeRow)
         self.button_po_info = QtWidgets.QPushButton("PO Info")
+        self.button_po_info.setDisabled(True)
+        self.button_po_info.clicked.connect(self.showPO)
         
         self.button_check_data = QtWidgets.QPushButton("Check Data")
         self.button_check_data.clicked.connect(self.checkData)
@@ -79,6 +82,7 @@ class ProjectPartsTab(QtWidgets.QWidget):
         
     def onRowSelect(self):
         self.button_remove.setEnabled(bool(self.parts.selectionModel().selectedIndexes()))
+        self.button_po_info.setEnabled(bool(self.parts.selectionModel().selectedIndexes()))
         
     def addRow(self):
         row = self.parts.rowCount()
@@ -139,6 +143,11 @@ class ProjectPartsTab(QtWidgets.QWidget):
             # if self.parts.item(row,8) is not None:
             #     tooling_item = self.parts.item(row,8)
             #     print(self.visual.getPONotation(tooling_item.text()))
+            
+    def showPO(self):
+        row = self.parts.currentRow()
+        part_id = self.parts.item(row,0).text()
+        self.poWindow = POWindow(self,part_id)
             
     def checkForECN(self,part_id):
         self.cursor.execute(f"select count(PART_ID) from PARTS where PART_ID like '%{part_id}%'")
