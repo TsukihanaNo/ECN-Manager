@@ -147,8 +147,18 @@ class Visual():
         # for result in results:
         #     print(result)
         return results
+    
+    def getPurchLineInfo2(self,PO,PO_line):
+        self.cur.execute(f"select PURC_ORDER_ID, LINE_NO, PART_ID, VENDOR_PART_ID, ORDER_QTY, PURCHASE_UM, UNIT_PRICE, PROMISE_DATE from PURC_ORDER_LINE where PURC_ORDER_ID='{PO}' and LINE_NO='{PO_line}'")
+        result = self.cur.fetchone()
+        return result
             
     def getPurchOrderInfo(self,PO):
         self.cur.execute(f"select ID, VENDOR_ID, STATUS,DESIRED_RECV_DATE, PROMISE_DATE from PURCHASE_ORDER where ID='{PO}'")
         result = self.cur.fetchone()
         return result
+    
+    def getPurchLineDelivery(self,PO,PO_line):
+        self.cur.execute(f"select PURC_ORDER_ID, PURC_ORDER_LINE_NO, DEL_SCHED_LINE_NO, DESIRED_RECV_DATE, ACTUAL_RECV_DATE, ORDER_QTY, RECEIVED_QTY FROM PURC_LINE_DEL WHERE PURC_ORDER_ID='{PO}' and PURC_ORDER_LINE_NO='{PO_line}'")
+        results = self.cur.fetchall()
+        return results

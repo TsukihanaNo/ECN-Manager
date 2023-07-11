@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+    <header>
+        <title>PO Info</title>
+        <style>
+
+            *{
+                box-sizing: border-box;
+            }
+
+            .container {
+                width: 8in;
+                min-height:10.5in;
+                margin: .25in auto;
+                padding: 0;
+                text-align: center;
+            }
+
+            #title-block > h1 {
+                margin: 0;
+            }
+
+            .header-block {
+                display: flex;
+                text-align: left;
+            }
+
+            .header-item{
+                padding: 2px;
+            }
+
+            #ecn-id{
+                width: 33.33%;
+            }
+
+            #ecn-title{
+                width: 66.66%;
+            }
+
+            #requestor, #author, #department{
+                width: 33.33%;
+            }
+
+            .text-block{
+                padding: 10px;
+            }
+
+            .text-block > h2{
+                font-size: 16px;
+                text-align: left;
+            }
+
+            .text-box{
+                text-align: left;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                border: 2px solid rgb(200, 200, 200);
+                letter-spacing: 1px;
+                font-family: sans-serif;
+            }
+
+            td,
+            th {
+                border: 1px solid rgb(190, 190, 190);
+                padding: 2px;
+            }
+
+
+
+            .filename {
+                width: 35%;
+            }
+
+        </style>
+    </header>
+    <body>
+        <div class="container">
+            <div id="title-block">
+                <h1>Purchase Order</h1>
+                <div class="header-block">
+                    <div id = "po-id" class="header-item">
+                        ID: $POID
+                    </div>
+                    <div id = "ecn-title" class="header-item">
+                        Title: $ECNTitle
+                    </div>
+                </div>
+                <div class="header-block">
+                    <div id = "requestor" class="header-item">
+                        Requestor: $Requestor
+                    </div>
+                    <div id = "author" class="header-item">
+                        Author: $Author
+                    </div>
+                    <div id = "department" class="header-item">
+                        Department: $Department
+                    </div>
+                </div>
+            </div>
+            <div id="reason-block" class="text-block">
+                <h2>Reason for ECN:</h2>
+                <div id="reason-text" class="text-box">
+                    $Reason
+                </div>
+            <hr>
+            </div>
+            <div id="summary-block" class="text-block">
+                <h2>Summary of changes:</h2>
+                <div id="summary-text" class="text-box">
+                    $Summary
+                </div>
+            <hr>
+            </div>
+            <div id="parts-block" class="text-block">
+                <h2>Parts List:</h2>
+                <div id="parts-text" class="text-box">
+                    $Parts
+                </div>
+            <hr>
+            </div>
+            <div id="attachment-block" class="text-block">
+                <h2>Attachments:</h2>
+                <table>
+                    <tr>
+                        <th class="filename">File Name:</th>
+                        <th>File Path:</th>
+                    </tr>
+                    $Attachment
+                </table>
+                <hr>
+            </div>
+            <div id="signature-block" class="text-block">
+                <h2>Signatures:</h2>
+                <table>
+                    <tr>
+                        <th style="width: 35%;">Title:</th>
+                        <th style="width: 35%;">Name:</th>
+                        <th>Approved Date</th>
+                    </tr>
+                    $Signature
+                </table>
+            </div>
+        </div>
+    </body>
+</html>

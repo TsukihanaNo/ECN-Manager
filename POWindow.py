@@ -62,7 +62,7 @@ class POWindow(QtWidgets.QWidget):
         
         hlayout = QtWidgets.QHBoxLayout()
         self.po_list = QtWidgets.QListWidget()
-        self.po_list.setFixedWidth(250)
+        self.po_list.setFixedWidth(100)
         self.po_list.itemSelectionChanged.connect(self.showPoInfo)
         self.text_edit = QtWidgets.QTextEdit()
         self.text_edit.setReadOnly(True)
@@ -76,15 +76,27 @@ class POWindow(QtWidgets.QWidget):
     def loadPOs(self):
         results = self.visual.getPurchLineInfo(self.part_id)
         for result in results:
-            po_item = QtWidgets.QListWidgetItem(result[0])
+            po_item = QtWidgets.QListWidgetItem(result[0]+"/"+str(result[1]))
             self.po_list.addItem(po_item)
             
     def showPoInfo(self):
         po_id = self.po_list.currentItem().text()
         self.text_edit.clear()
-        po_info = self.visual.getPurchOrderInfo(po_id)
-        self.text_edit.append(f"Vendor ID: {po_info[1]}\n")
-        self.text_edit.append(f"Status: {po_info[2]}\n")
-        self.text_edit.append(f"Desired Receive Date: {po_info[3]}\n")
-        self.text_edit.append(f"Promise Date: {po_info[4]}\n")
+        # po,po_line = po_id.split("/")
+        # po_info = self.visual.getPurchLineInfo2(po,po_line)
+        # text = "Purch Line Info:\n"
+        # for data in po_info:
+        #     text+=str(data)+"\n"
+        # delivery_info = self.visual.getPurchLineDelivery(po,po_line)
+        # text+="Delivery info:\n"
+        # for data in delivery_info:
+        #     text+=str(data)+"\n"
+        # self.text_edit.append(text)
+        html = open(r"C:\Users\ljiang\Documents\Programming Projects\ECN-Manager\templates\po_template.html","r").read()
+        self.text_edit.setHtml(html)
+        # self.text_edit.append(f"Vendor ID: {po_info[1]}\n")
+        # self.text_edit.append(f"Status: {po_info[2]}\n")
+        # self.text_edit.append(f"Desired Receive Date: {po_info[3]}\n")
+        # self.text_edit.append(f"Promise Date: {po_info[4]}\n")
+
         
