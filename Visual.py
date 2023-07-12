@@ -142,19 +142,22 @@ class Visual():
         # print(note)
         
     def getPurchLineInfo(self,part):
-        self.cur.execute(f"select PURC_ORDER_ID, LINE_NO, PART_ID, VENDOR_PART_ID, ORDER_QTY, PURCHASE_UM, UNIT_PRICE, PROMISE_DATE from PURC_ORDER_LINE where PART_ID='{part}' or VENDOR_PART_ID='{part}'")
+        self.cur.execute(f"select PURC_ORDER_ID, LINE_NO, PART_ID, VENDOR_PART_ID, ORDER_QTY, PURCHASE_UM, UNIT_PRICE, PROMISE_DATE from PURC_ORDER_LINE where PART_ID like '%{part}%' or VENDOR_PART_ID like '%{part}%'")
         results = self.cur.fetchall()
-        # for result in results:
-        #     print(result)
         return results
     
     def getPurchLineInfo2(self,PO,PO_line):
         self.cur.execute(f"select PURC_ORDER_ID, LINE_NO, PART_ID, VENDOR_PART_ID, ORDER_QTY, PURCHASE_UM, UNIT_PRICE, PROMISE_DATE from PURC_ORDER_LINE where PURC_ORDER_ID='{PO}' and LINE_NO='{PO_line}'")
         result = self.cur.fetchone()
         return result
+    
+    def getPurchLines(self,PO):
+        self.cur.execute(f"select PURC_ORDER_ID, LINE_NO, PART_ID, VENDOR_PART_ID, ORDER_QTY, PURCHASE_UM, UNIT_PRICE, LAST_RECEIVED_DATE, GL_EXPENSE_ACCT_ID from PURC_ORDER_LINE where PURC_ORDER_ID='{PO}'")
+        results = self.cur.fetchall()
+        return results
             
     def getPurchOrderInfo(self,PO):
-        self.cur.execute(f"select ID, VENDOR_ID, STATUS,DESIRED_RECV_DATE, PROMISE_DATE from PURCHASE_ORDER where ID='{PO}'")
+        self.cur.execute(f"select ID, VENDOR_ID, STATUS,ORDER_DATE,DESIRED_RECV_DATE, PROMISE_SHIP_DATE,PROMISE_DATE,BUYER from PURCHASE_ORDER where ID='{PO}'")
         result = self.cur.fetchone()
         return result
     
@@ -162,3 +165,13 @@ class Visual():
         self.cur.execute(f"select PURC_ORDER_ID, PURC_ORDER_LINE_NO, DEL_SCHED_LINE_NO, DESIRED_RECV_DATE, ACTUAL_RECV_DATE, ORDER_QTY, RECEIVED_QTY FROM PURC_LINE_DEL WHERE PURC_ORDER_ID='{PO}' and PURC_ORDER_LINE_NO='{PO_line}'")
         results = self.cur.fetchall()
         return results
+    
+    def getPurchOrderDelivery(self,PO):
+        self.cur.execute(f"select PURC_ORDER_ID, PURC_ORDER_LINE_NO, DEL_SCHED_LINE_NO, DESIRED_RECV_DATE, ACTUAL_RECV_DATE, ORDER_QTY, RECEIVED_QTY FROM PURC_LINE_DEL WHERE PURC_ORDER_ID='{PO}'")
+        results = self.cur.fetchall()
+        return results
+    
+    def getVendorName(self,vendor_id):
+        self.cur.execute(f"select NAME from VENDOR where ID='{vendor_id}'")
+        result = self.cur.fetchone()
+        return result[0]
