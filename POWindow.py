@@ -57,12 +57,12 @@ class POWindow(QtWidgets.QWidget):
         
     def initUI(self):
         mainlayout = QtWidgets.QVBoxLayout(self)
-        self.toolbar = QtWidgets.QToolBar()
+        # self.toolbar = QtWidgets.QToolBar()
         
-        self.button_save = QtWidgets.QPushButton("Save")
+        # self.button_save = QtWidgets.QPushButton("Save")
         # self.button_save.clicked.connect(self.save)
         
-        self.toolbar.addWidget(self.button_save)
+        # self.toolbar.addWidget(self.button_save)
         
         hlayout = QtWidgets.QHBoxLayout()
         self.po_list = QtWidgets.QListWidget()
@@ -73,7 +73,7 @@ class POWindow(QtWidgets.QWidget):
         hlayout.addWidget(self.po_list)
         hlayout.addWidget(self.text_edit)
 
-        mainlayout.addWidget(self.toolbar)
+        # mainlayout.addWidget(self.toolbar)
         mainlayout.addLayout(hlayout)
         self.setLayout(mainlayout)
         
