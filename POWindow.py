@@ -85,6 +85,9 @@ class POWindow(QtWidgets.QWidget):
                 po_item = QtWidgets.QListWidgetItem(result[0])
                 self.po_list.addItem(po_item)
                 po_list.append(result[0])
+        if len(po_list)>0:
+            self.po_list.setCurrentRow(0)
+            self.showPoInfo()
             
     def showPoInfo(self):
         po_id = self.po_list.currentItem().text()
