@@ -52,6 +52,21 @@ class Visual():
                 
         return filtered_results
     
+    def queryParts(self,search):
+        command = f"select ID, Description, purchased, fabricated from part where ID like '{search}%'"
+        self.cur.execute(command)
+        results = self.cur.fetchall()
+        filtered_results = []
+        for result in results:
+            if result[2]=="Y":
+                ptype="Purchased"
+            else:
+                ptype="Fabricated"
+            if not self.checkPartSetup(result[0],ptype):
+                filtered_results.append(result)
+                
+        return filtered_results
+    
     def queryPartsFromBOM(self,part_id,filtered=False):
         command = f"select requirement.part_id, part.description, part.purchased, part.fabricated  from requirement left join part on part.id = requirement.part_id where workorder_type='M' and workorder_base_id='{part_id}'"
         self.cur.execute(command)

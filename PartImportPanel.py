@@ -55,7 +55,7 @@ class PartImportPanel(QtWidgets.QWidget):
         self.line_search.setPlaceholderText("Leave blank to search all non-setup part, enter part id to search through BOM...")
         self.line_search.returnPressed.connect(self.search)
         self.checkbox_filter = QtWidgets.QCheckBox()
-        self.label_fiflter = QtWidgets.QLabel("Filter BOM result")
+        self.label_fiflter = QtWidgets.QLabel("BOM Search")
         self.button_search = QtWidgets.QPushButton("Search")
         self.button_search.clicked.connect(self.search)
         search_layout.addWidget(self.line_search)
@@ -87,9 +87,9 @@ class PartImportPanel(QtWidgets.QWidget):
         else:
             search_string = self.line_search.text().upper()
             if self.checkbox_filter.checkState()==QtCore.Qt.CheckState.Checked:
-                self.results = self.visual.queryPartsFromBOM(search_string,True)
-            else:
                 self.results = self.visual.queryPartsFromBOM(search_string)
+            else:
+                self.results = self.visual.queryParts(search_string)
         # for result in results:
         #     print(result)
         self.results.sort(key=self.sortData)
