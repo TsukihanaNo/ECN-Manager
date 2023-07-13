@@ -52,7 +52,7 @@ class PartImportPanel(QtWidgets.QWidget):
         
         search_layout= QtWidgets.QHBoxLayout()
         self.line_search = QtWidgets.QLineEdit()
-        self.line_search.setPlaceholderText("Leave blank to search all non-setup part, enter part id to search through BOM...")
+        self.line_search.setPlaceholderText("Leave blank to search all non-setup part, enter part id to search for part...")
         self.line_search.returnPressed.connect(self.search)
         self.checkbox_filter = QtWidgets.QCheckBox()
         self.label_fiflter = QtWidgets.QLabel("BOM Search")
