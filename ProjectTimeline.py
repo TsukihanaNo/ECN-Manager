@@ -7,6 +7,8 @@ if getattr(sys, 'frozen', False):
 else:
     # unfrozen
     program_location = os.path.dirname(os.path.realpath(__file__))
+    
+MONTH = {1:"JANUARY", 2:"FEBUARY", 3: "MARCH", 4: "APRIL", 5:"MAY", 6:"JUNE", 7:"JULY", 8:"AUGUST", 9:"SEPTEMBER", 10:"OCTOBER", 11:"NOVEMBER", 12: "DECEMBER"}
 
 class ProjectTimeline(QtWidgets.QWidget):
     def __init__(self, parent = None):
@@ -26,6 +28,7 @@ class ProjectTimeline(QtWidgets.QWidget):
             self.doc_id = parent.doc_id
         # self.window_height = 600
         # self.window_width = 1000
+        self.zoom_factor = 1
         self.show()
         self.initAtt()
         self.initUI()
@@ -37,36 +40,71 @@ class ProjectTimeline(QtWidgets.QWidget):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowState(QtGui.Qt.WindowMaximized)
 
-    def initUI(self): 
+    def initUI(self):     
+        main_layout = QtWidgets.QVBoxLayout(self)
+        self.toolbar = QtWidgets.QToolBar()
+        self.button_save = QtWidgets.QPushButton("Save")
+        self.button_save.clicked.connect(self.save)
+        self.button_zoom_in = QtWidgets.QPushButton("Zoom In")
+        self.button_zoom_in.clicked.connect(self.ZoomIn)
+        self.button_zoom_out = QtWidgets.QPushButton("Zoom Out")
+        self.button_zoom_out.clicked.connect(self.ZoomOut)
+        self.label_zoom = QtWidgets.QLabel(f"Zoom: {self.zoom_factor*100}% ")
+        self.radio_days = QtWidgets.QRadioButton("Days")
+        self.radio_days.setChecked(True)
+        self.radio_weeks = QtWidgets.QRadioButton("Weeks")
+        self.radio_months = QtWidgets.QRadioButton("Months")
+        self.toolbar.addWidget(self.button_save)
+        self.toolbar.addWidget(self.button_zoom_in)
+        self.toolbar.addWidget(self.button_zoom_out)
+        self.toolbar.addWidget(self.label_zoom)
+        self.toolbar.addWidget(self.radio_days)
+        self.toolbar.addWidget(self.radio_weeks)
+        self.toolbar.addWidget(self.radio_months)
+        main_layout.addWidget(self.toolbar)
+        
         self.grid_size = 25
         # starting_date = QtCore.QDate.fromString("01/01/2023","MM/dd/yyyy")
         # ending_date = QtCore.QDate.fromString("12/31/2023","MM/dd/yyyy")
         starting_date,ending_date = self.parent.getStartEndDates()
         total_days = starting_date.daysTo(ending_date)
         task_count = self.parent.getRowCount()
+        # task_count=30
         spacing = 5
         self.offset = 10
-        self.scene_height = task_count * self.grid_size + task_count* spacing+ self.offset*2
-        if self.scene_height<self.height():
-            self.scene_height=self.height()
-        self.scene_width = total_days * self.grid_size + self.offset*2
-        if self.scene_width<self.width():
-            self.scene_width=self.width()
-            steps = (self.scene_width-self.offset*2)/self.grid_size
+        self.drawDayMode(task_count,spacing,starting_date,total_days)
+        # self.drawWeekMode(task_count,spacing,starting_date,ending_date)
+            
+        self.graphics_view = QtWidgets.QGraphicsView(self.graphic_scene)
+        self.graphics_view.show()
+        self.graphics_view.horizontalScrollBar().setValue(0)
+        self.graphics_view.verticalScrollBar().setValue(0)
+        # self.tree = QtWidgets.QTreeWidget()
+        # self.tree.setFixedWidth(300)
+        # main_layout.addWidget(self.tree)
+        
+        main_layout.addWidget(self.graphics_view)
+        
+    def drawDayMode(self,task_count,spacing,starting_date,total_days):
+        scene_height = task_count * self.grid_size + task_count* spacing+ self.offset*2
+        if scene_height<self.height():
+            scene_height=self.height()
+        scene_width = total_days * self.grid_size + self.offset*2
+        if scene_width<self.width():
+            scene_width=self.width()
+            steps = (scene_width-self.offset*2)/self.grid_size
             total_days = int(steps)
-            
-            
-        main_layout = QtWidgets.QHBoxLayout(self)
-        self.graphic_scene = QtWidgets.QGraphicsScene(0,0,self.scene_width,self.scene_height)
+        self.graphic_scene = QtWidgets.QGraphicsScene(0,0,scene_width,scene_height)
         self.graphic_scene.setBackgroundBrush(QtGui.Qt.white)
         vert_lines = []
         line_pen = QtGui.QPen()
-        line_pen.setBrush(QtGui.Qt.gray)
+        # line_pen.setStyle(QtGui.Qt.DotLine)
+        line_pen.setBrush(QtGui.QColor("#ece1f7"))
+        # text_pen = QtGui.QPen()
+        # text_pen.setBrush(QtGui.Qt.white)
         
-        MONTH = {1:"JANUARY", 2:"FEBUARY", 3: "MARCH", 4: "APRIL", 5:"MAY", 6:"JUNE", 7:"JULY", 8:"AUGUST", 9:"SEPTEMBER", 10:"OCTOBER", 11:"NOVEMBER", 12: "DECEMBER"}
-        
-        for x in range(int((self.scene_width-self.offset*2)/self.grid_size)):
-            line = QtCore.QLineF((x)*self.grid_size+self.offset*2,self.offset*4,(x)*self.grid_size+self.offset*2,self.scene_height-self.offset)
+        for x in range(int((scene_width-self.offset*2)/self.grid_size)):
+            line = QtCore.QLineF((x)*self.grid_size+self.offset*2,self.offset*4,(x)*self.grid_size+self.offset*2,scene_height-self.offset)
             line_item = QtWidgets.QGraphicsLineItem(line)
             line_item.setPen(line_pen)
             vert_lines.append(line_item)
@@ -80,25 +118,15 @@ class ProjectTimeline(QtWidgets.QWidget):
             text_item.setPos(day*self.grid_size+self.offset*2-offset,self.offset*2)
             self.graphic_scene.addItem(text_item)
             if current.day()==1:
-                month_item = QtWidgets.QGraphicsSimpleTextItem(MONTH[current.month()])
+                month_item = QtWidgets.QGraphicsSimpleTextItem(MONTH[current.month()]+ f" {current.year()}")
                 # offset = month_item.boundingRect().width()/2
                 month_item.setPos(day*self.grid_size+self.offset*2,self.offset-5)
                 self.graphic_scene.addItem(month_item)
             
-        # hor_lines = []
-        # for y in range(int((self.scene_height-self.offset*2)/self.grid_size)+1):
-        #     hor_lines.append(QtCore.QLineF(self.offset,(y)*self.grid_size+self.offset,self.scene_width-self.offset,(y)*self.grid_size+self.offset))
             
         for line in vert_lines:
             self.graphic_scene.addItem(line)
-        # for line in hor_lines:
-        #     self.graphic_scene.addLine(line)
         
-        # for x in range(task_count):
-            # rect = QtWidgets.QGraphicsRectItem(self.offset*2+self.grid_size*20*x,self.offset*4+spacing*(x)+self.grid_size*x,self.grid_size*20,self.grid_size)
-            # rect.setBrush(QtGui.QBrush(QtGui.Qt.gray))
-            # rect.setPen(QtGui.Qt.NoPen)
-            # self.graphic_scene.addItem(rect)
         
         #drawing the tasks
         iterator = QtWidgets.QTreeWidgetItemIterator(self.parent.tasks)
@@ -110,25 +138,36 @@ class ProjectTimeline(QtWidgets.QWidget):
             starting_point = starting_date.daysTo(starting)
             duration = int(tree_item.text(5))
             rect = QtWidgets.QGraphicsRectItem(self.offset*2+self.grid_size*starting_point,self.offset*4+spacing*counter+self.grid_size*counter,self.grid_size*duration,self.grid_size)
-            rect.setBrush(QtGui.QBrush(QtGui.Qt.gray))
+            rect.setBrush(QtGui.QBrush(QtGui.QColor("#e8d7f7")))
             rect.setPen(QtGui.Qt.NoPen)
             self.graphic_scene.addItem(rect)
+            text = QtWidgets.QGraphicsSimpleTextItem(tree_item.text(0))
+            # text.setPen(text_pen)
+            text.setPos(self.offset*2+self.grid_size*starting_point,self.offset*4+spacing*counter+self.grid_size*counter)
+            self.graphic_scene.addItem(text)
             iterator+=1
             counter+=1
-            
-        # rect = QtWidgets.QGraphicsRectItem(self.offset*2+self.grid_size*10,self.offset*4+spacing+self.grid_size,self.grid_size*20,self.grid_size)
-        # rect.setBrush(QtGui.QBrush(QtGui.Qt.gray))
-        # rect.setPen(QtGui.Qt.NoPen)
-        # self.graphic_scene.addItem(rect)
-            
-        self.graphics_view = QtWidgets.QGraphicsView(self.graphic_scene)
-        self.graphics_view.show()
-        self.graphics_view.horizontalScrollBar().setValue(0)
-        self.graphics_view.verticalScrollBar().setValue(0)
-        # self.tree = QtWidgets.QTreeWidget()
-        # self.tree.setFixedWidth(300)
-        # main_layout.addWidget(self.tree)
-        main_layout.addWidget(self.graphics_view)
+        
+        
+    def ZoomIn(self):
+        # old_pos = self.graphics_view.mapToScene()
+        self.zoom_factor = self.zoom_factor * 1.25
+        self.label_zoom.setText(f"Zoom: {int(self.zoom_factor*100)}% ")
+        self.graphics_view.scale(1.25,1.25)
+    
+    def ZoomOut(self):
+        self.zoom_factor = self.zoom_factor * (1/1.25)
+        self.label_zoom.setText(f"Zoom: {int(self.zoom_factor*100)}% ")
+        self.graphics_view.scale(1/1.25,1/1.25)
+        
+    def save(self):
+        image = QtGui.QImage(int(self.graphic_scene.width()),int(self.graphic_scene.height()),QtGui.QImage.Format_RGB32)
+        painter = QtGui.QPainter(image)
+        painter.setRenderHints(QtGui.QPainter.Antialiasing|QtGui.QPainter.TextAntialiasing)
+        self.graphic_scene.render(painter)
+        image.save("timeline.png")
+        painter.end()
+        self.dispMsg("image saved!")
     
     def center(self):
         window = self.window()
@@ -140,6 +179,11 @@ class ProjectTimeline(QtWidgets.QWidget):
             QtGui.QGuiApplication.primaryScreen().availableGeometry(),
         ),
     )
+        
+    def dispMsg(self,msg):
+        msgbox = QtWidgets.QMessageBox()
+        msgbox.setText(msg+"        ")
+        msgbox.exec()
     
 # execute the program
 def main():
