@@ -26,10 +26,11 @@ class ProjectTimeline(QtWidgets.QWidget):
             self.doc_id = parent.doc_id
         # self.window_height = 600
         # self.window_width = 1000
+        self.show()
         self.initAtt()
         self.initUI()
         self.center()
-        self.show()
+        # self.show()
 
     def initAtt(self):
         # self.setGeometry(100,50,self.window_width,self.window_height)
@@ -38,14 +39,23 @@ class ProjectTimeline(QtWidgets.QWidget):
 
     def initUI(self): 
         self.grid_size = 25
-        starting_date = QtCore.QDate.fromString("01/01/2023","MM/dd/yyyy")
-        ending_date = QtCore.QDate.fromString("12/31/2023","MM/dd/yyyy")
+        # starting_date = QtCore.QDate.fromString("01/01/2023","MM/dd/yyyy")
+        # ending_date = QtCore.QDate.fromString("12/31/2023","MM/dd/yyyy")
+        starting_date,ending_date = self.parent.getStartEndDates()
         total_days = starting_date.daysTo(ending_date)
-        task_count = 30
+        task_count = self.parent.getRowCount()
         spacing = 5
         self.offset = 10
         self.scene_height = task_count * self.grid_size + task_count* spacing+ self.offset*2
+        if self.scene_height<self.height():
+            self.scene_height=self.height()
         self.scene_width = total_days * self.grid_size + self.offset*2
+        if self.scene_width<self.width():
+            self.scene_width=self.width()
+            steps = (self.scene_width-self.offset*2)/self.grid_size
+            total_days = int(steps)
+            
+            
         main_layout = QtWidgets.QHBoxLayout(self)
         self.graphic_scene = QtWidgets.QGraphicsScene(0,0,self.scene_width,self.scene_height)
         self.graphic_scene.setBackgroundBrush(QtGui.Qt.white)
@@ -84,11 +94,27 @@ class ProjectTimeline(QtWidgets.QWidget):
         # for line in hor_lines:
         #     self.graphic_scene.addLine(line)
         
-        for x in range(task_count):
-            rect = QtWidgets.QGraphicsRectItem(self.offset*2+self.grid_size*20*x,self.offset*4+spacing*(x)+self.grid_size*x,self.grid_size*20,self.grid_size)
+        # for x in range(task_count):
+            # rect = QtWidgets.QGraphicsRectItem(self.offset*2+self.grid_size*20*x,self.offset*4+spacing*(x)+self.grid_size*x,self.grid_size*20,self.grid_size)
+            # rect.setBrush(QtGui.QBrush(QtGui.Qt.gray))
+            # rect.setPen(QtGui.Qt.NoPen)
+            # self.graphic_scene.addItem(rect)
+        
+        #drawing the tasks
+        iterator = QtWidgets.QTreeWidgetItemIterator(self.parent.tasks)
+        counter = 0
+        while iterator.value():
+            tree_item = iterator.value()
+            starting = QtCore.QDate.fromString(tree_item.text(2),"MM/dd/yyyy")
+            # ending = QtCore.QDate.fromString(tree_item.text(3),"MM/dd/yyyy")
+            starting_point = starting_date.daysTo(starting)
+            duration = int(tree_item.text(5))
+            rect = QtWidgets.QGraphicsRectItem(self.offset*2+self.grid_size*starting_point,self.offset*4+spacing*counter+self.grid_size*counter,self.grid_size*duration,self.grid_size)
             rect.setBrush(QtGui.QBrush(QtGui.Qt.gray))
             rect.setPen(QtGui.Qt.NoPen)
             self.graphic_scene.addItem(rect)
+            iterator+=1
+            counter+=1
             
         # rect = QtWidgets.QGraphicsRectItem(self.offset*2+self.grid_size*10,self.offset*4+spacing+self.grid_size,self.grid_size*20,self.grid_size)
         # rect.setBrush(QtGui.QBrush(QtGui.Qt.gray))

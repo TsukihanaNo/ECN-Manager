@@ -93,7 +93,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         # self.button_expand.clicked.connect(self.expandAll)
         # self.button_collapse = QtWidgets.QPushButton("Collapse All")
         # self.button_collapse.clicked.connect(self.collapseAll)
-        # self.button_timeline = QtWidgets.QPushButton("Show Timeline")
+        self.button_timeline = QtWidgets.QPushButton("Show Timeline")
+        self.button_timeline.clicked.connect(self.showTimeline)
         self.button_export_csv = QtWidgets.QPushButton("Export CSV")
         self.button_export_csv.clicked.connect(self.export)
         self.button_save_template = QtWidgets.QPushButton("Save as Template")
@@ -109,7 +110,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_move_down)
         # self.toolbar.addWidget(self.button_expand)
         # self.toolbar.addWidget(self.button_collapse)
-        # self.toolbar.addWidget(self.button_timeline)
+        self.toolbar.addWidget(self.button_timeline)
         self.toolbar.addWidget(self.button_export_csv)
         self.toolbar.addWidget(self.button_save_template)
         self.toolbar.addWidget(self.button_load_template)
@@ -586,6 +587,14 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             if iterator.value().childCount()>0:
                 self.tasks.collapseItem(iterator.value())
             iterator+=1
+            
+    def getRowCount(self):
+        iterator = QtWidgets.QTreeWidgetItemIterator(self.tasks)
+        counter = 0
+        while iterator.value():
+            iterator+=1
+            counter+=1
+        return counter
             
     def toggleMilestone(self):
         item = self.tasks.currentItem()
