@@ -88,7 +88,7 @@ class PurchReqTab(QtWidgets.QWidget):
         
         
     def addReq(self):
-        self.req_editor = PurchReqWindow(self)
+        self.req_editor = PurchReqWindow(self,row=self.rowCount())
         
     def editReq(self):
         index = self.reqs.currentIndex()

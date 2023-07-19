@@ -783,8 +783,10 @@ class Manager(QtWidgets.QWidget):
             self.HookEcn(doc_id)
         elif doc_id[:3]=="PCN":
             self.HookPCN(doc_id)
-        else:
+        elif doc_id[:3]=="PRJ":
             self.HookProject(doc_id)
+        else:
+            self.dispMsg("format opening not yet implemented")
 
 
     def loadInAnim(self):

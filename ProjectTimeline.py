@@ -26,19 +26,20 @@ class ProjectTimeline(QtWidgets.QWidget):
             self.ico = parent.ico
             self.visual = parent.visual
             self.doc_id = parent.doc_id
-        # self.window_height = 600
-        # self.window_width = 1000
+        self.window_height = 800
+        self.window_width = 1000
         self.zoom_factor = 1
-        self.show()
         self.initAtt()
+        # self.show()
         self.initUI()
         self.center()
-        # self.show()
+        self.show()
 
     def initAtt(self):
-        # self.setGeometry(100,50,self.window_width,self.window_height)
+        self.setGeometry(100,50,self.window_width,self.window_height)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        self.setWindowState(QtGui.Qt.WindowMaximized)
+        # self.setWindowState(QtGui.Qt.WindowMaximized)
 
     def initUI(self):     
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -68,24 +69,27 @@ class ProjectTimeline(QtWidgets.QWidget):
         # ending_date = QtCore.QDate.fromString("12/31/2023","MM/dd/yyyy")
         starting_date,ending_date = self.parent.getStartEndDates()
         total_days = starting_date.daysTo(ending_date)
+        current_date_pos = starting_date.daysTo(QtCore.QDate.currentDate())
         task_count = self.parent.getRowCount()
-        # task_count=30
+        # task_count=100
         spacing = 5
         self.offset = 10
-        self.drawDayMode(task_count,spacing,starting_date,total_days)
+        self.drawDayMode(task_count,spacing,starting_date,total_days,current_date_pos)
         # self.drawWeekMode(task_count,spacing,starting_date,ending_date)
             
         self.graphics_view = QtWidgets.QGraphicsView(self.graphic_scene)
         self.graphics_view.show()
         self.graphics_view.horizontalScrollBar().setValue(0)
         self.graphics_view.verticalScrollBar().setValue(0)
+        self.graphics_view.verticalScrollBar().valueChanged.connect(self.moveGroup)
+        self.graphics_view.centerOn(current_date_pos*self.grid_size+self.offset*2,0)
         # self.tree = QtWidgets.QTreeWidget()
         # self.tree.setFixedWidth(300)
         # main_layout.addWidget(self.tree)
         
         main_layout.addWidget(self.graphics_view)
         
-    def drawDayMode(self,task_count,spacing,starting_date,total_days):
+    def drawDayMode(self,task_count,spacing,starting_date,total_days,current_date_pos):
         scene_height = task_count * self.grid_size + task_count* spacing+ self.offset*2
         if scene_height<self.height():
             scene_height=self.height()
@@ -100,34 +104,23 @@ class ProjectTimeline(QtWidgets.QWidget):
         line_pen = QtGui.QPen()
         # line_pen.setStyle(QtGui.Qt.DotLine)
         line_pen.setBrush(QtGui.QColor("#ece1f7"))
-        # text_pen = QtGui.QPen()
-        # text_pen.setBrush(QtGui.Qt.white)
+        current_line_pen = QtGui.QPen()
+        current_line_pen.setBrush(QtGui.Qt.red)
+        text_pen = QtGui.QPen()
+        text_pen.setBrush(QtGui.Qt.red)
         
         for x in range(int((scene_width-self.offset*2)/self.grid_size)):
             line = QtCore.QLineF((x)*self.grid_size+self.offset*2,self.offset*4,(x)*self.grid_size+self.offset*2,scene_height-self.offset)
             line_item = QtWidgets.QGraphicsLineItem(line)
-            line_item.setPen(line_pen)
+            if x == current_date_pos:
+                line_item.setPen(current_line_pen)
+            else:
+                line_item.setPen(line_pen)
             vert_lines.append(line_item)
-            
-        #draw days
-        for day in range(total_days):
-            current = starting_date.addDays(day)
-            # print(current.day())
-            text_item = QtWidgets.QGraphicsSimpleTextItem(str(current.day()))
-            offset = text_item.boundingRect().width()/2
-            text_item.setPos(day*self.grid_size+self.offset*2-offset,self.offset*2)
-            self.graphic_scene.addItem(text_item)
-            if current.day()==1:
-                month_item = QtWidgets.QGraphicsSimpleTextItem(MONTH[current.month()]+ f" {current.year()}")
-                # offset = month_item.boundingRect().width()/2
-                month_item.setPos(day*self.grid_size+self.offset*2,self.offset-5)
-                self.graphic_scene.addItem(month_item)
-            
             
         for line in vert_lines:
             self.graphic_scene.addItem(line)
-        
-        
+            
         #drawing the tasks
         iterator = QtWidgets.QTreeWidgetItemIterator(self.parent.tasks)
         counter = 0
@@ -147,6 +140,31 @@ class ProjectTimeline(QtWidgets.QWidget):
             self.graphic_scene.addItem(text)
             iterator+=1
             counter+=1
+            
+        #draw days
+        self.group_days = QtWidgets.QGraphicsItemGroup()
+        rect_bg = QtWidgets.QGraphicsRectItem(0,0,scene_width,self.offset*4)
+        rect_bg.setBrush(QtGui.Qt.white)
+        rect_bg.setPen(QtGui.Qt.NoPen)
+        self.group_days.addToGroup(rect_bg)
+        for day in range(total_days):
+            current = starting_date.addDays(day)
+            # print(current.day())
+            text_item = QtWidgets.QGraphicsSimpleTextItem(str(current.day()))
+            offset = text_item.boundingRect().width()/2
+            text_item.setPos(day*self.grid_size+self.offset*2-offset,self.offset*2)
+            if current == QtCore.QDate.currentDate():
+                text_item.setPen(text_pen)
+            # self.graphic_scene.addItem(text_item)
+            self.group_days.addToGroup(text_item)
+            if current.day()==1:
+                month_item = QtWidgets.QGraphicsSimpleTextItem(MONTH[current.month()]+ f" {current.year()}")
+                # offset = month_item.boundingRect().width()/2
+                month_item.setPos(day*self.grid_size+self.offset*2,self.offset-5)
+                # self.graphic_scene.addItem(month_item)
+                self.group_days.addToGroup(month_item)
+        self.graphic_scene.addItem(self.group_days)
+        
         
         
     def ZoomIn(self):
@@ -159,6 +177,12 @@ class ProjectTimeline(QtWidgets.QWidget):
         self.zoom_factor = self.zoom_factor * (1/1.25)
         self.label_zoom.setText(f"Zoom: {int(self.zoom_factor*100)}% ")
         self.graphics_view.scale(1/1.25,1/1.25)
+        
+    def moveGroup(self):
+        y_offset = self.graphics_view.mapToScene(0,0,self.graphics_view.width(),self.graphics_view.height()).first().y()
+        # print(y_offset)
+        # print(self.group_days.pos().x(),self.group_days.pos().y())
+        self.group_days.setPos(0,y_offset)
         
     def save(self):
         image = QtGui.QImage(int(self.graphic_scene.width()),int(self.graphic_scene.height()),QtGui.QImage.Format_RGB32)

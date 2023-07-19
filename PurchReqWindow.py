@@ -86,7 +86,7 @@ class PurchReqWindow(QtWidgets.QWidget):
         self.tab_purch_req = PurchReqDetailTab(self)
         self.tab_comments = CommentTab(self)
         self.tab_signature = SignatureTab(self,"PRQ")
-        self.tab_notification = NotificationTab(self)
+        self.tab_notification = NotificationTab(self,"PRQ")
         
         self.tab_widget = QtWidgets.QTabWidget(self)
         self.tab_widget.addTab(self.tab_purch_req,"Purch Reqs")
@@ -140,12 +140,13 @@ class PurchReqWindow(QtWidgets.QWidget):
         #SIGNATURE(ECN_ID TEXT, NAME TEXT, USER_ID TEXT, HAS_SIGNED TEXT, SIGNED_DATE TEXT)
         try:
             #get current values in db
+            # print("adding sigs")
             current_list = []
             self.cursor.execute(f"SELECT USER_ID FROM SIGNATURE WHERE DOC_ID='{self.doc_id}' and TYPE='Signing'")
             results = self.cursor.fetchall()
             for result in results:
                 current_list.append(result[0])
-            #print('current list',current_list)
+            # print('current list',current_list)
             #get new values
             new_list = []
             for x in range(self.tab_signature.rowCount()):
@@ -153,7 +154,7 @@ class PurchReqWindow(QtWidgets.QWidget):
                 name = self.tab_signature.model.get_name(x)
                 user_id = self.tab_signature.model.get_user(x)
                 new_list.append((self.doc_id,job_title,name,user_id,"Signing"))
-            #print('new list',new_list)
+            # print('new list',new_list)
             
             for element in new_list:
                 if element[3] not in current_list:
