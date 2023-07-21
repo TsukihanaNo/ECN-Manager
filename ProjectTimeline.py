@@ -9,6 +9,10 @@ else:
     program_location = os.path.dirname(os.path.realpath(__file__))
     
 MONTH = {1:"JANUARY", 2:"FEBUARY", 3: "MARCH", 4: "APRIL", 5:"MAY", 6:"JUNE", 7:"JULY", 8:"AUGUST", 9:"SEPTEMBER", 10:"OCTOBER", 11:"NOVEMBER", 12: "DECEMBER"}
+PURPLE = QtGui.QColor("#BDB2FF") #purple
+GREEN = QtGui.QColor("#CAFFBF") #green
+YELLOW = QtGui.QColor("#FDFFB6") #yellow
+RED = QtGui.QColor("#FFADAD") #red
 
 class ProjectTimeline(QtWidgets.QWidget):
     def __init__(self, parent = None):
@@ -68,11 +72,11 @@ class ProjectTimeline(QtWidgets.QWidget):
         # starting_date = QtCore.QDate.fromString("01/01/2023","MM/dd/yyyy")
         # ending_date = QtCore.QDate.fromString("12/31/2023","MM/dd/yyyy")
         starting_date,ending_date = self.parent.getStartEndDates()
-        total_days = starting_date.daysTo(ending_date)
+        total_days = starting_date.daysTo(ending_date)+60
         current_date_pos = starting_date.daysTo(QtCore.QDate.currentDate())
         task_count = self.parent.getRowCount()
         # task_count=100
-        spacing = 5
+        spacing = 10
         self.offset = 10
         self.drawDayMode(task_count,spacing,starting_date,total_days,current_date_pos)
         # self.drawWeekMode(task_count,spacing,starting_date,ending_date)
@@ -90,7 +94,7 @@ class ProjectTimeline(QtWidgets.QWidget):
         main_layout.addWidget(self.graphics_view)
         
     def drawDayMode(self,task_count,spacing,starting_date,total_days,current_date_pos):
-        scene_height = task_count * self.grid_size + task_count* spacing+ self.offset*2
+        scene_height = task_count * self.grid_size + task_count* spacing+ self.offset*4
         if scene_height<self.height():
             scene_height=self.height()
         scene_width = total_days * self.grid_size + self.offset*2
@@ -108,6 +112,10 @@ class ProjectTimeline(QtWidgets.QWidget):
         current_line_pen.setBrush(QtGui.Qt.red)
         text_pen = QtGui.QPen()
         text_pen.setBrush(QtGui.Qt.red)
+        text_font = QtWidgets.QGraphicsTextItem().font()
+        text_font.setPointSize(14)
+        text_font.setFamily("Verdana")
+        # text_font.setBold(True)
         
         for x in range(int((scene_width-self.offset*2)/self.grid_size)):
             line = QtCore.QLineF((x)*self.grid_size+self.offset*2,self.offset*4,(x)*self.grid_size+self.offset*2,scene_height-self.offset)
@@ -124,19 +132,45 @@ class ProjectTimeline(QtWidgets.QWidget):
         #drawing the tasks
         iterator = QtWidgets.QTreeWidgetItemIterator(self.parent.tasks)
         counter = 0
+        today = QtCore.QDate.currentDate()
         while iterator.value():
             tree_item = iterator.value()
             starting = QtCore.QDate.fromString(tree_item.text(2),"MM/dd/yyyy")
-            # ending = QtCore.QDate.fromString(tree_item.text(3),"MM/dd/yyyy")
+            ending = QtCore.QDate.fromString(tree_item.text(3),"MM/dd/yyyy")
+            task_status = tree_item.text(4)
             starting_point = starting_date.daysTo(starting)
             duration = int(tree_item.text(5))
-            rect = QtWidgets.QGraphicsRectItem(self.offset*2+self.grid_size*starting_point,self.offset*4+spacing*counter+self.grid_size*counter,self.grid_size*duration,self.grid_size)
-            rect.setBrush(QtGui.QBrush(QtGui.QColor("#e8d7f7")))
+            if tree_item.childCount()>0:
+                rect = QtWidgets.QGraphicsRectItem(self.offset*2+self.grid_size*starting_point,self.offset*4+spacing*counter+self.grid_size*counter+self.grid_size-5,self.grid_size*duration,5)
+                rect2 = QtWidgets.QGraphicsRectItem(self.offset*2+self.grid_size*starting_point,self.offset*4+spacing*counter+self.grid_size*counter+self.grid_size-5,25,25)
+                text_font.setBold(True)
+                text_x_pos = self.offset*3+self.grid_size*starting_point
+                
+            else:
+                rect = QtWidgets.QGraphicsRectItem(self.offset*2+self.grid_size*starting_point,self.offset*4+spacing*counter+self.grid_size*counter,self.grid_size*duration,self.grid_size)
+                text_font.setBold(False)
+                text_x_pos = self.offset*4+self.grid_size*starting_point+self.grid_size*duration
+            # rect.setBrush(QtGui.QBrush(QtGui.QColor("#e8d7f7")))
+            if task_status != "Completed":
+                if ending<today:
+                    rect.setBrush(QtGui.QBrush(RED))
+                else:
+                    if task_status=="Started":
+                        rect.setBrush(QtGui.QBrush(YELLOW))
+                    else:
+                        rect.setBrush(QtGui.QBrush(PURPLE))
+            else:
+                rect.setBrush(QtGui.QBrush(GREEN))
             rect.setPen(QtGui.Qt.NoPen)
             self.graphic_scene.addItem(rect)
-            text = QtWidgets.QGraphicsSimpleTextItem(tree_item.text(0))
+            text = QtWidgets.QGraphicsSimpleTextItem(tree_item.text(0)+ f"    [{tree_item.text(2)} - {tree_item.text(3)}]")
             # text.setPen(text_pen)
-            text.setPos(self.offset*2+self.grid_size*starting_point,self.offset*4+spacing*counter+self.grid_size*counter)
+            text.setFont(text_font)
+            # print(rect.boundingRect().width(), text.boundingRect().width)
+            # if text.boundingRect().width()<rect.boundingRect().width():
+            #     text.setPos(self.offset*3+self.grid_size*starting_point,self.offset*4+spacing*counter+self.grid_size*counter)
+            # else:
+            text.setPos(text_x_pos,self.offset*4+spacing*counter+self.grid_size*counter)
             self.graphic_scene.addItem(text)
             iterator+=1
             counter+=1
