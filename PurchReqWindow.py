@@ -14,7 +14,7 @@ else:
     program_location = os.path.dirname(os.path.realpath(__file__))
 
 class PurchReqWindow(QtWidgets.QWidget):
-    def __init__(self, parent = None, doc_id = None, row = None):
+    def __init__(self, parent = None, doc_id = None, row = None, project_id = None):
         super(PurchReqWindow,self).__init__()
         self.parent = parent
         self.cursor = parent.cursor
@@ -30,13 +30,14 @@ class PurchReqWindow(QtWidgets.QWidget):
         self.windowHeight = 550
         self.setFixedSize(self.windowWidth,self.windowHeight)
         self.doc_id = doc_id
-        self.project_id = parent.doc_id
+        self.project_id = project_id
         self.row = row
         self.tablist = []
         self.initAtt()
         self.initUI()
         if self.doc_id is not None:
             self.loadData()
+            self.setButtons()
         else:
             self.doc_data = {"AUTHOR":self.user_info["user"],"STATUS":"Draft"}
 
@@ -60,14 +61,22 @@ class PurchReqWindow(QtWidgets.QWidget):
         self.toolbar = QtWidgets.QToolBar()
         
         self.button_save = QtWidgets.QPushButton("Save")
+        self.button_save.setDisabled(True)
         self.button_save.clicked.connect(self.save)
         self.button_cancel = QtWidgets.QPushButton("Cancel")
+        self.button_cancel.setDisabled(True)
         self.button_release = QtWidgets.QPushButton("Release")
+        self.button_release.setDisabled(True)
         self.button_release.clicked.connect(self.release)
         self.button_comment = QtWidgets.QPushButton("Add Comment")
         self.button_comment.clicked.connect(self.addUserComment)
+        self.button_comment.setDisabled(True)
         self.button_approve = QtWidgets.QPushButton("Approve")
+        self.button_approve.clicked.connect(self.approve)
+        self.button_approve.setDisabled(True)
         self.button_reject = QtWidgets.QPushButton("Reject")
+        self.button_reject.clicked.connect(self.reject)
+        self.button_reject.setDisabled(True)
         self.button_export = QtWidgets.QPushButton("Export")
         self.button_preview = QtWidgets.QPushButton("Preview")
         
@@ -109,15 +118,21 @@ class PurchReqWindow(QtWidgets.QWidget):
         ),
     )
         
+    def setButtons(self):
+        if self.user_info['user']==self.doc_data['AUTHOR']:
+            if self.doc_data["STATUS"]!="Completed":
+                self.button_save.setEnabled(True)
+            if self.doc_data["STATUS"]=="Draft":
+                self.button_release.setEnabled(True)
+        else:
+            if self.doc_data["STATUS"]=="Out For Approval":
+                if self.isUserSignable():
+                    self.button_approve.setEnabled(True)
+                    self.button_reject.setEnabled(True)
+        if self.doc_data["STATUS"]=="Out For Approval":
+            self.button_comment.setEnabled(True)
+        
     def save(self, msg=None):
-        # if self.doc_id is None:
-        #     self.generateID()
-        # if not self.checkID():
-        #     self.insertData()
-        #     self.dispMsg("purch req has been saved")
-        # else:
-        #     self.updateData()
-        #     self.dispMsg("purch req has been updated")
         if self.visual.checkReqID(self.tab_purch_req.line_id.text()):
             self.tab_purch_req.loadHeader()
             self.tab_purch_req.loadItems()
@@ -131,7 +146,7 @@ class PurchReqWindow(QtWidgets.QWidget):
                 self.updateData()
                 if not msg:
                     self.dispMsg("Project has been updated!")
-                        
+            self.button_release.setEnabled(True)
         else:
             self.dispMsg("The purchase requisition ID does not exist in Visual. Please make sure you entered it correctly or that you have entered a purchase requisition in Visual prior to adding it here.")
         
@@ -214,6 +229,24 @@ class PurchReqWindow(QtWidgets.QWidget):
             return False
         else:
             return True
+        
+    def isUserSignable(self):
+        self.cursor.execute(f"SELECT USER_ID from SIGNATURE where DOC_ID='{self.doc_id}' and USER_ID='{self.user_info['user']}'")
+        result = self.cursor.fetchone()
+        if result is not None:
+            return True
+        return False
+    
+    def getElapsedDays(self,day1,day2):
+        #today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        day1 = datetime.strptime(day1,'%Y-%m-%d %H:%M:%S')
+        day2 = datetime.strptime(day2,'%Y-%m-%d %H:%M:%S')
+        if day2>day1:
+            elapsed = day2 - day1
+        else:
+            elapsed = day1 - day2
+        #print(elapsed.days)
+        return elapsed.days + round(elapsed.seconds/86400,2)
     
     def checkID(self):
         self.cursor.execute(f"select DOC_ID from DOCUMENT where DOC_ID='{self.tab_purch_req.line_doc_id.text()}'")
@@ -279,7 +312,10 @@ class PurchReqWindow(QtWidgets.QWidget):
             else:
                 self.AddSignatures()
             self.db.commit()
-            self.parent.model.update_req_data(self.row,self.doc_id,title,req_id,status)
+            if self.row is not None:
+                self.parent.model.update_req_data(self.row,self.doc_id,title,req_id,status)
+            else:
+                self.parent.repopulateTable()
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data update (updateData)!\n Error: {e}")
@@ -349,8 +385,8 @@ class PurchReqWindow(QtWidgets.QWidget):
             self.button_approve.setDisabled(True)
             self.checkComplete()
             self.db.commit()
-            print("moving prq stage check")
-            self.movePRQStage()
+            # print("moving prq stage check")
+            # self.movePRQStage()
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data insertion (approve)!\n Error: {e}")
@@ -383,10 +419,10 @@ class PurchReqWindow(QtWidgets.QWidget):
             command = f"Select * from SIGNATURE where DOC_ID ='{self.doc_id}' and TYPE='Signing'"
             self.cursor.execute(command)
             results = self.cursor.fetchall()
-            completed = True
+            completed = False
             for result in results:
-                if result['SIGNED_DATE'] == None or result['SIGNED_DATE']== "":
-                    completed = False
+                if result['SIGNED_DATE'] is not None or result['SIGNED_DATE']!= "":
+                    completed = True
             if completed:
                 completeddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 self.cursor.execute(f"select FIRST_RELEASE from DOCUMENT where DOC_ID='{self.doc_id}'")
@@ -404,6 +440,7 @@ class PurchReqWindow(QtWidgets.QWidget):
                 self.addNotification(self.doc_id, "Completed")
                 self.tab_signature.button_add.setDisabled(True)
                 self.tab_notification.button_add.setDisabled(True)
+                self.tab_purch_req.line_status.setText("Completed")
             else:
                 self.parent.repopulateTable()
         except Exception as e:
@@ -480,73 +517,73 @@ class PurchReqWindow(QtWidgets.QWidget):
         try:
             self.checkComplete()
             self.db.commit()
-            print("moving pcr stage check")
-            self.movePRQStage()
+            # print("moving pcr stage check")
+            # self.movePRQStage()
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data insertion (approve)!\n Error: {e}")
         
-    def getPRQStage(self):
-        try:
-            self.cursor.execute(f"Select TEMPSTAGE from PURCH_REQS where DOC_ID='{self.doc_id}'")
-            result = self.cursor.fetchone()
-            #print("current stage",result[0])
-            if result[0] is None:
-                return 0
-            else:
-                return result[0]
-        except Exception as e:
-            self.dispMsg(f"Error trying to get PRQ stage. Error: {e}")
+    # def getPRQStage(self):
+    #     try:
+    #         self.cursor.execute(f"Select TEMPSTAGE from DOCUMENT where DOC_ID='{self.doc_id}'")
+    #         result = self.cursor.fetchone()
+    #         #print("current stage",result[0])
+    #         if result[0] is None:
+    #             return 0
+    #         else:
+    #             return result[0]
+    #     except Exception as e:
+    #         self.dispMsg(f"Error trying to get PRQ stage. Error: {e}")
             
-    def setPRQStage(self,stage):
-        try:
-            #print('setting ecn to ', stage)
-            self.cursor.execute(f"UPDATE DOCUMENT SET STAGE ='{stage}', TEMPSTAGE = '{stage}' where DOC_ID='{self.doc_id}'")
-            self.db.commit()
-        except Exception as e:
-            self.dispMsg(f"Error trying to set PRQ stage. Error: {e}")
+    # def setPRQStage(self,stage):
+    #     try:
+    #         #print('setting ecn to ', stage)
+    #         self.cursor.execute(f"UPDATE DOCUMENT SET STAGE ='{stage}', TEMPSTAGE = '{stage}' where DOC_ID='{self.doc_id}'")
+    #         self.db.commit()
+    #     except Exception as e:
+    #         self.dispMsg(f"Error trying to set PRQ stage. Error: {e}")
             
-    def movePRQStage(self):
-        curStage = self.getPRQStage()
-        titles = self.getTitlesForStage()
-        titles = titles[str(curStage)]
-        #print("here are the titles",titles)
-        move = True
-        for title in titles:
-            self.cursor.execute(f"Select SIGNED_DATE from SIGNATURE where DOC_ID = '{self.doc_id}' and JOB_TITLE='{title}' and TYPE='Signing'")
-            results = self.cursor.fetchall()
-            for result in results:
-                #print(result['SIGNED_DATE'])
-                if result['SIGNED_DATE'] is None:
-                    move = False
-                    #print("not moving to next stage")
-                    break
-        if move:
-            nextStages = self.getNextStage()
-            if len(nextStages)>0:
-                #print("moving to stage:", nextStages[0])
-                self.setPRQStage(nextStages[0])
-                self.addNotification(self.doc_id, "Stage Moved")
-            # else:
-            #     print("this is the last stage")
+    # def movePRQStage(self):
+    #     curStage = self.getPRQStage()
+    #     titles = self.getTitlesForStage()
+    #     titles = titles[str(curStage)]
+    #     #print("here are the titles",titles)
+    #     move = True
+    #     for title in titles:
+    #         self.cursor.execute(f"Select SIGNED_DATE from SIGNATURE where DOC_ID = '{self.doc_id}' and JOB_TITLE='{title}' and TYPE='Signing'")
+    #         results = self.cursor.fetchall()
+    #         for result in results:
+    #             #print(result['SIGNED_DATE'])
+    #             if result['SIGNED_DATE'] is None:
+    #                 move = False
+    #                 #print("not moving to next stage")
+    #                 break
+    #     if move:
+    #         nextStages = self.getNextStage()
+    #         if len(nextStages)>0:
+    #             #print("moving to stage:", nextStages[0])
+    #             self.setPRQStage(nextStages[0])
+    #             self.addNotification(self.doc_id, "Stage Moved")
+    #         # else:
+    #         #     print("this is the last stage")
             
-    def getNextStage(self):
-        self.cursor.execute(f"Select JOB_TITLE from SIGNATURE where DOC_ID='{self.doc_id}' and SIGNED_DATE is NULL and TYPE='Signing'")
-        results = self.cursor.fetchall()
-        stage = []
-        for result in results:
-            stage.append(self.stageDictPRQ[result[0]])
-        stage = sorted(stage)
-        return stage
+    # def getNextStage(self):
+    #     self.cursor.execute(f"Select JOB_TITLE from SIGNATURE where DOC_ID='{self.doc_id}' and SIGNED_DATE is NULL and TYPE='Signing'")
+    #     results = self.cursor.fetchall()
+    #     stage = []
+    #     for result in results:
+    #         stage.append(self.stageDictPRQ[result[0]])
+    #     stage = sorted(stage)
+    #     return stage
     
-    def getTitlesForStage(self):
-        titles = {}
-        for key, value in self.stageDictPRQ.items():
-            if value not in titles:
-                titles[value] = [key]
-            else:
-                titles[value].append(key)
-        return titles
+    # def getTitlesForStage(self):
+    #     titles = {}
+    #     for key, value in self.stageDictPRQ.items():
+    #         if value not in titles:
+    #             titles[value] = [key]
+    #         else:
+    #             titles[value].append(key)
+    #     return titles
         
         
     def dispMsg(self,msg):
@@ -555,4 +592,5 @@ class PurchReqWindow(QtWidgets.QWidget):
         msgbox.exec()
         
     def closeEvent(self, event):
-        self.parent.projectWindow = None
+        if self.row is None:
+            self.parent.prqWindow = None

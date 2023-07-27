@@ -9,6 +9,7 @@ from LoginWindow import *
 from datetime import datetime
 from ECNWindow import *
 from PCNWindow import *
+from PurchReqWindow import *
 from ProjectWindow import *
 from DataBaseUpdateWindow import *
 from NewDBWindow import *
@@ -44,6 +45,7 @@ class Manager(QtWidgets.QWidget):
         self.ecnWindow = None
         self.pcnWindow = None
         self.projectWindow = None
+        self.prqWindow = None
         self.sorting = (0,QtCore.Qt.DescendingOrder)
         self.doc = doc
         self.firstInstance = True
@@ -756,6 +758,18 @@ class Manager(QtWidgets.QWidget):
             else:
                 self.pcnWindow.activateWindow()
                 
+    def HookPRQ(self,doc_id=None):
+        self.cursor.execute(f"select PROJECT_ID from PURCH_REQ_DOC_LINK where DOC_ID='{doc_id}'")
+        project_id = self.cursor.fetchone()
+        if self.prqWindow is None:
+            self.prqWindow = PurchReqWindow(self,doc_id=doc_id,project_id=project_id)
+        else:
+            if self.prqWindow.doc_id !=doc_id:
+                self.prqWindow.close()
+                self.prqWindow = PurchReqWindow(self,doc_id=doc_id,project_id=project_id)
+            else:
+                self.prqWindow.activateWindow()
+                
     def HookProject(self,doc_id=None):
         if self.projectWindow is None:
             self.projectWindow = ProjectWindow(self,doc_id)
@@ -785,6 +799,8 @@ class Manager(QtWidgets.QWidget):
             self.HookPCN(doc_id)
         elif doc_id[:3]=="PRJ":
             self.HookProject(doc_id)
+        elif doc_id[:3]=="PRQ":
+            self.HookPRQ(doc_id)
         else:
             self.dispMsg("format opening not yet implemented")
 

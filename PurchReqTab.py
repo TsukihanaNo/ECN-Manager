@@ -88,7 +88,7 @@ class PurchReqTab(QtWidgets.QWidget):
         
         
     def addReq(self):
-        self.req_editor = PurchReqWindow(self,row=self.rowCount())
+        self.req_editor = PurchReqWindow(self,row=self.rowCount(),project_id=self.doc_id)
         
     def editReq(self):
         index = self.reqs.currentIndex()
@@ -106,13 +106,10 @@ class PurchReqTab(QtWidgets.QWidget):
         
             
     def repopulateTable(self):
+        self.model.clear_reqs()
         self.parent.cursor.execute(f"select * from DOCUMENT LEFT JOIN PURCH_REQ_DOC_LINK ON DOCUMENT.DOC_ID=PURCH_REQ_DOC_LINK.DOC_ID WHERE PURCH_REQ_DOC_LINK.PROJECT_ID='{self.doc_id}'")
         results = self.parent.cursor.fetchall()
         for result in results:
-            # if self.parent.parent.visual is not None:
-            #     status = self.getStatus(result['PART_ID'], result['TYPE'])
-            # else:
-            #     status = "NA"
             self.model.add_req(result['DOC_ID'],result["DOC_TITLE"], result['REQ_ID'],result['STATUS'])
             
     def rowCount(self):
@@ -173,10 +170,10 @@ class ReqsDelegate(QtWidgets.QStyledItemDelegate):
         painter.drawRoundedRect(r, 5, 5)
         
         if status !="NA":
-            rect = QtCore.QRect(r.topRight()+QtCore.QPoint(-150,12),QtCore.QSize(110,25))
+            rect = QtCore.QRect(r.topRight()+QtCore.QPoint(-150,12),QtCore.QSize(140,25))
             if status =="Completed":
                 color = QtGui.QColor("#CAFFBF")
-            elif status =="Incomplete":
+            elif status =="Out For Approval":
                 color = QtGui.QColor("#FDFFB6")
             else:
                 color = QtGui.QColor("#FFADAD")

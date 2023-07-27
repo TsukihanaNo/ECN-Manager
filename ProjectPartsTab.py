@@ -199,8 +199,8 @@ class ProjectPartsTab(QtWidgets.QWidget):
                 # print(part_id,description,status,part_type)
                 data = (self.doc_id,part_id,description,status,part_type,drawing_made,quoted,vendor,tooling_cost,tooling_po,note)
                 self.cursor.execute(f"INSERT INTO PROJECT_PARTS(PROJECT_ID,PART_ID,DESCRIPTION,STATUS,PART_TYPE,DRAWING_MADE,QUOTED,VENDOR,TOOLING_COST,TOOLING_PO,NOTE) VALUES(?,?,?,?,?,?,?,?,?,?,?)",(data))
-                self.db.commit()
-                self.checkData()
+            self.db.commit()
+            self.checkData()
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data insertion (insertData - parts tab)!\n Error: {e}")
