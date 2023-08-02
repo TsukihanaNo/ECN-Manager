@@ -50,10 +50,14 @@ class ProjectPartsTab(QtWidgets.QWidget):
         self.button_check_data = QtWidgets.QPushButton("Check Data")
         self.button_check_data.clicked.connect(self.checkData)
         
+        self.button_export_csv = QtWidgets.QPushButton("Export CSV")
+        self.button_export_csv.clicked.connect(self.export)
+        
         self.toolbar.addWidget(self.button_add)
         self.toolbar.addWidget(self.button_remove)
         self.toolbar.addWidget(self.button_po_info)
         self.toolbar.addWidget(self.button_check_data)
+        self.toolbar.addWidget(self.button_export_csv)
         
         headers = ["Part ID","Description","Status","Part Type","Drawing?","Quoted?","Vendor","Tooling Cost", "Tooling PO", "ECN?","Qty On Hand","Qty On Order","Notes"]
         self.parts = QtWidgets.QTableWidget(0,len(headers),self)
@@ -231,6 +235,32 @@ class ProjectPartsTab(QtWidgets.QWidget):
             self.parts.setItem(row,12,item_note)
             row+=1
         self.checkData()
+        
+    def export(self):
+        main_list = [["PART ID","Description","Status","Part Type","Drawing?","Quoted?","Vendor","Tooling Cost","Tooling PO","ECN?","Qty On Hand","Qty On Order","Note"]]
+        for row in range(self.parts.rowCount()):            
+            part = self.parts.item(row,0).text()
+            desc = self.parts.item(row,1).text()
+            status = self.parts.cellWidget(row,2).currentText()
+            part_type = self.parts.cellWidget(row,3).currentText()
+            drawing = self.parts.cellWidget(row,4).currentText()
+            quoted = self.parts.cellWidget(row,5).currentText()
+            vendor = self.parts.item(row,6).text()
+            tooling_cost = self.parts.item(row,7).text()
+            tooling_po = self.parts.item(row,8).text()
+            ecn = self.parts.item(row,9).text()
+            qty_on_hand = self.parts.item(row,10).text()
+            qty_on_order = self.parts.item(row,11).text()
+            notes = self.parts.item(row,12).text()
+            line = [part,desc,status,part_type,drawing,vendor,quoted,tooling_cost,tooling_po,ecn,qty_on_hand,qty_on_order,notes]
+            main_list.append(line)
+        f = open(f"{self.doc_id} parts.csv", "w")
+        for line in main_list:
+            text = ",".join(line)
+            text+="\n"
+            f.write(text)
+        f.close()
+        self.dispMsg("export completed!")
     
     def clearData(self):
         self.cursor.execute(f"DELETE FROM PROJECT_PARTS WHERE PROJECT_ID = '{self.doc_id}'")
