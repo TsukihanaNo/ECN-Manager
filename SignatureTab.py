@@ -19,6 +19,8 @@ class SignatureTab(QtWidgets.QWidget):
         self.stageDict = parent.stageDict
         self.stageDictPCN = parent.stageDictPCN
         self.job_titles =[]
+        self.cursor = parent.cursor
+        self.user_info = parent.user_info
         self.findJobTitles()
         self.initAtt()
         self.initUI()
@@ -90,7 +92,7 @@ class SignatureTab(QtWidgets.QWidget):
             self.button_edit.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
         
     def addRow(self):
-        self.signature = SignaturePanel(self,sig_type="Signing")
+        self.signature = SignaturePanel(self,sig_type="signing")
         
     def editSignature(self):
         index = self.signatures.currentIndex()

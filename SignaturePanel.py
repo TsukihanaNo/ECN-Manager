@@ -23,7 +23,15 @@ class SignaturePanel(QtWidgets.QWidget):
         self.doc_type = parent.doc_type
         self.stageDict = parent.stageDict
         self.stageDictPCN = parent.stageDictPCN
-        print(self.doc_type)
+        self.cursor = parent.cursor
+        self.user_info = parent.user_info
+        # print(self.doc_type)
+        if sig_type=="signing":
+            self.label = "Signature"
+        elif sig_type=="members":
+            self.label = "Member"
+        else:
+            self.label = "Notification"
         self.row = row
         self.job_titles =[]
         self.findJobTitles()
@@ -68,14 +76,14 @@ class SignaturePanel(QtWidgets.QWidget):
             self.setBoxJob()
             self.setBoxName()
             self.setBoxUser()
-            self.button_add = QtWidgets.QPushButton("Add Signature")
+            self.button_add = QtWidgets.QPushButton(f"Add {self.label}")
             self.button_add.clicked.connect(self.addSignature)
             form_layout.addRow(self.button_add)
         else:
             self.setBoxJob(self.parent.model.get_job_title(self.row))
             self.setBoxName(self.parent.model.get_name(self.row))
             self.setBoxUser(self.parent.model.get_user(self.row))
-            self.button_update = QtWidgets.QPushButton("Update Signature")
+            self.button_update = QtWidgets.QPushButton(f"Update {self.label}")
             self.button_update.clicked.connect(self.updateSignature)
             form_layout.addRow(self.button_update)
         
@@ -129,11 +137,11 @@ class SignaturePanel(QtWidgets.QWidget):
     def setBoxName(self,text=None):
         self.box_name.clear()
         command = "Select NAME,USER_ID from USER where JOB_TITLE = '" + self.box_title.currentText() +"'"
-        self.parent.parent.cursor.execute(command)
-        test = self.parent.parent.cursor.fetchall()
+        self.cursor.execute(command)
+        test = self.cursor.fetchall()
         names = []
         for item in test:
-            if item[1]!=self.parent.parent.parent.user_info['user']:
+            if item[1]!=self.user_info['user']:
                 names.append(item[0])
         names.sort()
         self.box_name.addItems(names)
@@ -143,8 +151,8 @@ class SignaturePanel(QtWidgets.QWidget):
         
     def setBoxUser(self, text=None):
         command = "Select USER_ID from USER where NAME = '" + self.box_name.currentText() +"'"
-        self.parent.parent.cursor.execute(command)
-        test = self.parent.parent.cursor.fetchall()
+        self.cursor.execute(command)
+        test = self.cursor.fetchall()
         names = []
         for item in test:
             names.append(item[0])
@@ -155,11 +163,11 @@ class SignaturePanel(QtWidgets.QWidget):
     def setNameList(self):
         self.box_name.clear()
         command = "Select NAME from USER where JOB_TITLE = '" + self.box_title.currentText() +"' and STATUS='Active'"
-        self.parent.parent.cursor.execute(command)
-        test = self.parent.parent.cursor.fetchall()
+        self.cursor.execute(command)
+        test = self.cursor.fetchall()
         names = []
         for item in test:
-            if item[0]!=self.parent.parent.parent.user_info['name']:
+            if item[0]!=self.user_info['name']:
                 names.append(item[0])
         names.sort()
         self.box_name.addItems(names)
@@ -168,16 +176,16 @@ class SignaturePanel(QtWidgets.QWidget):
     def setUser(self):
         self.box_user.clear()
         command = "Select USER_ID from USER where NAME = '" + self.box_name.currentText() +"'"
-        self.parent.parent.cursor.execute(command)
-        test = self.parent.parent.cursor.fetchall()
+        self.cursor.execute(command)
+        test = self.cursor.fetchall()
         users = []
         for item in test:
             users.append(item[0])
         self.box_user.addItems(users)
         
     def findJobTitles(self):
-        self.parent.parent.cursor.execute("Select DISTINCT JOB_TITLE FROM USER")
-        results = self.parent.parent.cursor.fetchall()
+        self.cursor.execute("Select DISTINCT JOB_TITLE FROM USER")
+        results = self.cursor.fetchall()
         for result in results:
             self.job_titles.append(result[0])
         if "Admin" in self.job_titles:

@@ -3,6 +3,7 @@ from datetime import datetime
 from PurchReqTab import *
 from ProjectPartsTab import *
 from ProjectScheduleTab import *
+from ProjectMembers import *
 import sys
 
 if getattr(sys, 'frozen', False):
@@ -69,10 +70,11 @@ class ProjectWindow(QtWidgets.QWidget):
         
         self.button_save = QtWidgets.QPushButton("Save")
         self.button_save.clicked.connect(self.save)
-        # self.button_members = QtWidgets.QPushButton("Members")
+        self.button_members = QtWidgets.QPushButton("Members")
+        self.button_members.clicked.connect(self.launchMembers)
         
         self.toolbar.addWidget(self.button_save)
-        # self.toolbar.addWidget(self.button_members)
+        self.toolbar.addWidget(self.button_members)
         
         self.label_id = QtWidgets.QLabel("Project ID:")
         self.line_id = QtWidgets.QLineEdit()
@@ -121,7 +123,9 @@ class ProjectWindow(QtWidgets.QWidget):
                     self.dispMsg("Project has been updated!")
                 self.parent.repopulateTable()
             self.tab_schedule.saveData()
-
+            
+    def launchMembers(self):
+        self.members_window = ProjectMembers(self)
     
     def checkID(self):
         self.cursor.execute(f"select DOC_ID from DOCUMENT where DOC_ID='{self.line_id.text()}'")
