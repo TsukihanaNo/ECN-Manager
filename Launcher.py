@@ -1,6 +1,6 @@
 from multiprocessing.connection import Client
 import sys, os
-import time
+import psutil
 import subprocess
 
 if getattr(sys, 'frozen', False):
@@ -19,10 +19,18 @@ lock_loc = r"C:\ProgramData\ECN-Manager"
 f = open(sys.argv[1],'r')
 ecn = f.readline().strip()
 #print(ecn)
+count=0
+for p in psutil.process_iter(['name']):
+    if p.name()=="Manager.exe":
+        count+=1
 
-lockfile = os.path.join(lock_loc,"ecn.lock")
+# if count>1:
+#     self.dispMsg(f"Another Instance is already open.")
+#     self.firstInstance = False
+#     sys.exit()
+# lockfile = os.path.join(lock_loc,"ecn.lock")
 program = os.path.join(program_location,"Manager.exe")
-if not os.path.exists(lockfile):
+if count==0:
     #print(f"launching: {program}")
     subprocess.Popen([program,ecn])
 else:
