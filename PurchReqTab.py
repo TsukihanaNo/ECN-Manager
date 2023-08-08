@@ -25,6 +25,7 @@ class PurchReqTab(QtWidgets.QWidget):
         self.ico = parent.ico
         self.visual = parent.visual
         self.doc_id = parent.doc_id
+        self.access = parent.access
         self.initAtt()
         self.clipboard = QtGui.QGuiApplication.clipboard()
         self.menu = QtWidgets.QMenu(self)
@@ -60,6 +61,9 @@ class PurchReqTab(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_remove)
         self.toolbar.addWidget(self.button_edit)
         
+        if self.access =="read":
+            self.button_add.setDisabled(True)
+        
         self.reqs = QtWidgets.QListView()
         self.reqs.setStyleSheet("QListView{background-color:#f0f0f0}")
         self.reqs.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
@@ -84,6 +88,8 @@ class PurchReqTab(QtWidgets.QWidget):
         #self.repopulateTable()
         
     def onRowSelect(self):
+        if self.access=="write":
+            self.button_remove.setEnabled(bool(self.reqs.selectionModel().selectedIndexes()))
         self.button_edit.setEnabled(bool(self.reqs.selectionModel().selectedIndexes()))
         
         

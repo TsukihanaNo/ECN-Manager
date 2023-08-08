@@ -15,6 +15,7 @@ class ProjectMembers(QtWidgets.QWidget):
         self.db = parent.db
         self.user_info = parent.user_info
         self.doc_id = parent.doc_id
+        self.access = parent.access
         self.initAtt()
         self.initUI()
         self.show()
@@ -51,6 +52,10 @@ class ProjectMembers(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_save)
         self.toolbar.addWidget(self.button_add)
         self.toolbar.addWidget(self.button_remove)
+        if self.access == "read":
+            self.button_add.setDisabled(True)
+            self.button_remove.setDisabled(True)
+            self.button_save.setDisabled(True)
         
         self.members = QtWidgets.QListView()
         self.members.setStyleSheet("QListView{background-color:#f0f0f0}")
@@ -62,6 +67,7 @@ class ProjectMembers(QtWidgets.QWidget):
         self.members.setModel(self.model)
         main_layout.addWidget(self.toolbar)
         main_layout.addWidget(self.members)
+        self.load()
         
     def addRow(self):
         self.members_panel = SignaturePanel(self,sig_type="members")
@@ -71,8 +77,7 @@ class ProjectMembers(QtWidgets.QWidget):
         index = sorted(index, reverse=True)
         for item in index:
             row = item.row()
-            if self.model.get_signed_date(row) is None:
-                self.model.removeRow(row)
+            self.model.removeRow(row)
                 
     def rowCount(self):
         return self.model.rowCount(self.members)
@@ -80,13 +85,16 @@ class ProjectMembers(QtWidgets.QWidget):
     def save(self):
         self.clearData()
         for row in range(self.rowCount()):
-            data = (self.doc_id,self.model.get_user(row))
-            self.cursor.execute("INSERT INTO PROJECT_MEMBERS(PROJECT_ID,USER_ID) VALUES(?,?)",(data))
+            data = (self.doc_id,self.model.get_user(row),self.model.get_name(row),self.model.get_job_title(row))
+            self.cursor.execute("INSERT INTO PROJECT_MEMBERS(PROJECT_ID,USER_ID,USER_NAME,JOB_TITLE) VALUES(?,?,?,?)",(data))
         self.db.commit
         self.dispMsg("Saved!")
     
     def load(self):
-        pass
+        self.cursor.execute(f"SELECT * from PROJECT_MEMBERS where PROJECT_ID='{self.doc_id}'")
+        results = self.cursor.fetchall()
+        for result in results:
+            self.model.add_signature(result[3],result[2],result[1])
     
     def clearData(self):
         self.cursor.execute(f"DELETE FROM PROJECT_MEMBERS WHERE PROJECT_ID = '{self.doc_id}'")

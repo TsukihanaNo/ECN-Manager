@@ -19,6 +19,7 @@ class ProjectPartsTab(QtWidgets.QWidget):
         self.visual = parent.visual
         self.cursor = parent.cursor
         self.db = parent.db
+        self.access = parent.access
         self.initAtt()
         self.clipboard = QtGui.QGuiApplication.clipboard()
         self.menu = QtWidgets.QMenu(self)
@@ -47,8 +48,8 @@ class ProjectPartsTab(QtWidgets.QWidget):
         self.button_po_info.setDisabled(True)
         self.button_po_info.clicked.connect(self.showPO)
         
-        self.button_check_data = QtWidgets.QPushButton("Check Data")
-        self.button_check_data.clicked.connect(self.checkData)
+        # self.button_check_data = QtWidgets.QPushButton("Check Data")
+        # self.button_check_data.clicked.connect(self.checkData)
         
         self.button_export_csv = QtWidgets.QPushButton("Export CSV")
         self.button_export_csv.clicked.connect(self.export)
@@ -56,8 +57,10 @@ class ProjectPartsTab(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_add)
         self.toolbar.addWidget(self.button_remove)
         self.toolbar.addWidget(self.button_po_info)
-        self.toolbar.addWidget(self.button_check_data)
+        # self.toolbar.addWidget(self.button_check_data)
         self.toolbar.addWidget(self.button_export_csv)
+        if self.access == "read":
+            self.button_add.setDisabled(True)
         
         headers = ["Part ID","Description","Status","Part Type","Drawing?","Quoted?","Vendor","Tooling Cost", "Tooling PO", "ECN?","Qty On Hand","Qty On Order","Notes"]
         self.parts = QtWidgets.QTableWidget(0,len(headers),self)
@@ -85,7 +88,8 @@ class ProjectPartsTab(QtWidgets.QWidget):
         self.sizing()
         
     def onRowSelect(self):
-        self.button_remove.setEnabled(bool(self.parts.selectionModel().selectedIndexes()))
+        if self.access != "read":
+            self.button_remove.setEnabled(bool(self.parts.selectionModel().selectedIndexes()))
         self.button_po_info.setEnabled(bool(self.parts.selectionModel().selectedIndexes()))
         
     def addRow(self):
@@ -100,21 +104,27 @@ class ProjectPartsTab(QtWidgets.QWidget):
         self.parts.setItem(row,9,item_ecn)
         self.parts.setItem(row,10,item_qty)
         self.parts.setItem(row,11,item_qty_order)
-        combo_type = QtWidgets.QComboBox()
-        part_types = ["Die-Casted","Die-Cut", "Injection Molded","Machined","Off The Shelf","PCB"]
-        combo_type.addItems(part_types)
-        self.parts.setCellWidget(row,3,combo_type)
-        status = ["Designing","Quoting","Awaiting Sample","Evaluating","Released"]
-        combo_status = QtWidgets.QComboBox()
-        combo_status.addItems(status)
-        combo_drawing = QtWidgets.QComboBox()
-        combo_quoted = QtWidgets.QComboBox()
-        yes_no = ["No","Yes"]
-        combo_drawing.addItems(yes_no)
-        combo_quoted.addItems(yes_no)
-        self.parts.setCellWidget(row,2,combo_status)
-        self.parts.setCellWidget(row,4,combo_drawing)
-        self.parts.setCellWidget(row,5,combo_quoted)
+        if self.access=="write":
+            combo_type = QtWidgets.QComboBox()
+            part_types = ["Die-Casted","Die-Cut", "Injection Molded","Machined","Off The Shelf","PCB"]
+            combo_type.addItems(part_types)
+            self.parts.setCellWidget(row,3,combo_type)
+            status = ["Designing","Quoting","Awaiting Sample","Evaluating","Released"]
+            combo_status = QtWidgets.QComboBox()
+            combo_status.addItems(status)
+            combo_drawing = QtWidgets.QComboBox()
+            combo_quoted = QtWidgets.QComboBox()
+            yes_no = ["No","Yes"]
+            combo_drawing.addItems(yes_no)
+            combo_quoted.addItems(yes_no)
+            self.parts.setCellWidget(row,2,combo_status)
+            self.parts.setCellWidget(row,4,combo_drawing)
+            self.parts.setCellWidget(row,5,combo_quoted)
+        else:
+            for x in range(4):
+                item = QtWidgets.QTableWidgetItem()
+                item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
+                self.parts.setItem(row,2+x,item)
         
 
     def removeRow(self):
@@ -218,13 +228,11 @@ class ProjectPartsTab(QtWidgets.QWidget):
         for result in results:
             self.addRow()
             item_id = QtWidgets.QTableWidgetItem(result[1])
+            # item_id.setFlags(item_id.flags() & ~QtCore.Qt.ItemIsEditable)
             self.parts.setItem(row,0,item_id)
             item_desc = QtWidgets.QTableWidgetItem(result[2])
+            # item_desc.setFlags(item_desc.flags() & ~QtCore.Qt.ItemIsEditable)
             self.parts.setItem(row,1,item_desc)
-            self.parts.cellWidget(row,2).setCurrentText(result[3])
-            self.parts.cellWidget(row,3).setCurrentText(result[4])
-            self.parts.cellWidget(row,4).setCurrentText(result[5])
-            self.parts.cellWidget(row,5).setCurrentText(result[6])
             item_vendor = QtWidgets.QTableWidgetItem(result[7])
             self.parts.setItem(row,6,item_vendor)
             item_tooling_po = QtWidgets.QTableWidgetItem(result[8])
@@ -232,7 +240,19 @@ class ProjectPartsTab(QtWidgets.QWidget):
             item_tooling_cost = QtWidgets.QTableWidgetItem(result[9])
             self.parts.setItem(row,8,item_tooling_cost)
             item_note = QtWidgets.QTableWidgetItem(result[10])
+            # item_note.setFlags(item_note.flags() & ~QtCore.Qt.ItemIsEditable)
             self.parts.setItem(row,12,item_note)
+            if self.access=="write":
+                self.parts.cellWidget(row,2).setCurrentText(result[3])
+                self.parts.cellWidget(row,3).setCurrentText(result[4])
+                self.parts.cellWidget(row,4).setCurrentText(result[5])
+                self.parts.cellWidget(row,5).setCurrentText(result[6])
+            else:
+                for x in range(4):
+                    self.parts.item(row,2+x).setText(result[3+x])
+                item_id.setFlags(item_id.flags() & ~QtCore.Qt.ItemIsEditable)
+                item_desc.setFlags(item_desc.flags() & ~QtCore.Qt.ItemIsEditable)
+                item_note.setFlags(item_note.flags() & ~QtCore.Qt.ItemIsEditable)
             row+=1
         self.checkData()
         

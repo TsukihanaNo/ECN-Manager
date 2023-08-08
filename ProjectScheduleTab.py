@@ -30,6 +30,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.ico = parent.ico
         self.visual = parent.visual
         self.doc_id = parent.doc_id
+        self.access = parent.access
         self.task_counter = 0
         self.task_dict = {}
         self.task_items = {}
@@ -41,7 +42,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.initAtt()
         self.clipboard = QtGui.QGuiApplication.clipboard()
         self.menu = QtWidgets.QMenu(self)
-        self.createMenu()
+        if self.access == "write":
+            self.createMenu()
         self.initUI()
 
     def initAtt(self):
@@ -118,6 +120,11 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         # self.toolbar.addWidget(self.button_cut)
         # self.toolbar.addWidget(self.button_paste)
         # self.toolbar.addWidget(self.button_paste_child)
+        
+        if self.access == "read":
+            self.button_add.setDisabled(True)
+            self.button_save_template.setDisabled(True)
+            self.button_load_template.setDisabled(True)
         
         self.tasks = QtWidgets.QTreeWidget()
         headers = ["Task", "Owner", "Start", "Finish", "Status", "Duration","Depends On","ID","◆"]
@@ -210,12 +217,13 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.tasks.setColumnWidth(8,15)
         
     def onRowSelect(self,selected,deselected):
-        toggle = bool(self.tasks.selectedItems())
-        self.button_insert.setEnabled(toggle)
-        self.button_insert_after.setEnabled(toggle)
-        self.button_remove.setEnabled(toggle)
-        self.button_move_up.setEnabled(toggle)
-        self.button_move_down.setEnabled(toggle)
+        if self.access == "write":
+            toggle = bool(self.tasks.selectedItems())
+            self.button_insert.setEnabled(toggle)
+            self.button_insert_after.setEnabled(toggle)
+            self.button_remove.setEnabled(toggle)
+            self.button_move_up.setEnabled(toggle)
+            self.button_move_down.setEnabled(toggle)
 
     def showTimeline(self):
         self.timeline = ProjectTimeline(self)
@@ -700,7 +708,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             self.task_items[str(result["TASK_ID"])]=item
             # self.generateWidgets(item,str(result["TASK_ID"]))
             #setting data
-            if result["TYPE"]!="parent":
+            if result["TYPE"]!="parent" and self.access=="write":
                 item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
             item.setText(0,result["TASK_NAME"])
             item.setText(1,result["ASSIGNED_TO"])
@@ -960,6 +968,7 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
                 
         painter.setPen(pen)
         painter.drawLine(r.bottomLeft(),r.bottomRight())
+        
         if QtCore.Qt.ItemIsEditable not in index.flags():
             font.setBold(True)
             painter.setFont(font)

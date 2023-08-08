@@ -29,17 +29,26 @@ class ProjectWindow(QtWidgets.QWidget):
         self.stageDictPRQ = parent.stageDictPRQ
         self.windowWidth =  950
         self.windowHeight = 580
+        self.access = "write"
         # self.setFixedSize(self.windowWidth,self.windowHeight)
         self.doc_id = doc_id
         self.tablist = []
         self.initAtt()
-        self.initUI()
+        
         if self.doc_id is not None:
+            self.getMembers()
+            if self.user_info['user']!=self.getAuthor() and self.user_info['user'] not in self.members:
+                self.access = "read"
+            self.initUI()
             self.loadData()
+        else:
+            self.initUI()
+            
             
         self.center()
         self.show()
         self.activateWindow()
+        print(self.access)
 
     def initAtt(self):
         self.setWindowIcon(self.parent.ico)
@@ -69,6 +78,8 @@ class ProjectWindow(QtWidgets.QWidget):
         self.toolbar = QtWidgets.QToolBar()
         
         self.button_save = QtWidgets.QPushButton("Save")
+        if self.access=="read":
+            self.button_save.setDisabled(True)
         self.button_save.clicked.connect(self.save)
         self.button_members = QtWidgets.QPushButton("Members")
         self.button_members.clicked.connect(self.launchMembers)
@@ -86,6 +97,11 @@ class ProjectWindow(QtWidgets.QWidget):
         self.line_status = QtWidgets.QLineEdit()
         self.line_status.setFixedWidth(125)
         self.line_status.setReadOnly(True)
+        self.label_author = QtWidgets.QLabel("Author:")
+        self.line_author = QtWidgets.QLineEdit()
+        self.line_author.setFixedWidth(125)
+        self.line_author.setReadOnly(True)
+        self.line_author.setText(self.user_info['user'])
         layout_header = QtWidgets.QHBoxLayout()
         layout_header.addWidget(self.label_id)
         layout_header.addWidget(self.line_id)
@@ -93,6 +109,8 @@ class ProjectWindow(QtWidgets.QWidget):
         layout_header.addWidget(self.line_title)
         layout_header.addWidget(self.label_status)
         layout_header.addWidget(self.line_status)
+        layout_header.addWidget(self.label_author)
+        layout_header.addWidget(self.line_author)
         self.tab_widget = QtWidgets.QTabWidget(self)
         self.tab_parts = ProjectPartsTab(self)
         self.tab_purch_req = PurchReqTab(self)
@@ -106,6 +124,14 @@ class ProjectWindow(QtWidgets.QWidget):
         mainlayout.addLayout(layout_header)
         mainlayout.addWidget(self.tab_widget)
         self.setLayout(mainlayout)
+        
+    def getMembers(self):
+        self.members = []
+        self.cursor.execute(f"Select * from PROJECT_MEMBERS where PROJECT_ID ='{self.doc_id}'")
+        results = self.cursor.fetchall()
+        for result in results:
+            self.members.append(result[1])
+        
 
     def save(self,msg = None):
         if self.checkFields():
@@ -186,9 +212,15 @@ class ProjectWindow(QtWidgets.QWidget):
         self.line_id.setText(result['DOC_ID'])
         self.line_title.setText(result["DOC_TITLE"])
         self.line_status.setText(result["STATUS"])
+        self.line_author.setText(result['AUTHOR'])
         self.tab_purch_req.repopulateTable()
         self.tab_parts.loadData()
         self.tab_schedule.loadData()
+        
+    def getAuthor(self):
+        self.cursor.execute(f"select author from DOCUMENT where DOC_ID='{self.doc_id}'")
+        result = self.cursor.fetchone()
+        return result[0]
         
     # def addParts(self):
     #     # part_id, desc,fab_type,status,vendor, vendor_part_id,tooling_po, tooling_cost,cost_per,notes,part_po,ecn, qty_on_hand, qty_incoming
