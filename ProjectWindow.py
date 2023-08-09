@@ -33,16 +33,20 @@ class ProjectWindow(QtWidgets.QWidget):
         # self.setFixedSize(self.windowWidth,self.windowHeight)
         self.doc_id = doc_id
         self.tablist = []
+        self.members = []
         self.initAtt()
         
         if self.doc_id is not None:
             self.getMembers()
-            if self.user_info['user']!=self.getAuthor() and self.user_info['user'] not in self.members:
+            self.members.append(self.getAuthor())
+            self.members.sort()
+            if self.user_info['user'] not in self.members:
                 self.access = "read"
             self.initUI()
             self.loadData()
         else:
             self.initUI()
+            self.members.append(self.user_info['user'])
             
             
         self.center()
@@ -126,7 +130,6 @@ class ProjectWindow(QtWidgets.QWidget):
         self.setLayout(mainlayout)
         
     def getMembers(self):
-        self.members = []
         self.cursor.execute(f"Select * from PROJECT_MEMBERS where PROJECT_ID ='{self.doc_id}'")
         results = self.cursor.fetchall()
         for result in results:

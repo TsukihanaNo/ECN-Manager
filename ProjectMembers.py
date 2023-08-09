@@ -8,6 +8,7 @@ class ProjectMembers(QtWidgets.QWidget):
         self.windowHeight = 400
         self.windowWidth = 600
         self.doc_type = "project_member"
+        self.parent = parent
         self.stageDict = parent.stageDict
         self.stageDictPCN = parent.stageDictPCN
         self.stageDictPRQ = parent.stageDictPRQ
@@ -84,10 +85,13 @@ class ProjectMembers(QtWidgets.QWidget):
                 
     def save(self):
         self.clearData()
+        self.parent.members = [self.parent.line_author.text()]
         for row in range(self.rowCount()):
             data = (self.doc_id,self.model.get_user(row),self.model.get_name(row),self.model.get_job_title(row))
+            self.parent.members.append(self.model.get_user(row))
             self.cursor.execute("INSERT INTO PROJECT_MEMBERS(PROJECT_ID,USER_ID,USER_NAME,JOB_TITLE) VALUES(?,?,?,?)",(data))
         self.db.commit
+        self.parent.members.sort()
         self.dispMsg("Saved!")
     
     def load(self):

@@ -987,7 +987,7 @@ class TreeDelegate(QtWidgets.QStyledItemDelegate):
             editor = QtWidgets.QLineEdit(parent)
         elif index.column() ==1:
             editor = QtWidgets.QComboBox(parent)
-            editor.addItems(["","lily","paul","deven"])
+            editor.addItems(self.parent.parent.members)
         elif index.column() ==4:
             editor = QtWidgets.QComboBox(parent)
             editor.addItems(["Pending","Started","Completed"])
