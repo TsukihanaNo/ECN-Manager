@@ -119,7 +119,8 @@ class SearchResults(QtWidgets.QWidget):
                         self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(elapsed_days))
                     else:
                         self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(item["COMP_DAYS"])))
-                    if item['STAGE']!=0:
+                    if item['STAGE']!=0 and item['STAGE'] is not None:
+                        # print(item['DOC_ID'],self.titleStageDict[str(item['STAGE'])])
                         users = self.getWaitingUser(item['DOC_ID'], self.titleStageDict[str(item['STAGE'])])
                         self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(users))
                 if item["STATUS"]=="Rejected":

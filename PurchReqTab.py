@@ -46,11 +46,11 @@ class PurchReqTab(QtWidgets.QWidget):
         icon_loc = icon = os.path.join(program_location,"icons","add.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.addReq)
-        self.button_remove = QtWidgets.QPushButton("Remove Requisition")
-        icon_loc = icon = os.path.join(program_location,"icons","minus.png")
-        self.button_remove.setIcon(QtGui.QIcon(icon_loc))
-        self.button_remove.setDisabled(True)
-        self.button_remove.clicked.connect(self.removeRow)
+        # self.button_remove = QtWidgets.QPushButton("Remove Requisition")
+        # icon_loc = icon = os.path.join(program_location,"icons","minus.png")
+        # self.button_remove.setIcon(QtGui.QIcon(icon_loc))
+        # self.button_remove.setDisabled(True)
+        # self.button_remove.clicked.connect(self.removeRow)
         self.button_edit = QtWidgets.QPushButton("Edit Requisition")
         icon_loc = icon = os.path.join(program_location,"icons","edit.png")
         self.button_edit.setIcon(QtGui.QIcon(icon_loc))
@@ -58,7 +58,7 @@ class PurchReqTab(QtWidgets.QWidget):
         self.button_edit.clicked.connect(self.editReq)
         
         self.toolbar.addWidget(self.button_add)
-        self.toolbar.addWidget(self.button_remove)
+        # self.toolbar.addWidget(self.button_remove)
         self.toolbar.addWidget(self.button_edit)
         
         if self.access =="read":
@@ -88,8 +88,10 @@ class PurchReqTab(QtWidgets.QWidget):
         #self.repopulateTable()
         
     def onRowSelect(self):
-        if self.access=="write":
-            self.button_remove.setEnabled(bool(self.reqs.selectionModel().selectedIndexes()))
+        # if self.access=="write":
+        #     print(self.model.get_req_status(self.reqs.currentIndex().row()))
+        #     if self.model.get_req_status(self.reqs.currentIndex().row()) == "Draft":
+        #         self.button_remove.setEnabled(bool(self.reqs.selectionModel().selectedIndexes()))
         self.button_edit.setEnabled(bool(self.reqs.selectionModel().selectedIndexes()))
         
         
@@ -101,14 +103,14 @@ class PurchReqTab(QtWidgets.QWidget):
         print(index.data(QtCore.Qt.DisplayRole))
         doc_id = index.data(QtCore.Qt.DisplayRole)[0]
         row = index.row()
-        self.part_editor = PurchReqWindow(self,doc_id,row)
+        self.part_editor = PurchReqWindow(self,doc_id,row,self.doc_id)
 
-    def removeRow(self):
-        index = self.reqs.selectionModel().selectedIndexes()
-        index = sorted(index, reverse=True)
-        for item in index:
-            row = item.row()
-            self.model.removeRow(row)
+    # def removeRow(self):
+    #     index = self.reqs.selectionModel().selectedIndexes()
+    #     index = sorted(index, reverse=True)
+    #     for item in index:
+    #         row = item.row()
+    #         self.model.removeRow(row)
         
             
     def repopulateTable(self):
@@ -116,7 +118,9 @@ class PurchReqTab(QtWidgets.QWidget):
         self.parent.cursor.execute(f"select * from DOCUMENT LEFT JOIN PURCH_REQ_DOC_LINK ON DOCUMENT.DOC_ID=PURCH_REQ_DOC_LINK.DOC_ID WHERE PURCH_REQ_DOC_LINK.PROJECT_ID='{self.doc_id}'")
         results = self.parent.cursor.fetchall()
         for result in results:
-            self.model.add_req(result['DOC_ID'],result["DOC_TITLE"], result['REQ_ID'],result['STATUS'])
+            req_header = self.visual.getReqHeader(result['REQ_ID'])
+            visual_status = VISUAL_REQ_STATUS[req_header[1]]
+            self.model.add_req(result['DOC_ID'],result["DOC_TITLE"], result['REQ_ID'],result['STATUS'],visual_status)
             
     def rowCount(self):
         return self.model.rowCount(self.reqs)
@@ -159,7 +163,7 @@ class ReqsDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         painter.save()
         
-        doc_id, title,req_id,status = index.model().data(index, QtCore.Qt.DisplayRole)
+        doc_id, title,req_id,status,visual_status= index.model().data(index, QtCore.Qt.DisplayRole)
         # status = index.model().data(index, QtCore.Qt.DecorationRole)
         
         lineMarkedPen = QtGui.QPen(QtGui.QColor("#f0f0f0"),1,QtCore.Qt.SolidLine)
@@ -209,6 +213,7 @@ class ReqsDelegate(QtWidgets.QStyledItemDelegate):
         painter.setFont(font)
         painter.setPen(QtCore.Qt.black)
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,25),"Req. ID: "+req_id)
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,45),"Visual Status: "+visual_status)
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,45),title)
         painter.restore()
 
@@ -237,8 +242,8 @@ class ReqsModel(QtCore.QAbstractListModel):
         del self.reqs[row]
         self.layoutChanged.emit()
         
-    def update_req_data(self,row, doc_id,title, req_id,status):
-        self.reqs[row]=(doc_id,title, req_id,status)
+    def update_req_data(self,row, doc_id,title, req_id,status,visual_status):
+        self.reqs[row]=(doc_id,title, req_id,status, visual_status)
         self.layoutChanged.emit()
         
     def update_status(self,row,status):
@@ -247,6 +252,9 @@ class ReqsModel(QtCore.QAbstractListModel):
         
     def get_req_data(self,row):
         return self.reqs[row]
+    
+    def get_req_status(self,row):
+        return self.status[row]
 
     def clear_reqs(self):
         self.reqs = []
@@ -284,9 +292,9 @@ class ReqsModel(QtCore.QAbstractListModel):
     # def get_inspection(self,row):
     #     return self.reqs[row][8]
     
-    def add_req(self, doc_id,title, req_id,status):
+    def add_req(self, doc_id,title, req_id,status,visual_status):
         # Access the list via the model.
-        self.reqs.append((doc_id,title, req_id,status))
+        self.reqs.append((doc_id,title, req_id,status,visual_status))
         self.status.append(status)
         # Trigger refresh.
         self.layoutChanged.emit()

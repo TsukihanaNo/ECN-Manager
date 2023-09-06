@@ -57,6 +57,7 @@ class Manager(QtWidgets.QWidget):
         self.getStageDictPRQ()
         self.getTitleStageDict()
         self.getTitleStageDictPCN()
+        self.getTitleStageDictPRQ()
         self.user_info = {}
         self.user_permissions = {}
         self.programLoc = program_location
@@ -286,14 +287,16 @@ class Manager(QtWidgets.QWidget):
         self.button_add = QtWidgets.QPushButton("New ECN")
         self.button_add2 = QtWidgets.QPushButton("New PCN")
         self.button_add2.clicked.connect(self.newPCN)
-        self.button_add3 = QtWidgets.QPushButton("New Project")
+        self.button_add3 = QtWidgets.QPushButton("New PRJ")
         self.button_add3.clicked.connect(self.newProject)
-        #self.button_add.setToolTip("New ECN")
-        #self.button_add.setFixedWidth(25)
+        self.button_add4 = QtWidgets.QPushButton("New PRQ")
+        self.button_add4.clicked.connect(self.newPurchReq)
+
         icon_loc = icon = os.path.join(program_location,"icons","new.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
         self.button_add2.setIcon(QtGui.QIcon(icon_loc))
         self.button_add3.setIcon(QtGui.QIcon(icon_loc))
+        self.button_add4.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.newECN)
         if self.user_permissions["create_ecn"]=="n":
             self.button_add.hide()
@@ -350,6 +353,7 @@ class Manager(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_add)
         self.toolbar.addWidget(self.button_add2)
         self.toolbar.addWidget(self.button_add3)
+        self.toolbar.addWidget(self.button_add4)
         self.toolbar.addWidget(self.button_open)
         self.toolbar.addWidget(self.button_refresh)
         # self.toolbar.addWidget(self.dropdown_type)
@@ -535,6 +539,8 @@ class Manager(QtWidgets.QWidget):
             if self.table_data[x]['STAGE']!=0 and self.table_data[x]['STAGE'] is not None:
                 if self.table_data[x]['DOC_ID'][:3]=="PCN":
                     users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDictPCN[str(self.table_data[x]['STAGE'])])
+                elif self.table_data[x]['DOC_ID'][:3]=="PRQ":
+                    users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDictPRQ[str(self.table_data[x]['STAGE'])])
                 else:
                     users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
             else:
@@ -585,6 +591,8 @@ class Manager(QtWidgets.QWidget):
                 if self.table_data[x]['STAGE']!=0 and self.table_data[x]['STAGE'] is not None:
                     if self.table_data[x]['DOC_ID'][:3]=="PCN":
                         users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDictPCN[str(self.table_data[x]['STAGE'])])
+                    elif self.table_data[x]['DOC_ID'][:3]=="PRQ":
+                        users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDictPRQ[str(self.table_data[x]['STAGE'])])
                     else:
                         users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
                 else:
@@ -635,6 +643,15 @@ class Manager(QtWidgets.QWidget):
                 self.titleStageDictPCN[value]=[key]
             else:
                 self.titleStageDictPCN[value].append(key)
+        #print("title stage dict pcn",self.titleStageDictPCN)
+        
+    def getTitleStageDictPRQ(self):
+        self.titleStageDictPRQ = {}
+        for key, value in self.stageDictPRQ.items():
+            if value not in self.titleStageDictPRQ.keys():
+                self.titleStageDictPRQ[value]=[key]
+            else:
+                self.titleStageDictPRQ[value].append(key)
         #print("title stage dict pcn",self.titleStageDictPCN)
                 
     def getWaitingUser(self,ecn,titles):
@@ -759,8 +776,11 @@ class Manager(QtWidgets.QWidget):
                 self.pcnWindow.activateWindow()
                 
     def HookPRQ(self,doc_id=None):
-        self.cursor.execute(f"select PROJECT_ID from PURCH_REQ_DOC_LINK where DOC_ID='{doc_id}'")
-        project_id = self.cursor.fetchone()
+        if doc_id is not None:
+            self.cursor.execute(f"select PROJECT_ID from PURCH_REQ_DOC_LINK where DOC_ID='{doc_id}'")
+            project_id = self.cursor.fetchone()[0]
+        else:
+            project_id = "General"
         if self.prqWindow is None:
             self.prqWindow = PurchReqWindow(self,doc_id=doc_id,project_id=project_id)
         else:
@@ -789,6 +809,9 @@ class Manager(QtWidgets.QWidget):
         
     def newProject(self):
         self.HookProject()
+        
+    def newPurchReq(self):
+        self.HookPRQ()
         
     def openDoc(self):
         index = self.docs.currentIndex()
