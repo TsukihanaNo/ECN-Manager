@@ -280,7 +280,7 @@ class Manager(QtWidgets.QWidget):
         self.button_open = QtWidgets.QPushButton("Open")
         self.button_open.setEnabled(False)
         #self.button_open.setToolTip("Open ECN")
-        icon_loc = icon = os.path.join(program_location,"icons","open.png")
+        icon_loc = os.path.join(program_location,"icons","open.png")
         self.button_open.setIcon(QtGui.QIcon(icon_loc))
         #self.button_open.setFixedWidth(25)
         self.button_open.clicked.connect(self.openDoc)
@@ -292,16 +292,20 @@ class Manager(QtWidgets.QWidget):
         self.button_add4 = QtWidgets.QPushButton("New PRQ")
         self.button_add4.clicked.connect(self.newPurchReq)
 
-        icon_loc = icon = os.path.join(program_location,"icons","new.png")
+        icon_loc = os.path.join(program_location,"icons","new.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
         self.button_add2.setIcon(QtGui.QIcon(icon_loc))
         self.button_add3.setIcon(QtGui.QIcon(icon_loc))
         self.button_add4.setIcon(QtGui.QIcon(icon_loc))
         self.button_add.clicked.connect(self.newECN)
-        if self.user_permissions["create_ecn"]=="n":
+        if self.user_permissions["create_ecn"]!="y":
             self.button_add.hide()
-        if self.user_permissions["create_pcn"]=="n":
+        if self.user_permissions["create_pcn"]!="y":
             self.button_add2.hide()
+        if self.user_permissions["create_prj"]!="y":
+            self.button_add3.hide()
+        if self.user_permissions["create_prq"]!="y":
+            self.button_add4.hide()
             
         self.statusbar.addPermanentWidget(self.label_doc_count)
         self.statusbar.addPermanentWidget(self.label_open_docs)

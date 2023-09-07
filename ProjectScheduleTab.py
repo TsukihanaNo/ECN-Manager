@@ -228,6 +228,14 @@ class ProjectScheduleTab(QtWidgets.QWidget):
     def showTimeline(self):
         self.timeline = ProjectTimeline(self)
         
+    def enableEditButtons(self,value):
+        self.button_add.setEnabled(value)
+        self.button_insert.setEnabled(value)
+        self.button_insert_after.setEnabled(value)
+        self.button_move_down.setEnabled(value)
+        self.button_move_up.setEnabled(value)
+        self.button_remove.setEnabled(value)
+        
     def addTask(self):
         self.task_counter+=1
         if self.tasks.selectedItems() == []:

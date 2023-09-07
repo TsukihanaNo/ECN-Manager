@@ -174,6 +174,7 @@ class ProjectWindow(QtWidgets.QWidget):
         date_time = datetime.now().strftime('%Y%m%d-%H%M%S')
         self.doc_id = 'PRJ-'+date_time[2:]
         self.line_id.setText(self.doc_id)
+        self.tab_schedule.enableEditButtons(True)
 
     def insertData(self):
         try:

@@ -116,7 +116,8 @@ class LoginWindow(QtWidgets.QWidget):
                 if permissions is None:
                     self.parent.user_permissions["create_ecn"] = "n"
                     self.parent.user_permissions["create_pcn"] = "n"
-                    self.parent.user_permissions["create_project"] = "n"
+                    self.parent.user_permissions["create_prj"] = "n"
+                    self.parent.user_permissions["create_prq"] = "n"
                     self.parent.user_permissions["create_user"] = "n"
                     self.parent.user_permissions["reject_signer"] = "n"
                     self.parent.user_permissions["access_settings"] = "n"
@@ -125,7 +126,8 @@ class LoginWindow(QtWidgets.QWidget):
                 else:
                     self.parent.user_permissions["create_ecn"] = permissions["CREATE_ECN"]
                     self.parent.user_permissions["create_pcn"] = permissions["CREATE_PCN"]
-                    #self.parent.user_permissions["create_project"] = permissions["CREATE_PROJECT"]
+                    self.parent.user_permissions["create_prj"] = permissions["CREATE_PRJ"]
+                    self.parent.user_permissions["create_prq"] = permissions["CREATE_PRQ"]
                     self.parent.user_permissions["create_user"] = permissions["CREATE_USER"]
                     self.parent.user_permissions["reject_signer"] = permissions["REJECT_SIGNER"]
                     self.parent.user_permissions["access_settings"] = permissions["ACCESS_SETTINGS"]

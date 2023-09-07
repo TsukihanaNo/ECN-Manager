@@ -157,11 +157,11 @@ class UserPanel(QtWidgets.QWidget):
         result = self.cursor.fetchone()
         check_dict = {QtCore.Qt.Checked:"y",QtCore.Qt.Unchecked:"n"}
         if result is not None:
-            data = (check_dict[self.tab_permissions.check_ecn.checkState()],check_dict[self.tab_permissions.check_pcn.checkState()],check_dict[self.tab_permissions.check_create_user.checkState()],check_dict[self.tab_permissions.check_reject_signer.checkState()],check_dict[self.tab_permissions.check_settings.checkState()],check_dict[self.tab_permissions.check_view_analytics.checkState()],check_dict[self.tab_permissions.check_rerouting.checkState()],self.tab_general.line_user.text())
-            self.cursor.execute(f"UPDATE PERMISSIONS SET CREATE_ECN = ?, CREATE_PCN = ?, CREATE_USER = ?, REJECT_SIGNER = ?, ACCESS_SETTINGS = ?, VIEW_ANALYTICS = ?, REROUTING = ? WHERE USER_ID = ?", (data))
+            data = (check_dict[self.tab_permissions.check_ecn.checkState()],check_dict[self.tab_permissions.check_pcn.checkState()],check_dict[self.tab_permissions.check_prj.checkState()],check_dict[self.tab_permissions.check_prq.checkState()],check_dict[self.tab_permissions.check_create_user.checkState()],check_dict[self.tab_permissions.check_reject_signer.checkState()],check_dict[self.tab_permissions.check_settings.checkState()],check_dict[self.tab_permissions.check_view_analytics.checkState()],check_dict[self.tab_permissions.check_rerouting.checkState()],self.tab_general.line_user.text())
+            self.cursor.execute(f"UPDATE PERMISSIONS SET CREATE_ECN = ?, CREATE_PCN = ?, CREATE_PRJ = ?, CREATE_PRQ = ?, CREATE_USER = ?, REJECT_SIGNER = ?, ACCESS_SETTINGS = ?, VIEW_ANALYTICS = ?, REROUTING = ? WHERE USER_ID = ?", (data))
         else:
-            data = (self.tab_general.line_user.text(),check_dict[self.tab_permissions.check_ecn.checkState()],check_dict[self.tab_permissions.check_pcn.checkState()],check_dict[self.tab_permissions.check_create_user.checkState()],check_dict[self.tab_permissions.check_reject_signer.checkState()],check_dict[self.tab_permissions.check_settings.checkState()],check_dict[self.tab_permissions.check_view_analytics.checkState()],check_dict[self.tab_permissions.check_rerouting.checkState()])
-            self.cursor.execute(f"INSERT INTO PERMISSIONS(USER_ID,CREATE_ECN, CREATE_PCN, CREATE_USER, REJECT_SIGNER, ACCESS_SETTINGS, VIEW_ANALYTICS, REROUTING) VALUES (?,?,?,?,?,?,?,?)",(data))
+            data = (self.tab_general.line_user.text(),check_dict[self.tab_permissions.check_ecn.checkState()],check_dict[self.tab_permissions.check_pcn.checkState()],check_dict[self.tab_permissions.check_prj.checkState()],check_dict[self.tab_permissions.check_prq.checkState()],check_dict[self.tab_permissions.check_create_user.checkState()],check_dict[self.tab_permissions.check_reject_signer.checkState()],check_dict[self.tab_permissions.check_settings.checkState()],check_dict[self.tab_permissions.check_view_analytics.checkState()],check_dict[self.tab_permissions.check_rerouting.checkState()])
+            self.cursor.execute(f"INSERT INTO PERMISSIONS(USER_ID,CREATE_ECN, CREATE_PCN,CREATE_PRJ,CREATE_PRQ, CREATE_USER, REJECT_SIGNER, ACCESS_SETTINGS, VIEW_ANALYTICS, REROUTING) VALUES (?,?,?,?,?,?,?,?,?,?)",(data))
         self.db.commit()
             
 #cursor.execute('CREATE TABLE PERMISSIONS(USER_ID TEXT, CREATE_ECN TEXT, CREATE_PCN TEXT, CREATE_USER TEXT, REJECT_SIGNER TEXT, ACCESS_SETTINGS TEXT, VIEW_ANALYTICS TEXT)')
@@ -189,7 +189,8 @@ class PermissionsTab(QtWidgets.QWidget):
         form_layout = QtWidgets.QFormLayout()
         self.check_ecn = QtWidgets.QCheckBox()
         self.check_pcn = QtWidgets.QCheckBox()
-        self.check_project = QtWidgets.QCheckBox()
+        self.check_prj = QtWidgets.QCheckBox()
+        self.check_prq = QtWidgets.QCheckBox()
         self.check_create_user = QtWidgets.QCheckBox()
         self.check_view_analytics = QtWidgets.QCheckBox()
         self.check_reject_signer = QtWidgets.QCheckBox()
@@ -197,7 +198,8 @@ class PermissionsTab(QtWidgets.QWidget):
         self.check_rerouting = QtWidgets.QCheckBox()
         form_layout.addRow("Allow user to create ECNs:",self.check_ecn)
         form_layout.addRow("Allow user to create PCNs:",self.check_pcn)
-        form_layout.addRow("Allow user to create Projects:",self.check_project)
+        form_layout.addRow("Allow user to create PRJs:",self.check_prj)
+        form_layout.addRow("Allow user to create PRQs",self.check_prq)
         form_layout.addRow("Allow user to reject to signer:",self.check_reject_signer)
         form_layout.addRow("Allow user to access settings:", self.check_settings)
         form_layout.addRow("Allow user to create users:", self.check_create_user)
