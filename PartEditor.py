@@ -60,6 +60,8 @@ class PartEditor(QtWidgets.QWidget):
         self.box_type.addItems(["","Fabricated","Purchased","Outside Service"])
         self.box_dispo = QtWidgets.QComboBox()
         self.box_dispo.addItems(["","Deplete","New","Scrap","Rework"])
+        self.box_dispo_old = QtWidgets.QComboBox()
+        self.box_dispo_old.addItems(["","Deplete","Scrap","Rework"])
         self.line_mfg = QtWidgets.QLineEdit()
         self.line_mfg_part = QtWidgets.QLineEdit()
         self.text_replace = QtWidgets.QTextEdit()
@@ -77,6 +79,7 @@ class PartEditor(QtWidgets.QWidget):
         form_layout.addRow("Mfg. Part ID:", self.line_mfg_part)
         form_layout.addRow("Reference:", self.text_reference)
         form_layout.addRow("Replacing", self.text_replace)
+        form_layout.addRow("Disposition [old]:", self.box_dispo_old)
         form_layout.addRow("Inspection:", self.box_inspec)
         form_layout.addRow(self.button_save)
                 
@@ -90,6 +93,7 @@ class PartEditor(QtWidgets.QWidget):
         self.text_reference.setText(data[6])
         self.text_replace.setText(data[7])
         self.box_inspec.setCurrentText(data[8])
+        self.box_dispo_old.setCurrentText(data[9])
         self.button_save.setText("Update Part")
         
     def checkEmptyFields(self,part_id,desc,part_type,disposition,inspection):
@@ -110,6 +114,7 @@ class PartEditor(QtWidgets.QWidget):
         desc = self.line_desc.text()
         part_type = self.box_type.currentText()
         disposition = self.box_dispo.currentText()
+        disposition_old = self.box_dispo_old.currentText()
         mfg = self.line_mfg.text()
         mfg_part_id = self.line_mfg_part.text()
         replacing = self.text_replace.toPlainText()
@@ -117,7 +122,7 @@ class PartEditor(QtWidgets.QWidget):
         inspection = self.box_inspec.currentText()
         if self.row is not None:
             if self.checkEmptyFields(part_id, desc, part_type, disposition, inspection):
-                self.parent.model.update_part_data(self.row, part_id, desc, part_type, disposition, mfg, mfg_part_id, reference,replacing, inspection)
+                self.parent.model.update_part_data(self.row, part_id, desc, part_type, disposition, mfg, mfg_part_id, reference,replacing, inspection, disposition_old)
                 if self.parent.parent.parent.visual is not None:
                     status = self.parent.getStatus(part_id, part_type)
                     self.parent.model.update_status(self.row, status)
@@ -130,7 +135,7 @@ class PartEditor(QtWidgets.QWidget):
                         status = self.parent.getStatus(part_id, part_type)
                     else:
                         status = "NA"
-                    self.parent.model.add_part(part_id, desc, part_type, disposition, mfg, mfg_part_id,reference,replacing, inspection,status)
+                    self.parent.model.add_part(part_id, desc, part_type, disposition, mfg, mfg_part_id,reference,replacing, inspection,status,disposition_old)
                 else:
                     self.dispMsg("Save Failed. There are empty fields.")
             else:

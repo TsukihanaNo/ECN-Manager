@@ -511,28 +511,22 @@ class Manager(QtWidgets.QWidget):
         self.cursor.execute(command)
         self.table_data = self.cursor.fetchall()
         
-        if self.table_type=="Queue":
-            table_index = 0
-            list_index_remove = []
-            #print(self.user_info['stage_ecn'],self.user_info['stage_pcn'])
-            for item in self.table_data:
-                #print(item["DOC_ID"][:3])
-                if item["DOC_ID"][:3]=="ECN":
-                    if item["STAGE"]!=int(self.user_info['stage_ecn']):
-                        list_index_remove.append(table_index)
-                        #print("adding index ecn")
-                else:
-                    if item["STAGE"]!=int(self.user_info['stage_pcn']):
-                        list_index_remove.append(table_index)
-                        #print("adding index pcn")
-                table_index+=1
+        # method for removing documents that are not your turn
+        # if self.table_type=="Queue":
+        #     table_index = 0
+        #     list_index_remove = []
+        #     for item in self.table_data:
+        #         if item["DOC_ID"][:3]=="ECN":
+        #             if item["STAGE"]!=int(self.user_info['stage_ecn']):
+        #                 list_index_remove.append(table_index)
+        #         else:
+        #             if item["STAGE"]!=int(self.user_info['stage_pcn']):
+        #                 list_index_remove.append(table_index)
+        #         table_index+=1
                 
-            #print(list_index_remove)
-            list_index_remove.sort(reverse=True)
-            #print(list_index_remove)
-            for index in list_index_remove:
-                #print(index)
-                self.table_data.pop(index)
+        #     list_index_remove.sort(reverse=True)
+        #     for index in list_index_remove:
+        #         self.table_data.pop(index)
                 
         data_size = len(self.table_data)
         if data_size>10:
@@ -569,7 +563,12 @@ class Manager(QtWidgets.QWidget):
                 status = self.table_data[x]['STAGE']
             else:
                 status = ""
-            self.model.add_doc(self.table_data[x]['DOC_ID'], self.table_data[x]['DOC_TITLE'], self.table_data[x]['DOC_TYPE'], self.table_data[x]['STATUS'],self.table_data[x]['LAST_MODIFIED'], status, users, elapsed_days, comment_count)
+                
+            if self.user_info["user"] in users:
+                signing = "y"
+            else:
+                signing = "n"
+            self.model.add_doc(self.table_data[x]['DOC_ID'], self.table_data[x]['DOC_TITLE'], self.table_data[x]['DOC_TYPE'], self.table_data[x]['STATUS'],self.table_data[x]['LAST_MODIFIED'], status, users, elapsed_days, comment_count,signing)
         self.statusbar.showMessage(f"Showing {counter} of {data_size}")
 
     def loadMoreTable(self):
@@ -621,7 +620,12 @@ class Manager(QtWidgets.QWidget):
                     status = self.table_data[x]['STAGE']
                 else:
                     status = ""
-                self.model.add_doc(self.table_data[x]['DOC_ID'], self.table_data[x]['DOC_TITLE'], self.table_data[x]['DOC_TYPE'], self.table_data[x]['STATUS'],self.table_data[x]['LAST_MODIFIED'], status, users, elapsed_days, comment_count)
+                    
+                if self.user_info["user"] in users:
+                    signing = "y"
+                else:
+                    signing = "n"
+                self.model.add_doc(self.table_data[x]['DOC_ID'], self.table_data[x]['DOC_TITLE'], self.table_data[x]['DOC_TYPE'], self.table_data[x]['STATUS'],self.table_data[x]['LAST_MODIFIED'], status, users, elapsed_days, comment_count,signing)
             self.statusbar.showMessage(f"Showing {rowcount+counter} of {total_count}")
             
     def rowCount(self):
@@ -955,7 +959,7 @@ class DocDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         painter.save()
         
-        doc_id, title, doc_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count = index.model().data(index, QtCore.Qt.DisplayRole)
+        doc_id, title, doc_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count,signing = index.model().data(index, QtCore.Qt.DisplayRole)
         
         lineMarkedPen = QtGui.QPen(QtGui.QColor("#f0f0f0"),1,QtCore.Qt.SolidLine)
         
@@ -969,6 +973,11 @@ class DocDelegate(QtWidgets.QStyledItemDelegate):
             color = QtGui.QColor("#FFFFFC")
         painter.setBrush(color)
         painter.drawRoundedRect(r, 5, 5)
+        
+        if signing=="y":
+            color = QtGui.QColor("#FFADAD")
+            painter.setBrush(color)
+            painter.drawEllipse(r.topLeft()+QtCore.QPoint(8,13),5,5)
         
         
         if status !="Completed":
@@ -1048,9 +1057,9 @@ class DocModel(QtCore.QAbstractListModel):
         self.docs = []
         self.layoutChanged.emit()
     
-    def add_doc(self, doc_id, title, doc_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count):
+    def add_doc(self, doc_id, title, doc_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count,signing):
         # Access the list via the model.
-        self.docs.append((doc_id, title, doc_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count))
+        self.docs.append((doc_id, title, doc_type, status, last_modified, stage, waiting_on, elapsed_days, comment_count,signing))
         # Trigger refresh. 
         self.layoutChanged.emit()
 

@@ -149,7 +149,7 @@ class PartsTab(QtWidgets.QWidget):
                 status = self.getStatus(result['PART_ID'], result['TYPE'])
             else:
                 status = "NA"
-            self.model.add_part(result['PART_ID'], result['DESC'], result['TYPE'], result['DISPOSITION'], result['MFG'], result['MFG_PART'], result['REFERENCE'],result['REPLACING'], result['INSPEC'],status)
+            self.model.add_part(result['PART_ID'], result['DESC'], result['TYPE'], result['DISPOSITION'], result['MFG'], result['MFG_PART'], result['REFERENCE'],result['REPLACING'], result['INSPEC'],status,result["DISPOSITION_OLD"])
             
     def rowCount(self):
         return self.model.rowCount(self.parts)
@@ -192,7 +192,7 @@ class PartsDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         painter.save()
         
-        part_id, desc, part_type, disposition, mfg, mfg_part_id, reference,replacing , inspection = index.model().data(index, QtCore.Qt.DisplayRole)
+        part_id, desc, part_type, disposition, mfg, mfg_part_id, reference,replacing , inspection,disposition_old = index.model().data(index, QtCore.Qt.DisplayRole)
         status = index.model().data(index, QtCore.Qt.DecorationRole)
         
         lineMarkedPen = QtGui.QPen(QtGui.QColor("#f0f0f0"),1,QtCore.Qt.SolidLine)
@@ -260,6 +260,7 @@ class PartsDelegate(QtWidgets.QStyledItemDelegate):
             if len(replacing)>100:
                 replacing = replacing[:100] +" ..."
         painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx1,95),f"Replacing: {replacing}")
+        painter.drawText(r.topLeft()+QtCore.QPoint(text_offsetx2,95),f"Disposition [old]: {disposition_old}")
         painter.restore()
 
     def sizeHint(self, option, index):
@@ -287,8 +288,8 @@ class PartsModel(QtCore.QAbstractListModel):
         del self.parts[row]
         self.layoutChanged.emit()
         
-    def update_part_data(self,row, part_id, desc, part_type, disposition, mfg, mfg_part_id, reference,replacing, inspection):
-        self.parts[row]=(part_id, desc, part_type, disposition, mfg, mfg_part_id, reference , replacing, inspection)
+    def update_part_data(self,row, part_id, desc, part_type, disposition, mfg, mfg_part_id, reference,replacing, inspection,disposition_old):
+        self.parts[row]=(part_id, desc, part_type, disposition, mfg, mfg_part_id, reference , replacing, inspection,disposition_old)
         self.layoutChanged.emit()
         
     def update_status(self,row,status):
@@ -334,9 +335,12 @@ class PartsModel(QtCore.QAbstractListModel):
     def get_inspection(self,row):
         return self.parts[row][8]
     
-    def add_part(self, part_id, desc, part_type, disposition, mfg, mfg_part_id, reference,replacing, inspection,status):
+    def get_disposition_old(self,row):
+        return self.parts[row][9]
+    
+    def add_part(self, part_id, desc, part_type, disposition, mfg, mfg_part_id, reference,replacing, inspection,status,disposition_old):
         # Access the list via the model.
-        self.parts.append((part_id, desc, part_type, disposition, mfg, mfg_part_id, reference, replacing, inspection))
+        self.parts.append((part_id, desc, part_type, disposition, mfg, mfg_part_id, reference, replacing, inspection,disposition_old))
         self.status.append(status)
         # Trigger refresh.
         self.layoutChanged.emit()
