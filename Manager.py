@@ -111,8 +111,8 @@ class Manager(QtWidgets.QWidget):
         
     def checkInstance(self):
         count=0
-        for p in psutil.process_iter(['name']):
-            if p.name()=="Manager.exe":
+        for p in psutil.process_iter(['name','username']):
+            if p.info['name']=="Manager.exe" and p.info['username'] is not None:
                 count+=1
         
         if count>1:
