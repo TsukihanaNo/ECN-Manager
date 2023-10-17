@@ -21,6 +21,7 @@ else:
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
 initfile = os.path.join(program_location, "setting.ini")
 lockfile = os.path.join(program_location, "notifier.lock")
+os.environ['QTWEBENGINE_DISABLE_SANDBOX'] = "1"
 
 icon = os.path.join(program_location,"icons","notifier.ico")
 

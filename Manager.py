@@ -38,7 +38,7 @@ icon = os.path.join(program_location,"icons","manager.ico")
 class Manager(QtWidgets.QWidget):
     def __init__(self,doc = None):
         super(Manager, self).__init__()
-        self.clientVersion = "230406"
+        self.clientVersion = "231017"
         self.windowWidth = 1000
         self.windowHeight = 600
         self.setFixedSize(self.windowWidth,self.windowHeight)
