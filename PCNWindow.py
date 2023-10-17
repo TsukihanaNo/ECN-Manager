@@ -120,6 +120,14 @@ class PCNWindow(QtWidgets.QWidget):
                 self.button_reject.clicked.connect(self.reject)
                 self.toolbar.addWidget(self.button_approve)
                 self.toolbar.addWidget(self.button_reject)
+                if self.isUserSignable():
+                    if self.hasUserSigned():
+                        self.button_approve.setDisabled(True)
+                    else:
+                        self.button_approve.setDisabled(False)
+                else:
+                    self.button_approve.setDisabled(True)
+                    self.button_reject.setDisabled(True)
             self.toolbar.addWidget(self.button_comment)
         self.toolbar.addWidget(self.button_export)
         self.toolbar.addWidget(self.button_preview)
@@ -200,6 +208,28 @@ class PCNWindow(QtWidgets.QWidget):
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data saving!\n Error: {e}")
+            
+    def isUserSignable(self):
+        curStage = self.getPCNStage()
+        #print(curStage)
+        if curStage == 0:
+            return False
+        titles = self.getTitlesForStage()
+        titles = titles[str(curStage)]
+        self.cursor.execute(f"SELECT USER_ID from SIGNATURE where DOC_ID='{self.doc_id}' and USER_ID='{self.user_info['user']}'")
+        result = self.cursor.fetchone()
+        if self.user_info['title'] in titles and result is not None:
+            return True
+        return False
+            
+    def hasUserSigned(self):
+        self.cursor.execute(f"SELECT SIGNED_DATE from SIGNATURE where DOC_ID='{self.doc_id}' and USER_ID='{self.user_info['user']}'")
+        result = self.cursor.fetchone()
+        if result is None or result[0] is None:
+            #print("found none returning false")
+            return False
+        else:
+            return True
             
     def loadData(self):
         self.cursor.execute(f"Select * from DOCUMENT WHERE DOC_ID='{self.doc_id}'")
