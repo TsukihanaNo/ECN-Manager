@@ -193,6 +193,9 @@ class PCNWindow(QtWidgets.QWidget):
                     if not msg:
                         self.dispMsg("PCN Updated!")
             self.db.commit()
+            if status=="Out For Approval":
+                print("check for signs")
+                self.movePCNStage()
             self.parent.repopulateTable()
         except Exception as e:
             print(e)
@@ -308,7 +311,7 @@ class PCNWindow(QtWidgets.QWidget):
             return False
         
     def addNotification(self,doc_id,notificationType,from_user=None,usersList=None,msg=""):
-        print('adding notification')
+        print(f'adding notification: {notificationType}')
         if usersList is not None:
             if type(usersList)==type([]):
                 users = ""
@@ -384,29 +387,48 @@ class PCNWindow(QtWidgets.QWidget):
         except Exception as e:
             self.dispMsg(f"Error trying to set PCN stage. Error: {e}")
             
+    # def movePCNStage(self):
+    #     curStage = self.getPCNStage()
+    #     titles = self.getTitlesForStage()
+    #     titles = titles[str(curStage)]
+    #     #print("here are the titles",titles)
+    #     move = True
+    #     for title in titles:
+    #         self.cursor.execute(f"Select SIGNED_DATE from SIGNATURE where DOC_ID = '{self.doc_id}' and JOB_TITLE='{title}' and TYPE='Signing'")
+    #         results = self.cursor.fetchall()
+    #         for result in results:
+    #             #print(result['SIGNED_DATE'])
+    #             if result['SIGNED_DATE'] is None:
+    #                 move = False
+    #                 #print("not moving to next stage")
+    #                 break
+    #     if move:
+    #         nextStages = self.getNextStage()
+    #         if len(nextStages)>0:
+    #             #print("moving to stage:", nextStages[0])
+    #             self.setPCNStage(nextStages[0])
+    #             self.addNotification(self.doc_id, "Stage Moved")
+    #         # else:
+    #         #     print("this is the last stage")
+            
     def movePCNStage(self):
-        curStage = self.getPCNStage()
-        titles = self.getTitlesForStage()
-        titles = titles[str(curStage)]
-        #print("here are the titles",titles)
-        move = True
-        for title in titles:
-            self.cursor.execute(f"Select SIGNED_DATE from SIGNATURE where DOC_ID = '{self.doc_id}' and JOB_TITLE='{title}' and TYPE='Signing'")
-            results = self.cursor.fetchall()
-            for result in results:
-                #print(result['SIGNED_DATE'])
-                if result['SIGNED_DATE'] is None:
-                    move = False
-                    #print("not moving to next stage")
-                    break
-        if move:
-            nextStages = self.getNextStage()
-            if len(nextStages)>0:
-                #print("moving to stage:", nextStages[0])
-                self.setPCNStage(nextStages[0])
+        curStage = str(self.getPCNStage())
+        stages = self.getSigStages()
+        print(curStage,stages)
+        if stages!=[]:
+            if curStage!=stages[0]:
+                self.setPCNStage(stages[0])
                 self.addNotification(self.doc_id, "Stage Moved")
-            # else:
-            #     print("this is the last stage")
+                
+    def getSigStages(self):
+        self.cursor.execute(f"select JOB_TITLE from SIGNATURE where DOC_ID='{self.doc_id}' and TYPE='Signing' and SIGNED_DATE is NULL")
+        results = self.cursor.fetchall()
+        stages = []
+        for result in results:
+            stages.append(self.stageDictPCN[result[0]])
+        stages.sort()
+        return stages
+        # print(stages)
             
     def getNextStage(self):
         self.cursor.execute(f"Select JOB_TITLE from SIGNATURE where DOC_ID='{self.doc_id}' and SIGNED_DATE is NULL and TYPE='Signing'")

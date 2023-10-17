@@ -154,7 +154,7 @@ class Manager(QtWidgets.QWidget):
             self.thread.start()
         except Exception as e:
             print(e)
-            self.dispMsg("Port already in use.")
+            self.dispMsg(f"Port already in use. {e}")
         
         if self.doc is not None:
             self.HookEcn(self.doc)

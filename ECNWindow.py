@@ -323,6 +323,16 @@ class ECNWindow(QtWidgets.QWidget):
         except Exception as e:
             print(e)
             self.dispMsg(f"Error occured during data insertion (approve)!\n Error: {e}")
+        
+    def getSigStages(self):
+        self.cursor.execute(f"select JOB_TITLE from SIGNATURE where DOC_ID='{self.doc_id}' and TYPE='Signing' and SIGNED_DATE is NULL")
+        results = self.cursor.fetchall()
+        stages = []
+        for result in results:
+            stages.append(self.stageDict[result[0]])
+        stages.sort()
+        return stages
+        # print(stages)
 
     def printIndex(self):
         print(self.tabwidget.currentIndex())
@@ -700,29 +710,37 @@ class ECNWindow(QtWidgets.QWidget):
         #print("titles generated", titles)
         return titles
     
+    # def moveECNStage(self):
+    #     curStage = self.getECNStage()
+    #     titles = self.getTitlesForStage()
+    #     titles = titles[str(curStage)]
+    #     #print("here are the titles",titles)
+    #     move = True
+    #     for title in titles:
+    #         self.cursor.execute(f"Select SIGNED_DATE from SIGNATURE where DOC_ID = '{self.doc_id}' and JOB_TITLE='{title}' and TYPE='Signing'")
+    #         results = self.cursor.fetchall()
+    #         for result in results:
+    #             #print(result['SIGNED_DATE'])
+    #             if result['SIGNED_DATE'] is None:
+    #                 move = False
+    #                 #print("not moving to next stage")
+    #                 break
+    #     if move:
+    #         nextStages = self.getNextStage()
+    #         if len(nextStages)>0:
+    #             #print("moving to stage:", nextStages[0])
+    #             self.setECNStage(nextStages[0])
+    #             self.addNotification(self.doc_id, "Stage Moved")
+    #         # else:
+    #         #     print("this is the last stage")
+    
     def moveECNStage(self):
-        curStage = self.getECNStage()
-        titles = self.getTitlesForStage()
-        titles = titles[str(curStage)]
-        #print("here are the titles",titles)
-        move = True
-        for title in titles:
-            self.cursor.execute(f"Select SIGNED_DATE from SIGNATURE where DOC_ID = '{self.doc_id}' and JOB_TITLE='{title}' and TYPE='Signing'")
-            results = self.cursor.fetchall()
-            for result in results:
-                #print(result['SIGNED_DATE'])
-                if result['SIGNED_DATE'] is None:
-                    move = False
-                    #print("not moving to next stage")
-                    break
-        if move:
-            nextStages = self.getNextStage()
-            if len(nextStages)>0:
-                #print("moving to stage:", nextStages[0])
-                self.setECNStage(nextStages[0])
+        curStage = str(self.getECNStage())
+        stages = self.getSigStages()
+        if stages!=[]:
+            if curStage!=stages[0]:
+                self.setECNStage(stages[0])
                 self.addNotification(self.doc_id, "Stage Moved")
-            # else:
-            #     print("this is the last stage")
             
     def getNextStage(self):
         self.cursor.execute(f"Select JOB_TITLE from SIGNATURE where DOC_ID='{self.doc_id}' and SIGNED_DATE is NULL and TYPE='Signing'")
@@ -894,6 +912,8 @@ class ECNWindow(QtWidgets.QWidget):
                         self.dispMsg("ECN has been updated!")
                     if self.tab_signature.rowCount()>0 and self.tab_ecn.line_status.text()!="Out For Approval":
                         self.button_release.setDisabled(False)
+                    if self.tab_ecn.line_status.text()=="Out For Approval":
+                        self.moveECNStage()
                     #self.getCurrentValues()
                     #self.checkDiff()
                     self.parent.repopulateTable()
@@ -1008,6 +1028,7 @@ class ECNWindow(QtWidgets.QWidget):
             self.dispMsg(f"Error Occured during ecn export.\n Error: {e}")
         
     def addNotification(self,doc_id,notificationType,from_user=None,userslist=None,msg=""):
+        print(f"adding notificaton: {notificationType}")
         if userslist is not None:
             if type(userslist)==type([]):
                 users = ""

@@ -21,6 +21,7 @@ class SignaturePanel(QtWidgets.QWidget):
         self.parent = parent
         self.sig_type = sig_type
         self.doc_type = parent.doc_type
+        print(self.doc_type,sig_type)
         self.stageDict = parent.stageDict
         self.stageDictPCN = parent.stageDictPCN
         self.cursor = parent.cursor
@@ -98,7 +99,7 @@ class SignaturePanel(QtWidgets.QWidget):
         if self.checkDuplicate():
             self.dispMsg("This person already exists in list.")
         else:
-            if self.sig_type=="Signing":
+            if self.sig_type=="signing":
                 if self.doc_type=="ECN":
                     if self.stageDict[job_title]=="99":
                         self.dispMsg("This user is set for notification only. Please use the Notification Tab.")
@@ -106,7 +107,7 @@ class SignaturePanel(QtWidgets.QWidget):
                 else:
                     if self.stageDictPCN[job_title]=="99":
                         self.dispMsg("This user is set for notification only. Please use the notification Tab.")
-                        return     
+                        return
             self.parent.model.add_signature(job_title, name, user)
             
     def updateSignature(self):
@@ -116,7 +117,7 @@ class SignaturePanel(QtWidgets.QWidget):
         if self.checkDuplicate():
             self.dispMsg("This person already exists in list.")
         else:
-            if self.sig_type=="Signing":
+            if self.sig_type=="signing":
                 if self.parent.parent.doc_id[:3]=="ECN":
                     if self.stageDict[job_title]=="99":
                         self.dispMsg("This user is set for notification only.")
