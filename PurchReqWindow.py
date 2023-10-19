@@ -103,6 +103,11 @@ class PurchReqWindow(QtWidgets.QWidget):
         self.tab_widget.addTab(self.tab_signature,"Signatures")
         self.tab_widget.addTab(self.tab_notification,"Notifications")
         
+        if self.parent.user_permissions["rerouting"]=="y":
+            self.button_check_stage = QtWidgets.QPushButton("Check Stage")
+            self.button_check_stage.clicked.connect(self.checkStage)
+            self.toolbar.addWidget(self.button_check_stage)
+        
         mainlayout.addWidget(self.toolbar)
         mainlayout.addWidget(self.tab_widget)
         self.setLayout(mainlayout)
@@ -435,15 +440,15 @@ class PurchReqWindow(QtWidgets.QWidget):
                 elapsed = self.getElapsedDays(result[0], completeddate)
                 #print(elapsed)
                 #elapsed = self.getElapsedDays(first_release, completeddate)
-                data = (completeddate,completeddate,elapsed, "Completed",self.doc_id)
+                data = (completeddate,completeddate,elapsed, "Approved",self.doc_id)
                 self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?,COMP_DATE = ?, COMP_DAYS = ?, STATUS = ? WHERE DOC_ID = ?",(data))
                 #self.db.commit()
                 self.parent.repopulateTable()
-                self.dispMsg("PRQ is now completed")
-                self.addNotification(self.doc_id, "Completed")
+                self.dispMsg("PRQ is now Approved")
+                self.addNotification(self.doc_id, "Approved")
                 self.tab_signature.button_add.setDisabled(True)
                 self.tab_notification.button_add.setDisabled(True)
-                self.tab_purch_req.line_status.setText("Completed")
+                self.tab_purch_req.line_status.setText("Approved")
             else:
                 self.parent.repopulateTable()
         except Exception as e:

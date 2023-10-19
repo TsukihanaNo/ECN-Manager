@@ -137,7 +137,7 @@ class PartImportPanel(QtWidgets.QWidget):
                     part_type = "Purchased"
                     
                 status = self.parent.getStatus(part_id,part_type)
-                self.parent.model.add_part(part_id, desc, part_type,"", "", "","","", "",status)
+                self.parent.model.add_part(part_id, desc, part_type,"", "", "","","", "",status,"")
             
         
     def resizeEvent(self, event):

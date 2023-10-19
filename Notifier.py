@@ -6,6 +6,7 @@ from email import encoders
 from datetime import datetime
 from string import Template
 from WebView import *
+from Visual import *
 import sqlite3
 import os
 import sys
@@ -45,6 +46,12 @@ class Notifier(QtWidgets.QWidget):
         self.getStageDictPCN()
         self.getTitleStageDict()
         self.getTitleStageDictPCN()
+        if "Visual" in self.settings.keys():
+            user,pw,db = self.settings['Visual'].split(',')
+            ic = self.settings['Instant_Client']
+            self.visual = Visual(self,user, pw , db,ic)
+        else:
+            self.visual = None
         self.initAtt()
         self.initUI()
         self.center()
@@ -236,6 +243,8 @@ class Notifier(QtWidgets.QWidget):
                     self.rejectNotification(result[0],result['FROM_USER'],result['MSG'])
                 elif result['TYPE']=="Rejected To Signer":
                     self.rejectSignerNotification(result[0],result['FROM_USER'],result['USERS'],result['MSG'])
+                elif result['TYPE']=="Approved":
+                    self.ApprovedNotification(result[0])
                 elif result['TYPE']=="Completed":
                     self.completionNotification(result[0])
                 elif result['TYPE']=="Stage Moved":
@@ -351,6 +360,29 @@ class Notifier(QtWidgets.QWidget):
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
         self.sendEmail(doc_id,receivers, message,"Completion",attach)
         self.log_text.append(f"-Completion Email sent for {doc_id} to {receivers}")
+        
+    def ApprovedNotification(self,doc_id):
+        receivers = []
+        self.cursor.execute(f"select Author from DOCUMENT where DOC_ID='{doc_id}'")
+        result = self.cursor.fetchone()
+        receivers.append(self.userList[result[0]])
+        self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{doc_id}'")
+        results = self.cursor.fetchall()
+        message = f"<p>{doc_id} has been Approved!</p><p>You can now view it in the Inprogress section of your viewer.</p>"
+        for result in results:
+            receivers.append(self.userList[result[0]])
+        #print(f"send email to these addresses: {receivers} notifying ecn completion")
+        attach = []
+        attach.append(os.path.join(program_location,doc_id+'.ecnx'))
+        if doc_id[:3]=="PCN":
+            self.log_text.append("-exporting PCN files to server")
+            filepath = os.path.join(self.settings["PCN_Export_Loc"],doc_id)
+            os.mkdir(filepath)
+            self.exportPDF(doc_id,filepath ,"PCN")
+            self.exportHTMLPCNWeb(doc_id, filepath)
+        #attach.append(os.path.join(program_location,ecn_id+'.html'))
+        self.sendEmail(doc_id,receivers, message,"Approved",attach)
+        self.log_text.append(f"-Approved Email sent for {doc_id} to {receivers}")
         
         
     def cancelNotification(self,doc_id,msg):
@@ -589,6 +621,38 @@ class Notifier(QtWidgets.QWidget):
 
             return html
         
+    def generateHTMLPRQ(self,doc_id):
+        template_loc = os.path.join(self.programLoc,'templates','prq_template.html')
+        with open(template_loc) as f:
+            lines = f.read() 
+            f.close()
+            t = Template(lines)
+            
+            self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
+            result = self.cursor.fetchone()
+            
+            title = result["DOC_TITLE"]
+            author = result["AUTHOR"]
+            status = result["STATUS"]
+            requisition_details = result["DOC_SUMMARY"]
+            
+            self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
+            result = self.cursor.fetchone()
+            req_id = result["REQ_ID"]
+            project_id = result["PROJECT_ID"]
+            
+            req_header = self.visual.getReqHeader(req_id)
+            visual_status = req_header[1]
+            assigned_buyer = req_header[0]
+            
+            requisition_lines = self.visual.getReqItems(req_id)
+
+            #print('substituting text')
+            
+            html = t.substitute(REQID=req_id,Title=title,AUTHOR=author,DOCID=doc_id,ORDERSTATUS=reason,Replacement=replacement,Reference=reference,Response=response)
+
+            return html
+        
     def exportPDF(self,doc_id,filepath,doc_type):
         try:
             if doc_type=="PCN":
@@ -628,7 +692,7 @@ class Notifier(QtWidgets.QWidget):
         return elapsed
     
     def checkForReminder(self):
-        self.cursor.execute("SELECT DOC_ID, LAST_NOTIFIED, FIRST_RELEASE, LAST_MODIFIED FROM DOCUMENT WHERE STATUS !='Completed' and STATUS!='Draft' and STAGE!='0'")
+        self.cursor.execute("SELECT DOC_ID, LAST_NOTIFIED, FIRST_RELEASE, LAST_MODIFIED FROM DOCUMENT WHERE STATUS !='Completed' and STATUS!='Draft' and STATUS!='Approved'and STAGE!='0'")
         results = self.cursor.fetchall()
         today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         for result in results:
@@ -655,6 +719,35 @@ class Notifier(QtWidgets.QWidget):
                 users = self.getWaitingUser(doc_id, self.titleStageDict[str(self.settings['Reminder_Stages'])])
                 for user in users:
                     secondary_receivers.append(self.userList[user])
+                total_days = self.getElapsedDays(today, first_release)
+                self.lateReminder(doc_id,direct_receivers,secondary_receivers, total_days)
+                
+        #check for prq reminders
+        self.cursor.execute("SELECT DOC_ID, LAST_NOTIFIED, FIRST_RELEASE, LAST_MODIFIED FROM DOCUMENT WHERE STATUS ='Approved'")
+        results = self.cursor.fetchall()
+        today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        for result in results:
+            if result['LAST_NOTIFIED'] is not None:
+                elapsed = self.getElapsedDays(today, result["LAST_NOTIFIED"])
+                #print(elapsed.days)
+            else:
+                elapsed = self.getElapsedDays(today, result["FIRST_RELEASE"])
+                #print(elapsed.days)
+            if elapsed.days >= int(self.settings['Reminder_Days']):
+                doc_id = result["DOC_ID"]
+                first_release = result["FIRST_RELEASE"]
+                direct_receivers = []
+                secondary_receivers = []
+                self.cursor.execute(f"Select Stage from DOCUMENT where DOC_ID='{doc_id}'")
+                result = self.cursor.fetchone()
+                stage = result[0]
+                #users are people in the notification tab
+                users = self.getNotificationUsers(doc_id)
+                for user in users:
+                    direct_receivers.append(self.userList[user])
+                # users = self.getWaitingUser(doc_id, self.titleStageDict[str(self.settings['Reminder_Stages'])])
+                # for user in users:
+                #     secondary_receivers.append(self.userList[user])
                 total_days = self.getElapsedDays(today, first_release)
                 self.lateReminder(doc_id,direct_receivers,secondary_receivers, total_days)
 
@@ -703,6 +796,14 @@ class Notifier(QtWidgets.QWidget):
 
     def getReminderUsers(self):
         self.cursor.execute(f"select USER_ID from SIGNATURE where SIGNED_DATE is NULL")
+        results = self.cursor.fetchall()
+        receivers = []
+        for result in results:
+            receivers.append(self.userList(result[0]))
+        return receivers
+    
+    def getNotificationUsers(self,doc_id):
+        self.cursor.execute(f"select USER_ID from SIGNATURE where TYPE='Notify' and DOC_ID='{doc_id}'")
         results = self.cursor.fetchall()
         receivers = []
         for result in results:

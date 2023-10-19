@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+    <header>
+        <title>PRQ Info</title>
+        <style>
+
+            *{
+                box-sizing: border-box;
+            }
+
+            .container {
+                width: 8in;
+                min-height:10.5in;
+                margin: .25in auto;
+                padding: 0;
+                text-align: center;
+            }
+
+            #title-block > h1 {
+                margin: 0;
+            }
+
+            .header-block {
+                display: inline;
+                text-align: left;
+            }
+
+            .header-item{
+                padding: 2px;
+            }
+            .text-block{
+                padding: 10px;
+            }
+
+            .text-block > h2{
+                font-size: 18px;
+                text-align: left;
+            }
+
+            .text-block > h3 {
+                font-size: 14px;
+                text-align: left;
+            }
+
+            .text-box{
+                text-align: left;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                border: 2px solid rgb(200, 200, 200);
+                letter-spacing: 1px;
+                font-family: sans-serif;
+            }
+
+            td,
+            th {
+                border: 1px solid rgb(190, 190, 190);
+                padding: 2px;
+            }
+
+
+
+            .filename {
+                width: 35%;
+            }
+
+        </style>
+    </header>
+    <body>
+        <div class="container">
+            <div id="title-block">
+                <h1>Purchase Requisition</h1>
+                <div class="header-block">
+                    <div id = "req-id" class="header-item">
+                        ID: $REQID
+                    </div>
+                    <div id = "title" class="header-item">
+                        Title: $Title
+                    </div>
+                    <div id = "author" class="header-item">
+                        author: $AUTHOR
+                    </div>
+                    <div id = "doc-id" class="header-item">
+                        DOC ID: $DOCID
+                    </div>
+                    <div id = "prj-id" class="header-item">
+                        Project ID: $PRJID
+                    </div>
+                    <div id = "status" class="header-item">
+                        Status: $ORDERSTATUS
+                    </div>
+                    <div id = "visual-status" class="header-item">
+                        Visual Status: $VISUALSTATUS
+                    </div>
+                    <div id = "buyer" class="header-item">
+                        Assigned Buyer: $BUYER
+                    </div>
+                    <div id = "details" class="header-item">
+                        Requisition Details: $DETAILS
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div id="req-lines" class="text-block">
+                <h2>Requisition Lines:</h2>
+                <div id="req-line" class="text-box">
+                    <table>
+                        <tr>
+                            <th>Line No:</th>
+                            <th>Part ID:</th>
+                            <th>Vendor Part ID:</th>
+                            <th>Order Qty:</th>
+                            <th>UM:</th>
+                            <th>Unit Price:</th>
+                            <th>Last Recv Date:</th>
+                            <th>GL Account:</th>
+                            <th>P.O#:</th>
+                        </tr>
+                        $REQLINE
+                    </table>
+                </div>
+            </div>
+            <div id="signature-block" class="text-block">
+                <h2>Signatures:</h2>
+                <table>
+                    <tr>
+                        <th style="width: 35%;">Title:</th>
+                        <th style="width: 35%;">Name:</th>
+                        <th>Approved Date</th>
+                    </tr>
+                    $Signature
+                </table>
+            </div>
+        </div>
+    </body>
+</html>
