@@ -127,7 +127,7 @@ class PurchReqWindow(QtWidgets.QWidget):
         if self.user_info['user']==self.doc_data['AUTHOR']:
             if self.doc_data["STATUS"]!="Completed":
                 self.button_save.setEnabled(True)
-            if self.doc_data["STATUS"]=="Draft":
+            if self.doc_data["STATUS"]=="Draft" or self.doc_data["STATUS"]=="Rejected":
                 self.button_release.setEnabled(True)
             if self.doc_data["STATUS"]!="Draft":
                 self.button_cancel.setText("Cancel")

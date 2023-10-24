@@ -44,8 +44,10 @@ class Notifier(QtWidgets.QWidget):
         self.getEmailNameDict()
         self.getStageDict()
         self.getStageDictPCN()
+        self.getStageDictPRQ()
         self.getTitleStageDict()
         self.getTitleStageDictPCN()
+        self.getTitleStageDictPRQ()
         if "Visual" in self.settings.keys():
             user,pw,db = self.settings['Visual'].split(',')
             ic = self.settings['Instant_Client']
@@ -229,6 +231,26 @@ class Notifier(QtWidgets.QWidget):
             for stage in stages:
                 key,value = stage.split("-")
                 self.stageDictPCN[key.strip()] = value.strip()
+                
+    def getStageDictPRQ(self):
+        self.stageDictPRQ = {}
+        if "PRQ_Stage" not in self.settings.keys():
+            self.dispMsg("PRQ_Stage not defined, please update your settings.")
+        else:
+            stages = self.settings["PRQ_Stage"].split(",")
+            for stage in stages:
+                key,value = stage.split("-")
+                self.stageDictPRQ[key.strip()] = value.strip()
+                
+    def getTitleStageDictPRQ(self):
+        self.titleStageDictPRQ = {}
+        for key, value in self.stageDictPRQ.items():
+            if value not in self.titleStageDictPRQ.keys():
+                self.titleStageDictPRQ[value]=[key]
+            else:
+                self.titleStageDictPRQ[value].append(key)
+                
+    
             
     def sendNotification(self):
         self.cursor.execute("Select * from NOTIFICATION where STATUS='Not Sent'")
@@ -418,6 +440,8 @@ class Notifier(QtWidgets.QWidget):
         stage = result[0]
         if doc_id[:3]=="ECN":
             users = self.getWaitingUser(doc_id, self.titleStageDict[str(stage)])
+        elif doc_id[:3]=="PRQ":
+            users = self.getWaitingUser(doc_id, self.titleStageDictPRQ[str(stage)])
         else:
             users = self.getWaitingUser(doc_id, self.titleStageDictPCN[str(stage)])
         receivers = []
@@ -460,6 +484,8 @@ class Notifier(QtWidgets.QWidget):
                 message +="\n\n"
                 if doc_id[:3]=="PCN":
                     html = self.generateHTMLPCN(doc_id)
+                elif doc_id[:3]=="PRQ":
+                    html = self.generateHTMLPRQ(doc_id)
                 else:
                     html = self.generateHTML(doc_id)
                 message+=html
@@ -476,7 +502,7 @@ class Notifier(QtWidgets.QWidget):
                     payload.add_header('Content-Disposition','attachment',filename = os.path.basename(file))
                     msg.attach(payload)
                 server.sendmail(self.settings["From_Address"], receivers, msg.as_string())
-                #print(f"Successfully sent email to {receivers}")
+                self.log_text.append(f"Successfully sent email to {receivers}")
         except Exception as e:
             print(e)
                 
@@ -624,32 +650,79 @@ class Notifier(QtWidgets.QWidget):
     def generateHTMLPRQ(self,doc_id):
         template_loc = os.path.join(self.programLoc,'templates','prq_template.html')
         with open(template_loc) as f:
-            lines = f.read() 
+            lines = f.read()
             f.close()
             t = Template(lines)
             
             self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
             result = self.cursor.fetchone()
-            
+            # print("generating header 1")
             title = result["DOC_TITLE"]
             author = result["AUTHOR"]
             status = result["STATUS"]
             requisition_details = result["DOC_SUMMARY"]
             
-            self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
+            # print("generating header 2")
+            self.cursor.execute(f"SELECT * from PURCH_REQ_DOC_LINK where DOC_ID='{doc_id}'")
             result = self.cursor.fetchone()
+            print(result)
             req_id = result["REQ_ID"]
             project_id = result["PROJECT_ID"]
             
+            # print("generating header 3")
+            print(req_id)
             req_header = self.visual.getReqHeader(req_id)
+            print(req_header)
             visual_status = req_header[1]
             assigned_buyer = req_header[0]
             
-            requisition_lines = self.visual.getReqItems(req_id)
+            # print("generating header 4")
+            requisitions = self.visual.getReqItems(req_id)
+            req_lines = ""
+            if requisitions is not None:
+                for req in requisitions:
+                    line_no = str(req[0])
+                    if req[2] is not None:
+                        part_id = req[2]
+                    else:
+                        part_id = ""
+                    if req[3] is not None:
+                        vendor_part_id = req[3]
+                    else:
+                        vendor_part_id = ""
+                    order_qty = str(req[4])
+                    purchase_um = req[5]
+                    if req[6] is not None:
+                        po_num = req[6]
+                    else:
+                        po_num = ""
 
-            #print('substituting text')
+                    req_lines += "<tr><td>"+line_no+"</td>"
+                    req_lines += "<td>"+part_id+"</td>"
+                    req_lines += "<td>"+vendor_part_id+"</td>"
+                    req_lines += "<td>"+order_qty+"</td>"
+                    req_lines += "<td>"+purchase_um+"</td>"
+                    req_lines += "<td>"+po_num+"</td></tr>"
+                    
+            # print("generating header 5")
+            signature = "<tr>"
+            self.cursor.execute(f"SELECT * from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing'")
+            results = self.cursor.fetchall()
+            if results is not None:
+                for result in results:
+                    signature += "<td>"+result['JOB_TITLE']+"</td>"
+                    signature += "<td>"+result['NAME']+"</td>"
+                    if result['SIGNED_DATE'] is not None:
+                        signature += "<td>"+str(result['SIGNED_DATE'])+"</td></tr>"
+                    else:
+                        signature += "<td></td></tr>"
+            else:
+                signature="<tr><td></td><td></td><td></td></tr>"
+                
+
+            # print('substituting text')
             
-            html = t.substitute(REQID=req_id,Title=title,AUTHOR=author,DOCID=doc_id,ORDERSTATUS=reason,Replacement=replacement,Reference=reference,Response=response)
+            html = t.substitute(REQID=req_id,Title=title,AUTHOR=author,DOCID=doc_id,PRJID=project_id,ORDERSTATUS=status,VISUALSTATUS=visual_status,BUYER=assigned_buyer,DETAILS=requisition_details,REQLINE=req_lines,Signature=signature)
 
             return html
         
@@ -712,6 +785,8 @@ class Notifier(QtWidgets.QWidget):
                 stage = result[0]
                 if doc_id[:3]=="ECN":
                     users = self.getWaitingUser(doc_id, self.titleStageDict[str(stage)])
+                elif doc_id[:3]=="PRQ":
+                    users = self.getWaitingUser(doc_id, self.titleStageDictPRQ[str(stage)])
                 else:
                     users = self.getWaitingUser(doc_id, self.titleStageDictPCN[str(stage)])
                 for user in users:
