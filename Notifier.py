@@ -656,29 +656,30 @@ class Notifier(QtWidgets.QWidget):
             
             self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
             result = self.cursor.fetchone()
-            # print("generating header 1")
+            print("generating header 1")
             title = result["DOC_TITLE"]
             author = result["AUTHOR"]
             status = result["STATUS"]
             requisition_details = result["DOC_SUMMARY"]
             
-            # print("generating header 2")
+            print("generating header 2")
             self.cursor.execute(f"SELECT * from PURCH_REQ_DOC_LINK where DOC_ID='{doc_id}'")
             result = self.cursor.fetchone()
             print(result)
             req_id = result["REQ_ID"]
             project_id = result["PROJECT_ID"]
             
-            # print("generating header 3")
+            print("generating header 3")
             print(req_id)
             req_header = self.visual.getReqHeader(req_id)
             print(req_header)
             visual_status = req_header[1]
             assigned_buyer = req_header[0]
             
-            # print("generating header 4")
+            print("generating header 4")
             requisitions = self.visual.getReqItems(req_id)
             req_lines = ""
+            total_cost = 0
             if requisitions is not None:
                 for req in requisitions:
                     line_no = str(req[0])
@@ -696,15 +697,20 @@ class Notifier(QtWidgets.QWidget):
                         po_num = req[6]
                     else:
                         po_num = ""
+                    unit_price = req[7]
+                    total_price = float(unit_price)*float(order_qty)
+                    total_cost+=total_price
 
                     req_lines += "<tr><td>"+line_no+"</td>"
                     req_lines += "<td>"+part_id+"</td>"
                     req_lines += "<td>"+vendor_part_id+"</td>"
                     req_lines += "<td>"+order_qty+"</td>"
                     req_lines += "<td>"+purchase_um+"</td>"
+                    req_lines += "<td>"+str(unit_price)+"</td>"
+                    req_lines += "<td>"+str(total_price)+"</td>"
                     req_lines += "<td>"+po_num+"</td></tr>"
                     
-            # print("generating header 5")
+            print("generating header 5")
             signature = "<tr>"
             self.cursor.execute(f"SELECT * from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing'")
             results = self.cursor.fetchall()
@@ -720,9 +726,9 @@ class Notifier(QtWidgets.QWidget):
                 signature="<tr><td></td><td></td><td></td></tr>"
                 
 
-            # print('substituting text')
+            print('substituting text')
             
-            html = t.substitute(REQID=req_id,Title=title,AUTHOR=author,DOCID=doc_id,PRJID=project_id,ORDERSTATUS=status,VISUALSTATUS=visual_status,BUYER=assigned_buyer,DETAILS=requisition_details,REQLINE=req_lines,Signature=signature)
+            html = t.substitute(REQID=req_id,Title=title,AUTHOR=author,DOCID=doc_id,PRJID=project_id,ORDERSTATUS=status,VISUALSTATUS=visual_status,BUYER=assigned_buyer,TOTALCOST=total_cost,DETAILS=requisition_details,REQLINE=req_lines,Signature=signature)
 
             return html
         
@@ -797,34 +803,52 @@ class Notifier(QtWidgets.QWidget):
                 total_days = self.getElapsedDays(today, first_release)
                 self.lateReminder(doc_id,direct_receivers,secondary_receivers, total_days)
                 
+                
         #check for prq reminders
         self.cursor.execute("SELECT DOC_ID, LAST_NOTIFIED, FIRST_RELEASE, LAST_MODIFIED FROM DOCUMENT WHERE STATUS ='Approved'")
         results = self.cursor.fetchall()
         today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         for result in results:
-            if result['LAST_NOTIFIED'] is not None:
-                elapsed = self.getElapsedDays(today, result["LAST_NOTIFIED"])
-                #print(elapsed.days)
+            #check for prq visual status
+            doc_id = result["DOC_ID"]
+            self.cursor.execute(f"SELECT REQ_ID FROM PURCH_REQ_DOC_LINK WHERE DOC_ID='{doc_id}'")
+            get_req = self.cursor.fetchone()
+            req_id = get_req[0]
+            req_status = self.visual.getReqHeader(req_id)[1]
+            if req_status=="C": #Closed
+                completeddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                elapsed = self.getElapsedDays(completeddate,result["FIRST_RELEASE"])
+                elapsed = elapsed.days + round(elapsed.seconds/86400,2)
+                data = (completeddate,completeddate,elapsed,"Completed",doc_id)
+                print(data)
+                self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?,COMP_DATE = ?, COMP_DAYS = ?, STATUS = ? WHERE DOC_ID = ?",(data))
+                # self.cursor.execute("UPDATE DOCUMENT SET STATUS = ? WHERE DOC_ID = ?",(data))
+                self.db.commit()
+                self.log_text.append(f"{doc_id} has been set as completed")
+                self.generateECNX(doc_id)
+                self.completionNotification(doc_id)
+                self.removeECNX(doc_id)
             else:
-                elapsed = self.getElapsedDays(today, result["FIRST_RELEASE"])
-                #print(elapsed.days)
-            if elapsed.days >= int(self.settings['Reminder_Days']):
-                doc_id = result["DOC_ID"]
-                first_release = result["FIRST_RELEASE"]
-                direct_receivers = []
-                secondary_receivers = []
-                self.cursor.execute(f"Select Stage from DOCUMENT where DOC_ID='{doc_id}'")
-                result = self.cursor.fetchone()
-                stage = result[0]
-                #users are people in the notification tab
-                users = self.getNotificationUsers(doc_id)
-                for user in users:
-                    direct_receivers.append(self.userList[user])
-                # users = self.getWaitingUser(doc_id, self.titleStageDict[str(self.settings['Reminder_Stages'])])
-                # for user in users:
-                #     secondary_receivers.append(self.userList[user])
-                total_days = self.getElapsedDays(today, first_release)
-                self.lateReminder(doc_id,direct_receivers,secondary_receivers, total_days)
+                if result['LAST_NOTIFIED'] is not None:
+                    elapsed = self.getElapsedDays(today, result["LAST_NOTIFIED"])
+                    #print(elapsed.days)
+                else:
+                    elapsed = self.getElapsedDays(today, result["FIRST_RELEASE"])
+                    #print(elapsed.days)
+                if elapsed.days >= int(self.settings['Reminder_Days']):
+                    # doc_id = result["DOC_ID"]
+                    first_release = result["FIRST_RELEASE"]
+                    direct_receivers = []
+                    secondary_receivers = []
+                    #users are people in the notification tab
+                    users = self.getNotificationUsers(doc_id)
+                    for user in users:
+                        direct_receivers.append(self.userList[user])
+                    # users = self.getWaitingUser(doc_id, self.titleStageDict[str(self.settings['Reminder_Stages'])])
+                    # for user in users:
+                    #     secondary_receivers.append(self.userList[user])
+                    total_days = self.getElapsedDays(today, first_release)
+                    self.lateReminder(doc_id,direct_receivers,secondary_receivers, total_days)
 
 
     def setElapsedDays(self):

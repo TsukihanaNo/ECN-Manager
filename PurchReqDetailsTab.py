@@ -119,7 +119,9 @@ class PurchReqDetailTab(QtWidgets.QWidget):
         results = self.visual.getReqItems(self.line_id.text())
         for result in results:
             # print(result[0],result[1],result[2],result[3],result[4],result[5],result[6])
-            self.model.add_item(result[0],result[1],result[2],result[3],result[4],result[5],result[6])
+            self.model.add_item(result[0],result[1],result[2],result[3],result[4],result[5],result[6],result[7])
+        total = self.model.get_total_cost()
+        self.label_items.setText(f"Requisition Items - ${total}:")
             
     def loadHeader(self):
         result = self.visual.getReqHeader(self.line_id.text())
@@ -143,7 +145,7 @@ class ItemsDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         painter.save()
         
-        line_no, line_status, part_id, vendor_part_id,order_qty, purchase_um, purch_order = index.model().data(index, QtCore.Qt.DisplayRole)
+        line_no, line_status, part_id, vendor_part_id,order_qty, purchase_um, purch_order, unit_price = index.model().data(index, QtCore.Qt.DisplayRole)
         
         #lineMarkedPen = QtGui.QPen(QtGui.QColor("#f0f0f0"),1,QtCore.Qt.SolidLine)
         
@@ -187,9 +189,13 @@ class ItemsDelegate(QtWidgets.QStyledItemDelegate):
         text = "Qty: "
         painter.drawText(r.topLeft()+QtCore.QPoint(15+15,40),text)
         text = "UOM: "
-        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+200,40),text)
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+100,40),text)
+        text = "Unit Price: "
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+100+150,40),text)
+        text = "Total: "
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+100+150+150,40),text)
         text = "P.O #: "
-        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+200+200,40),text)
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+100+150+150+150,40),text)
         
         font.setBold(False)
         painter.setFont(font)
@@ -210,11 +216,17 @@ class ItemsDelegate(QtWidgets.QStyledItemDelegate):
         painter.drawText(r.topLeft()+QtCore.QPoint(15+15+font_offset+10,40),text)
         text = str(purchase_um)
         font_offset=font_metric.boundingRect("UOM:").width()
-        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+200+font_offset+10,40),text)
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+100+font_offset+10,40),text)
+        text = "$" + str(unit_price)
+        font_offset=font_metric.boundingRect("Unit Price:").width()
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+100+150+font_offset+10,40),text)
+        total_price = unit_price*order_qty
+        text = "$"+str(total_price)
+        font_offset=font_metric.boundingRect("P.O #:").width()
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+100+150+150+font_offset+10,40),text)
         text = str(purch_order)
         font_offset=font_metric.boundingRect("P.O #:").width()
-        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+200+200+font_offset+10,40),text)
-        
+        painter.drawText(r.topLeft()+QtCore.QPoint(15+15+100+150+150+150+font_offset+10,40),text)
 
         painter.restore()
 
@@ -248,9 +260,15 @@ class ItemsModel(QtCore.QAbstractListModel):
     
     def getFileName(self, row):
         return self.items[row][0]
+    
+    def get_total_cost(self):
+        total = 0
+        for item in self.items:
+            total += item[4]*item[7]
+        return total
 
-    def add_item(self, line_no, line_status, part_id, vendor_part_id,order_qty, purchase_um, purch_order):
+    def add_item(self, line_no, line_status, part_id, vendor_part_id,order_qty, purchase_um, purch_order,unit_price):
         # Access the list via the model.
-        self.items.append((line_no, line_status, part_id, vendor_part_id,order_qty, purchase_um, purch_order))
+        self.items.append((line_no, line_status, part_id, vendor_part_id,order_qty, purchase_um, purch_order,unit_price))
         # Trigger refresh.
         self.layoutChanged.emit()

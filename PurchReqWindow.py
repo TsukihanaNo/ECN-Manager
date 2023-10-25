@@ -427,10 +427,10 @@ class PurchReqWindow(QtWidgets.QWidget):
             command = f"Select * from SIGNATURE where DOC_ID ='{self.doc_id}' and TYPE='Signing'"
             self.cursor.execute(command)
             results = self.cursor.fetchall()
-            completed = False
+            completed = True
             for result in results:
-                if result['SIGNED_DATE'] is not None or result['SIGNED_DATE']!= "":
-                    completed = True
+                if result['SIGNED_DATE'] is None or result['SIGNED_DATE']== "":
+                    completed = False
             if completed:
                 completeddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 self.cursor.execute(f"select FIRST_RELEASE from DOCUMENT where DOC_ID='{self.doc_id}'")

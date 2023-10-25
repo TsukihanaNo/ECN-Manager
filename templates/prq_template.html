@@ -74,31 +74,35 @@
                 <h1>Purchase Requisition</h1>
                 <div class="header-block">
                     <div id = "req-id" class="header-item">
-                        ID: $REQID
+                        <b>ID:</b> $REQID
                     </div>
                     <div id = "title" class="header-item">
-                        Title: $Title
+                        <b>Title:</b> $Title
                     </div>
                     <div id = "author" class="header-item">
-                        author: $AUTHOR
+                        <b>Author:</b> $AUTHOR
                     </div>
                     <div id = "doc-id" class="header-item">
-                        DOC ID: $DOCID
+                        <b>DOC ID:</b> $DOCID
                     </div>
                     <div id = "prj-id" class="header-item">
-                        Project ID: $PRJID
+                        <b>Project ID:</b> $PRJID
                     </div>
                     <div id = "status" class="header-item">
-                        Status: $ORDERSTATUS
+                        <b>Status:</b> $ORDERSTATUS
                     </div>
                     <div id = "visual-status" class="header-item">
-                        Visual Status: $VISUALSTATUS
+                        <b>Visual Status:</b> $VISUALSTATUS
                     </div>
                     <div id = "buyer" class="header-item">
-                        Assigned Buyer: $BUYER
+                        <b>Assigned Buyer:</b> $BUYER
                     </div>
+                    <div id = "total_cost" class="header-item">
+                        <b>Total Cost:</b> $TOTALCOST
+                    </div>
+                    <hr>
                     <div id = "details" class="header-item">
-                        Requisition Details: $DETAILS
+                        <b>Requisition Details</b>: $DETAILS
                     </div>
                 </div>
             </div>
@@ -113,12 +117,15 @@
                             <th>Vendor Part ID:</th>
                             <th>Order Qty:</th>
                             <th>UM:</th>
+                            <th>Unit Price:</th>
+                            <th>Total:</th>
                             <th>P.O#:</th>
                         </tr>
                         $REQLINE
                     </table>
                 </div>
             </div>
+            <hr>
             <div id="signature-block" class="text-block">
                 <h2>Signatures:</h2>
                 <table>
