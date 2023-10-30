@@ -841,9 +841,9 @@ class Notifier(QtWidgets.QWidget):
                     direct_receivers = []
                     secondary_receivers = []
                     #users are people in the notification tab
-                    users = self.getNotificationUsers(doc_id)
-                    for user in users:
-                        direct_receivers.append(self.userList[user])
+                    direct_receivers = self.getNotificationUsers(doc_id)
+                    # for user in users:
+                    #     direct_receivers.append(self.userList[user])
                     # users = self.getWaitingUser(doc_id, self.titleStageDict[str(self.settings['Reminder_Stages'])])
                     # for user in users:
                     #     secondary_receivers.append(self.userList[user])
@@ -898,7 +898,7 @@ class Notifier(QtWidgets.QWidget):
         results = self.cursor.fetchall()
         receivers = []
         for result in results:
-            receivers.append(self.userList(result[0]))
+            receivers.append(self.userList[result[0]])
         return receivers
     
     def getNotificationUsers(self,doc_id):
@@ -906,7 +906,7 @@ class Notifier(QtWidgets.QWidget):
         results = self.cursor.fetchall()
         receivers = []
         for result in results:
-            receivers.append(self.userList(result[0]))
+            receivers.append(self.userList[result[0]])
         return receivers
     
     

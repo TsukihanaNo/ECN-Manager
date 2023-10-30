@@ -6,6 +6,7 @@ from SignatureTab import *
 from NotificationTab import *
 from CommentTab import *
 
+
 if getattr(sys, 'frozen', False):
     # frozen
     program_location = os.path.dirname(sys.executable)
@@ -78,7 +79,9 @@ class PurchReqWindow(QtWidgets.QWidget):
         self.button_reject.clicked.connect(self.reject)
         self.button_reject.setDisabled(True)
         self.button_export = QtWidgets.QPushButton("Export")
+        self.button_export.setEnabled(False)
         self.button_preview = QtWidgets.QPushButton("Preview")
+        self.button_preview.setEnabled(False)
         
         # self.button_members = QtWidgets.QPushButton("Members")
         
@@ -138,6 +141,39 @@ class PurchReqWindow(QtWidgets.QWidget):
                     self.button_reject.setEnabled(True)
         if self.doc_data["STATUS"]=="Out For Approval":
             self.button_comment.setEnabled(True)
+            
+    def previewHTML(self):
+        html = self.generateHTML()
+        self.webview = WebView()
+        self.webview.setDocID(self.doc_id)
+        self.webview.loadHtml(html)
+
+    def exportHTML(self):
+        try:
+            foldername = QtWidgets.QFileDialog().getExistingDirectory()
+            if foldername:
+                export = self.generateHTML()
+                doc_loc = foldername+'\\'+self.doc_id+'.html'
+                with open(doc_loc, 'w') as f:
+                    f.write(export)
+                    f.close()
+                
+                self.dispMsg("Export Completed!")
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error Occured during ecn export.\n Error: {e}")
+            
+    def exportPDF(self):
+        try:
+            foldername = QtWidgets.QFileDialog().getExistingDirectory()
+            if foldername:
+                export = self.generateHTML()
+                doc_loc = foldername+'\\'+self.doc_id+'.pdf'
+                self.webview = WebView()
+                self.webview.loadAndPrint(export,doc_loc)
+        except Exception as e:
+            print(e)
+            self.dispMsg(f"Error Occured during ecn export.\n Error: {e}")
         
     def save(self, msg=None):
         if self.visual.checkReqID(self.tab_purch_req.line_id.text()):
