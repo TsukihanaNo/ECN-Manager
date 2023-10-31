@@ -5,6 +5,8 @@ from PurchReqDetailsTab import *
 from SignatureTab import *
 from NotificationTab import *
 from CommentTab import *
+from WebView import *
+from string import Template
 
 
 if getattr(sys, 'frozen', False):
@@ -79,9 +81,11 @@ class PurchReqWindow(QtWidgets.QWidget):
         self.button_reject.clicked.connect(self.reject)
         self.button_reject.setDisabled(True)
         self.button_export = QtWidgets.QPushButton("Export")
-        self.button_export.setEnabled(False)
+        self.button_export.clicked.connect(self.exportPDF)
+        # self.button_export.setEnabled(False)
         self.button_preview = QtWidgets.QPushButton("Preview")
-        self.button_preview.setEnabled(False)
+        self.button_preview.clicked.connect(self.previewHTML)
+        # self.button_preview.setEnabled(False)
         
         # self.button_members = QtWidgets.QPushButton("Members")
         
@@ -142,8 +146,93 @@ class PurchReqWindow(QtWidgets.QWidget):
         if self.doc_data["STATUS"]=="Out For Approval":
             self.button_comment.setEnabled(True)
             
+    def generateHTML(self,doc_id):
+        template_loc = os.path.join(self.parent.programLoc,'templates','prq_template.html')
+        with open(template_loc) as f:
+            lines = f.read()
+            f.close()
+            t = Template(lines)
+            
+            self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
+            result = self.cursor.fetchone()
+            # print("generating header 1")
+            title = result["DOC_TITLE"]
+            author = result["AUTHOR"]
+            status = result["STATUS"]
+            requisition_details = result["DOC_SUMMARY"]
+            
+            # print("generating header 2")
+            self.cursor.execute(f"SELECT * from PURCH_REQ_DOC_LINK where DOC_ID='{doc_id}'")
+            result = self.cursor.fetchone()
+            print(result)
+            req_id = result["REQ_ID"]
+            project_id = result["PROJECT_ID"]
+            
+            # print("generating header 3")
+            # print(req_id)
+            req_header = self.visual.getReqHeader(req_id)
+            print(req_header)
+            visual_status = req_header[1]
+            assigned_buyer = req_header[0]
+            
+            # print("generating header 4")
+            requisitions = self.visual.getReqItems(req_id)
+            req_lines = ""
+            total_cost = 0
+            if requisitions is not None:
+                for req in requisitions:
+                    line_no = str(req[0])
+                    if req[2] is not None:
+                        part_id = req[2]
+                    else:
+                        part_id = ""
+                    if req[3] is not None:
+                        vendor_part_id = req[3]
+                    else:
+                        vendor_part_id = ""
+                    order_qty = str(req[4])
+                    purchase_um = req[5]
+                    if req[6] is not None:
+                        po_num = req[6]
+                    else:
+                        po_num = ""
+                    unit_price = req[7]
+                    total_price = float(unit_price)*float(order_qty)
+                    total_cost+=total_price
+
+                    req_lines += "<tr><td>"+line_no+"</td>"
+                    req_lines += "<td>"+part_id+"</td>"
+                    req_lines += "<td>"+vendor_part_id+"</td>"
+                    req_lines += "<td>"+order_qty+"</td>"
+                    req_lines += "<td>"+purchase_um+"</td>"
+                    req_lines += "<td>"+str(unit_price)+"</td>"
+                    req_lines += "<td>"+str(total_price)+"</td>"
+                    req_lines += "<td>"+po_num+"</td></tr>"
+                    
+            # print("generating header 5")
+            signature = "<tr>"
+            self.cursor.execute(f"SELECT * from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing'")
+            results = self.cursor.fetchall()
+            if results is not None:
+                for result in results:
+                    signature += "<td>"+result['JOB_TITLE']+"</td>"
+                    signature += "<td>"+result['NAME']+"</td>"
+                    if result['SIGNED_DATE'] is not None:
+                        signature += "<td>"+str(result['SIGNED_DATE'])+"</td></tr>"
+                    else:
+                        signature += "<td></td></tr>"
+            else:
+                signature="<tr><td></td><td></td><td></td></tr>"
+                
+
+            # print('substituting text')
+            
+            html = t.substitute(REQID=req_id,Title=title,AUTHOR=author,DOCID=doc_id,PRJID=project_id,ORDERSTATUS=status,VISUALSTATUS=visual_status,BUYER=assigned_buyer,TOTALCOST=total_cost,DETAILS=requisition_details,REQLINE=req_lines,Signature=signature)
+
+            return html
+
     def previewHTML(self):
-        html = self.generateHTML()
+        html = self.generateHTML(self.doc_id)
         self.webview = WebView()
         self.webview.setDocID(self.doc_id)
         self.webview.loadHtml(html)
@@ -152,7 +241,7 @@ class PurchReqWindow(QtWidgets.QWidget):
         try:
             foldername = QtWidgets.QFileDialog().getExistingDirectory()
             if foldername:
-                export = self.generateHTML()
+                export = self.generateHTML(self.doc_id)
                 doc_loc = foldername+'\\'+self.doc_id+'.html'
                 with open(doc_loc, 'w') as f:
                     f.write(export)
@@ -167,7 +256,7 @@ class PurchReqWindow(QtWidgets.QWidget):
         try:
             foldername = QtWidgets.QFileDialog().getExistingDirectory()
             if foldername:
-                export = self.generateHTML()
+                export = self.generateHTML(self.doc_id)
                 doc_loc = foldername+'\\'+self.doc_id+'.pdf'
                 self.webview = WebView()
                 self.webview.loadAndPrint(export,doc_loc)

@@ -235,7 +235,7 @@ class SignatureDelegate(QtWidgets.QStyledItemDelegate):
         painter.setPen(QtCore.Qt.black)
         painter.drawText(r.topLeft()+QtCore.QPoint(25,15),job_title)
         if signed_date is not None:
-            painter.drawText(r.topLeft()+QtCore.QPoint(725,15),signed_date)
+            painter.drawText(r.topRight()+QtCore.QPoint(-150,15),signed_date)
         painter.drawText(r.topLeft()+QtCore.QPoint(375,15),name)
         
         painter.restore()

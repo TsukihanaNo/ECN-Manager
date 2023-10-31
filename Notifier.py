@@ -656,27 +656,27 @@ class Notifier(QtWidgets.QWidget):
             
             self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
             result = self.cursor.fetchone()
-            print("generating header 1")
+            # print("generating header 1")
             title = result["DOC_TITLE"]
             author = result["AUTHOR"]
             status = result["STATUS"]
             requisition_details = result["DOC_SUMMARY"]
             
-            print("generating header 2")
+            # print("generating header 2")
             self.cursor.execute(f"SELECT * from PURCH_REQ_DOC_LINK where DOC_ID='{doc_id}'")
             result = self.cursor.fetchone()
             print(result)
             req_id = result["REQ_ID"]
             project_id = result["PROJECT_ID"]
             
-            print("generating header 3")
-            print(req_id)
+            # print("generating header 3")
+            # print(req_id)
             req_header = self.visual.getReqHeader(req_id)
             print(req_header)
             visual_status = req_header[1]
             assigned_buyer = req_header[0]
             
-            print("generating header 4")
+            # print("generating header 4")
             requisitions = self.visual.getReqItems(req_id)
             req_lines = ""
             total_cost = 0
@@ -710,7 +710,7 @@ class Notifier(QtWidgets.QWidget):
                     req_lines += "<td>"+str(total_price)+"</td>"
                     req_lines += "<td>"+po_num+"</td></tr>"
                     
-            print("generating header 5")
+            # print("generating header 5")
             signature = "<tr>"
             self.cursor.execute(f"SELECT * from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing'")
             results = self.cursor.fetchall()
@@ -726,7 +726,7 @@ class Notifier(QtWidgets.QWidget):
                 signature="<tr><td></td><td></td><td></td></tr>"
                 
 
-            print('substituting text')
+            # print('substituting text')
             
             html = t.substitute(REQID=req_id,Title=title,AUTHOR=author,DOCID=doc_id,PRJID=project_id,ORDERSTATUS=status,VISUALSTATUS=visual_status,BUYER=assigned_buyer,TOTALCOST=total_cost,DETAILS=requisition_details,REQLINE=req_lines,Signature=signature)
 
