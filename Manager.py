@@ -331,9 +331,9 @@ class Manager(QtWidgets.QWidget):
         self.button_draft = QtWidgets.QPushButton("Drafts")
         self.button_draft.setFixedWidth(button_size)
         self.button_draft.clicked.connect(self.loadDrafts)
-        self.button_deleted = QtWidgets.QPushButton("Deleted")
-        self.button_deleted.clicked.connect(self.loadDeletedDocs)
-        self.button_deleted.setFixedWidth(button_size)
+        # self.button_deleted = QtWidgets.QPushButton("Deleted")
+        # self.button_deleted.clicked.connect(self.loadDeletedDocs)
+        # self.button_deleted.setFixedWidth(button_size)
         self.button_completed = QtWidgets.QPushButton("Completed")
         self.button_completed.setFixedWidth(button_size)
         self.button_completed.clicked.connect(self.loadCompletedDocs)
@@ -342,7 +342,7 @@ class Manager(QtWidgets.QWidget):
         self.navbar.addWidget(self.button_open_docs)
         self.navbar.addWidget(self.button_canceled)
         self.navbar.addWidget(self.button_draft)
-        self.navbar.addWidget(self.button_deleted)
+        # self.navbar.addWidget(self.button_deleted)
         self.navbar.addWidget(self.button_completed)
 
         for child in self.navbar.children():
@@ -434,9 +434,9 @@ class Manager(QtWidgets.QWidget):
         self.table_type = "Canceled"
         self.repopulateTable()
 
-    def loadDeletedDocs(self):
-        self.table_type = "Deleted"
-        self.repopulateTable()
+    # def loadDeletedDocs(self):
+    #     self.table_type = "Deleted"
+    #     self.repopulateTable()
 
     def loadDrafts(self):
         self.table_type="Draft"
@@ -462,8 +462,8 @@ class Manager(QtWidgets.QWidget):
             self.button_canceled.setStyleSheet(style)
         if self.table_type=="Draft":
             self.button_draft.setStyleSheet(style)
-        if self.table_type=="Deleted":
-            self.button_deleted.setStyleSheet(style)
+        # if self.table_type=="Deleted":
+        #     self.button_deleted.setStyleSheet(style)
         if self.table_type=="Completed":
             self.button_completed.setStyleSheet(style)
 
@@ -503,8 +503,8 @@ class Manager(QtWidgets.QWidget):
             command = f"select * from DOCUMENT where STATUS =='Canceled' {filter_type}"
         elif self.table_type=="Draft":
             command = f"select * from DOCUMENT where STATUS =='Draft' {filter_type}"
-        elif self.table_type=="Deleted":
-            command = f"select * from DOCUMENT where STATUS =='Deleted' {filter_type}"
+        # elif self.table_type=="Deleted":
+        #     command = f"select * from DOCUMENT where STATUS =='Deleted' {filter_type}"
         else:
             command = f"select * from DOCUMENT where STATUS='Completed' {filter_type}"
 

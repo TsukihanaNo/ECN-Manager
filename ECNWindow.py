@@ -626,23 +626,31 @@ class ECNWindow(QtWidgets.QWidget):
     def cancel(self):
         if self.tab_ecn.line_status.text()=="Draft":
             self.deleteECN(self.doc_id)
-            self.close()
         else:
             self.cancelECN(self.doc_id)
         
     def deleteECN(self,doc_id):
-        try:
-            self.cursor.execute(f"DELETE FROM DOCUMENT where DOC_ID='{doc_id}'")
-            self.cursor.execute(f"DELETE FROM COMMENTS where DOC_ID='{doc_id}'")
-            self.cursor.execute(f"DELETE FROM SIGNATURE where DOC_ID='{doc_id}'")
-            self.cursor.execute(f"DELETE FROM ATTACHMENTS where DOC_ID='{doc_id}'")
-            self.cursor.execute(f"DELETE FROM CHANGELOG where DOC_ID='{doc_id}'")
-            self.db.commit()
-            self.dispMsg("ECN has been deleted")
-            self.parent.repopulateTable()
-        except Exception as e:
-            print(e)
-            self.dispMsg(f"Problems occured trying to delete ECN.\n Error: {e}")
+        msgbox = QtWidgets.QMessageBox()
+        msgbox.setWindowTitle("Delete Prompt")
+        msgbox.setText("Are you sure you want to delete this Document?")
+        msgbox.setInformativeText("You will not be able to recover this document after deletion.")
+        ok = msgbox.addButton("Yes",QtWidgets.QMessageBox.AcceptRole)
+        no = msgbox.addButton("No",QtWidgets.QMessageBox.RejectRole)
+        msgbox.exec()
+        if msgbox.clickedButton()==ok:
+            try:
+                self.cursor.execute(f"DELETE FROM DOCUMENT where DOC_ID='{doc_id}'")
+                self.cursor.execute(f"DELETE FROM COMMENTS where DOC_ID='{doc_id}'")
+                self.cursor.execute(f"DELETE FROM SIGNATURE where DOC_ID='{doc_id}'")
+                self.cursor.execute(f"DELETE FROM ATTACHMENTS where DOC_ID='{doc_id}'")
+                self.cursor.execute(f"DELETE FROM CHANGELOG where DOC_ID='{doc_id}'")
+                self.db.commit()
+                self.dispMsg("ECN has been deleted")
+                self.parent.repopulateTable()
+                self.close()
+            except Exception as e:
+                print(e)
+                self.dispMsg(f"Problems occured trying to delete ECN.\n Error: {e}")
         
     def cancelECN(self,doc_id):
         comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Comment", "")
