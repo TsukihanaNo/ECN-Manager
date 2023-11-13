@@ -446,7 +446,9 @@ class PurchReqWindow(QtWidgets.QWidget):
                 self.AddSignatures()
             self.db.commit()
             if self.row is not None:
-                self.parent.model.update_req_data(self.row,self.doc_id,title,req_id,status)
+                req_header = self.visual.getReqHeader(req_id)
+                visual_status = VISUAL_REQ_STATUS[req_header[1]]
+                self.parent.model.update_req_data(self.row,self.doc_id,title,req_id,status,visual_status)
             else:
                 self.parent.repopulateTable()
         except Exception as e:

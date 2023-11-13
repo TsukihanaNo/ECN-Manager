@@ -9,6 +9,8 @@ if getattr(sys, 'frozen', False):
 else:
     # unfrozen
     program_location = os.path.dirname(os.path.realpath(__file__))
+    
+VISUAL_REQ_STATUS = {'V':"Approved",'I':"In Process",'C': "Closed",'X': "Canceled/Void",'T':"Draft",'O':"Ordered"}
 
 class PurchReqTab(QtWidgets.QWidget):
     def __init__(self, parent = None):

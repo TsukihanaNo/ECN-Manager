@@ -61,7 +61,7 @@ class SearchResults(QtWidgets.QWidget):
         searchLayout.addWidget(self.line_search)
         searchLayout.addWidget(self.button_search)
         self.button_open = QtWidgets.QPushButton("Open")
-        self.button_open.clicked.connect(self.openECN)
+        self.button_open.clicked.connect(self.openDoc)
         self.button_open.setDisabled(True)
 
         #USER(USER_ID TEXT, PASSWORD TEXT, NAME TEXT, ROLE TEXT, JOB_TITLE TEXT, DEPT TEXT, STATUS TEXT, EMAIL TEXT)
@@ -75,7 +75,7 @@ class SearchResults(QtWidgets.QWidget):
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.table.doubleClicked.connect(self.openECN)
+        self.table.doubleClicked.connect(self.openDoc)
         self.table.selectionModel().selectionChanged.connect(self.onRowSelect)
         header = self.table.horizontalHeader()
         for x in range(self.table.columnCount()):
@@ -139,6 +139,21 @@ class SearchResults(QtWidgets.QWidget):
         else:
             self.parent.HookPCN(doc_id)
         #self.parent.HookEcn(doc_id)
+        
+        
+    def openDoc(self):
+        row = self.table.currentRow()
+        doc_id =self.table.item(row,0).text()
+        if doc_id[:3]=="ECN":
+            self.parent.HookEcn(doc_id)
+        elif doc_id[:3]=="PCN":
+            self.parent.HookPCN(doc_id)
+        elif doc_id[:3]=="PRJ":
+            self.parent.HookProject(doc_id)
+        elif doc_id[:3]=="PRQ":
+            self.parent.HookPRQ(doc_id)
+        else:
+            self.dispMsg("format opening not yet implemented")
         
     def getElapsedDays(self,day1,day2):
         today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')

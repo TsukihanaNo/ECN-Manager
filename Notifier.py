@@ -815,7 +815,7 @@ class Notifier(QtWidgets.QWidget):
             get_req = self.cursor.fetchone()
             req_id = get_req[0]
             req_status = self.visual.getReqHeader(req_id)[1]
-            if req_status=="C": #Closed
+            if req_status=="C" or req_status=="O": #Closed
                 completeddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 elapsed = self.getElapsedDays(completeddate,result["FIRST_RELEASE"])
                 elapsed = elapsed.days + round(elapsed.seconds/86400,2)

@@ -498,7 +498,7 @@ class Manager(QtWidgets.QWidget):
             # command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and DOCUMENT.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
             command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}'and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
         elif self.table_type=="Open":
-            command = f"select * from DOCUMENT where (STATUS=='Out For Approval' OR STATUS=='Rejected' OR STATUS='Started') {filter_type}"
+            command = f"select * from DOCUMENT where (STATUS=='Out For Approval' OR STATUS=='Rejected' OR STATUS='Started' or STATUS='Approved') {filter_type}"
         elif self.table_type=="Canceled":
             command = f"select * from DOCUMENT where STATUS =='Canceled' {filter_type}"
         elif self.table_type=="Draft":
