@@ -25,6 +25,7 @@ lockfile = os.path.join(program_location, "notifier.lock")
 os.environ['QTWEBENGINE_DISABLE_SANDBOX'] = "1"
 
 icon = os.path.join(program_location,"icons","notifier.ico")
+VISUAL_REQ_STATUS = {'V':"Approved",'I':"In Process",'C': "Closed",'X': "Canceled/Void",'T':"Draft",'O':"Ordered"}
 
 class Notifier(QtWidgets.QWidget):
     def __init__(self):
@@ -459,7 +460,7 @@ class Notifier(QtWidgets.QWidget):
         result = self.cursor.fetchone()
         attach = []
         receivers = [email]
-        message = f"Here is your log in information for the ECN Manager. User: {result[0]} | password: {result[1]}"
+        message = f"<p>Here is your log in information for the ECN Manager.</p> <p><b>User</b>: {result[0]}</p><p><b>Password</b>: {result[1]}</p>"
         print(f"send email to {email} with user info: {result[0]} | {result[1]}")
         self.sendEmail("", receivers, message, "User Info", attach)
         self.log_text.append(f"- user info email has been sent to {receivers}")
@@ -481,14 +482,14 @@ class Notifier(QtWidgets.QWidget):
                 else:
                     msg['Subject']=f"{subject} Notification for {doc_id}"
                 
-                message +="\n\n"
-                if doc_id[:3]=="PCN":
-                    html = self.generateHTMLPCN(doc_id)
-                elif doc_id[:3]=="PRQ":
-                    html = self.generateHTMLPRQ(doc_id)
-                else:
-                    html = self.generateHTML(doc_id)
-                message+=html
+                    message +="\n\n"
+                    if doc_id[:3]=="PCN":
+                        html = self.generateHTMLPCN(doc_id)
+                    elif doc_id[:3]=="PRQ":
+                        html = self.generateHTMLPRQ(doc_id)
+                    else:
+                        html = self.generateHTML(doc_id)
+                    message+=html
                 
                 msg.attach(MIMEText(message,'html'))
                 #ecnx = os.path.join(program_location,ecn_id+'.ecnx')
@@ -673,7 +674,7 @@ class Notifier(QtWidgets.QWidget):
             # print(req_id)
             req_header = self.visual.getReqHeader(req_id)
             print(req_header)
-            visual_status = req_header[1]
+            visual_status = VISUAL_REQ_STATUS[req_header[1]]
             assigned_buyer = req_header[0]
             
             # print("generating header 4")

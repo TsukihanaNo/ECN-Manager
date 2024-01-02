@@ -51,6 +51,7 @@ class Manager(QtWidgets.QWidget):
         self.firstInstance = True
         self.checkInstance()
         self.ico = QtGui.QIcon(icon)
+        self.selfKillLoop()
         self.startUpCheck()
         self.getStageDict()
         self.getStageDictPCN()
@@ -148,7 +149,7 @@ class Manager(QtWidgets.QWidget):
         try:
             self.thread = QtCore.QThread()
             self.worker = Hook()
-            self.worker.launch.connect(self.HookEcn)
+            self.worker.launch.connect(self.HookDoc)
             self.worker.moveToThread(self.thread)
             self.thread.started.connect(self.worker.run)
             self.thread.start()
@@ -157,7 +158,7 @@ class Manager(QtWidgets.QWidget):
             self.dispMsg(f"Port already in use. {e}")
         
         if self.doc is not None:
-            self.HookEcn(self.doc)
+            self.HookDoc(self.doc)
 
     def startUpCheck(self):
         if not os.path.exists(initfile):
@@ -220,6 +221,18 @@ class Manager(QtWidgets.QWidget):
             missing_keys += "Port "
         if missing_keys !="":
             self.dispMsg(f"The following settings are missing: {missing_keys}. Please set them up in the settings window and set up the rest of the settings.")
+            
+    def selfKillLoop(self):
+        timer = QtCore.QTimer(self)
+        timer.timeout.connect(self.selfKillcheck)
+        timer.start(30000)
+        
+    def selfKillcheck(self):
+        self.cursor.execute(f"SELECT SHUTDOWN from SHUTDOWN")
+        result = self.cursor.fetchone()
+        print(result[0])
+        if result[0]=="Y":
+            self.close()
 
     def initAtt(self):
         self.setGeometry(100, 50, self.windowWidth, self.windowHeight)
@@ -824,6 +837,18 @@ class Manager(QtWidgets.QWidget):
     def openDoc(self):
         index = self.docs.currentIndex()
         doc_id = index.data(QtCore.Qt.DisplayRole)[0]
+        if doc_id[:3]=="ECN":
+            self.HookEcn(doc_id)
+        elif doc_id[:3]=="PCN":
+            self.HookPCN(doc_id)
+        elif doc_id[:3]=="PRJ":
+            self.HookProject(doc_id)
+        elif doc_id[:3]=="PRQ":
+            self.HookPRQ(doc_id)
+        else:
+            self.dispMsg("format opening not yet implemented")
+            
+    def HookDoc(self,doc_id):
         if doc_id[:3]=="ECN":
             self.HookEcn(doc_id)
         elif doc_id[:3]=="PCN":
