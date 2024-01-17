@@ -25,16 +25,28 @@ class Visual():
     def checkPartSetup(self,part,ptype):
         #planner id, buyer id, safety stock, min-max (not required), order policy, warehouse, inspection, vendor pricing
         if ptype=="Purchased":
-            command =f"Select PURCHASED, ORDER_POLICY, PRODUCT_CODE, INSPECTION_REQD, PRIMARY_WHS_ID, PRIMARY_LOC_ID, PLANNER_USER_ID, BUYER_USER_ID, SAFETY_STOCK_QTY FROM PART WHERE ID='{part}'"
+            command =f"Select CONSUMABLE, PURCHASED, ORDER_POLICY, PRODUCT_CODE, INSPECTION_REQD, PRIMARY_WHS_ID, PRIMARY_LOC_ID, PLANNER_USER_ID, BUYER_USER_ID, SAFETY_STOCK_QTY FROM PART WHERE ID='{part}'"
         elif ptype=="Fabricated":
             command =f"Select FABRICATED, ORDER_POLICY, ENGINEERING_MSTR, PRODUCT_CODE, PRIMARY_WHS_ID, PRIMARY_LOC_ID, PLANNER_USER_ID, SAFETY_STOCK_QTY FROM PART WHERE ID='{part}'"
         else:
             command =f"Select FABRICATED, ORDER_POLICY, ENGINEERING_MSTR, PRODUCT_CODE, PRIMARY_WHS_ID, PRIMARY_LOC_ID, PLANNER_USER_ID, SAFETY_STOCK_QTY FROM PART WHERE ID='{part}'"
         self.cur.execute(command)
         result = self.cur.fetchone()
+        counter = 0
+        3,5,6
+        consumable = False
         for item in result:
+            if counter==0 and item=="Y":
+                consumable = True
             if item=="" or item is None:
-                return False
+                if consumable:
+                    if counter==3 or counter == 5 or counter == 6:
+                        pass
+                    else:
+                        return False
+                else:
+                    return False
+            counter+=1
         return True
     
     def queryPartsNoStage(self):

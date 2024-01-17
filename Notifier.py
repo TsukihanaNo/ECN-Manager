@@ -163,14 +163,14 @@ class Notifier(QtWidgets.QWidget):
         os.remove(lockfile)
             
     def getUserList(self):
-        self.cursor.execute("select USER_ID, EMAIL from USER where STATUS='Active'")
+        self.cursor.execute("select USER_ID, EMAIL from USER")
         results = self.cursor.fetchall()
         for result in results:
             self.userList[result[0]]=result[1]
         #print(self.userList)
         
     def getEmailNameDict(self):
-        self.cursor.execute("select EMAIL, NAME from USER where STATUS='Active'")
+        self.cursor.execute("select EMAIL, NAME from USER")
         results = self.cursor.fetchall()
         for result in results:
             self.emailNameList[result[0]]=result[1].split(" ")[0]
