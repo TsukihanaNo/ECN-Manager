@@ -115,6 +115,8 @@ class Notifier(QtWidgets.QWidget):
         self.log_text.append(f"{now}: checking for standard and lateness notifications")
         self.checkForReminder()
         self.sendNotification()
+        if datetime.now().strftime('%H:%M')=="09:30":
+            self.notifierOnlineNotification("ONLINE")
         
     def startUpCheck(self):
         if not os.path.exists(initfile):
@@ -468,6 +470,16 @@ class Notifier(QtWidgets.QWidget):
         self.db.commit()
         self.log_text.append(f"- entry has been deleted from notifications table")
         
+    def notifierOnlineNotification(self,doc_id):
+        receivers = []
+        # for user in users:
+        receivers.append(self.userList["admin"])
+        message = f"<p>The notifier is currently online!</p>"
+        #print(f"send email these addresses: {receivers} notifying ecn release stage move")
+        attach = []
+        # attach.append(os.path.join(program_location,doc_id+'.ecnx'))
+        self.sendEmail(doc_id,receivers, message,"Online Reminder",attach)
+        self.log_text.append(f"-Notifier Online Reminder Email sent for {doc_id} to {receivers}")
             
     def sendEmail(self,doc_id,receivers,message,subject,attach):
         if not isinstance(attach, list):
@@ -483,13 +495,14 @@ class Notifier(QtWidgets.QWidget):
                     msg['Subject']=f"{subject} Notification for {doc_id}"
                 
                     message +="\n\n"
-                    if doc_id[:3]=="PCN":
-                        html = self.generateHTMLPCN(doc_id)
-                    elif doc_id[:3]=="PRQ":
-                        html = self.generateHTMLPRQ(doc_id)
-                    else:
-                        html = self.generateHTML(doc_id)
-                    message+=html
+                    if subject!="Online Reminder":
+                        if doc_id[:3]=="PCN":
+                            html = self.generateHTMLPCN(doc_id)
+                        elif doc_id[:3]=="PRQ":
+                            html = self.generateHTMLPRQ(doc_id)
+                        else:
+                            html = self.generateHTML(doc_id)
+                        message+=html
                 
                 msg.attach(MIMEText(message,'html'))
                 #ecnx = os.path.join(program_location,ecn_id+'.ecnx')
@@ -907,6 +920,7 @@ class Notifier(QtWidgets.QWidget):
         results = self.cursor.fetchall()
         receivers = []
         for result in results:
+            print(result[0],doc_id)
             receivers.append(self.userList[result[0]])
         return receivers
     

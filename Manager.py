@@ -4,6 +4,7 @@ import sys
 import time
 import sqlite3
 import psutil
+import platform
 from PySide6 import QtGui, QtCore, QtWidgets
 from LoginWindow import *
 from datetime import datetime
@@ -146,19 +147,21 @@ class Manager(QtWidgets.QWidget):
         self.center()
         self.show()
         self.loadInAnim()
-        try:
-            self.thread = QtCore.QThread()
-            self.worker = Hook()
-            self.worker.launch.connect(self.HookDoc)
-            self.worker.moveToThread(self.thread)
-            self.thread.started.connect(self.worker.run)
-            self.thread.start()
-        except Exception as e:
-            print(e)
-            self.dispMsg(f"Port already in use. {e}")
         
-        if self.doc is not None:
-            self.HookDoc(self.doc)
+        if platform.uname()[1]!="FRCRDS01":
+            try:
+                self.thread = QtCore.QThread()
+                self.worker = Hook()
+                self.worker.launch.connect(self.HookDoc)
+                self.worker.moveToThread(self.thread)
+                self.thread.started.connect(self.worker.run)
+                self.thread.start()
+            except Exception as e:
+                print(e)
+                self.dispMsg(f"Port already in use. {e}")
+            
+            if self.doc is not None:
+                self.HookDoc(self.doc)
 
     def startUpCheck(self):
         if not os.path.exists(initfile):
