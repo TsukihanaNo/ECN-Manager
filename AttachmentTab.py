@@ -16,6 +16,7 @@ class AttachmentTab(QtWidgets.QWidget):
         super(AttachmentTab,self).__init__()
         self.parent = parent
         self.user_info = parent.user_info
+        self.settings = parent.settings
         self.files = []
         self.initAtt()
         self.initUI()
@@ -83,21 +84,26 @@ class AttachmentTab(QtWidgets.QWidget):
 
 
     def dropEvent(self, e):
+        # print(self.settings["Buffer_Path"])
         urlList = e.mimeData().urls()
         cfiles=[]
         for item in urlList:
             url = item.toLocalFile()
+            url_path = str(Path(url).resolve())
             if str(Path(url).resolve())[:2] ==r"\\":
+            # if self.settings["Buffer_Path"] in url_path:
                 if str(Path(url).resolve()) not in self.files:
                     file_info = QtCore.QFileInfo(url)
                     icon_provider=QtGui.QAbstractFileIconProvider()
                     icon = icon_provider.icon(file_info)
-                    self.model.add_attachment(url[url.rfind("/")+1:], str(Path(url).resolve()),icon)
-                    self.files.append(str(Path(url).resolve()))
+                    self.model.add_attachment(url[url.rfind("/")+1:], url_path,icon)
+                    self.files.append(url_path)
             else:
-                cfiles.append(str(Path(url).resolve()))
+                cfiles.append(url_path)
         if len(cfiles)>0:
             self.dispMsg(f"The following files were not accepted as they reside on your local machine and is not accessible by other users:{cfiles}")
+            # buffer_path = self.settings["Buffer_Path"]
+            # self.dispMsg(f"The following files were not accepted as they reside out of the defined file buffer Location ({buffer_path}) : {cfiles}")
 
     def dragEnterEvent(self,e):
         if e.mimeData().hasUrls():

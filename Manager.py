@@ -220,8 +220,8 @@ class Manager(QtWidgets.QWidget):
             missing_keys += "Dept "
         if "SMTP" not in self.settings.keys():
             missing_keys += "SMTP "
-        if "Port" not in self.settings.keys():
-            missing_keys += "Port "
+        if "SMTP_Port" not in self.settings.keys():
+            missing_keys += "SMTP_Port "
         if missing_keys !="":
             self.dispMsg(f"The following settings are missing: {missing_keys}. Please set them up in the settings window and set up the rest of the settings.")
             
@@ -522,7 +522,7 @@ class Manager(QtWidgets.QWidget):
         # elif self.table_type=="Deleted":
         #     command = f"select * from DOCUMENT where STATUS =='Deleted' {filter_type}"
         else:
-            command = f"select * from DOCUMENT where STATUS='Completed' {filter_type}"
+            command = f"select * from DOCUMENT where STATUS='Completed' {filter_type} ORDER BY rowid DESC"
 
         self.cursor.execute(command)
         self.table_data = self.cursor.fetchall()

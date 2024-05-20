@@ -125,8 +125,11 @@ class PurchReqDetailTab(QtWidgets.QWidget):
             
     def loadHeader(self):
         result = self.visual.getReqHeader(self.line_id.text())
-        self.line_status_visual.setText(VISUAL_REQ_STATUS[result[1]])
-        self.line_buyer.setText(result[0])
+        if result is None:
+            self.dispMsg("purchase requisition does not exist.")
+        else:
+            self.line_status_visual.setText(VISUAL_REQ_STATUS[result[1]])
+            self.line_buyer.setText(result[0])
             
     def resizeEvent(self, e):
         self.model.layoutChanged.emit()

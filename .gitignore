@@ -9,5 +9,6 @@ test.py
 db_inquiries.py
 *.csv
 *.xlsx
+instantclient_19_13
 
 .vscode

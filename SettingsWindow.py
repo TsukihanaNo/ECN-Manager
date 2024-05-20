@@ -99,7 +99,7 @@ class SettingsWindow(QtWidgets.QWidget):
         self.label_smtp_ip = QtWidgets.QLabel("IP:   ")
         self.line_smtp_address = QtWidgets.QLineEdit(self)
         self.line_smtp_address.setPlaceholderText("SMTP Address")
-        self.label_smtp_port = QtWidgets.QLabel("Port:")
+        self.label_smtp_port = QtWidgets.QLabel("SMTP Port:")
         self.line_smtp_port = QtWidgets.QLineEdit(self)
         self.line_smtp_port.setPlaceholderText("SMTP Port")
         self.label_smtp_email = QtWidgets.QLabel("Email:")
@@ -260,8 +260,8 @@ class SettingsWindow(QtWidgets.QWidget):
             self.line_db_v.setText(db)
         if "SMTP" in self.settings.keys():
             self.line_smtp_address.setText(self.settings["SMTP"])
-        if "Port" in self.settings.keys():
-            self.line_smtp_port.setText(self.settings["Port"])
+        if "SMTP_Port" in self.settings.keys():
+            self.line_smtp_port.setText(self.settings["SMPT_Port"])
         if "From_Address" in self.settings.keys():
             self.line_smtp_email.setText(self.settings["From_Address"])
         if "Instant_Client" in self.settings.keys():
@@ -313,7 +313,7 @@ class SettingsWindow(QtWidgets.QWidget):
             self.dispMsg("One of the Visual fields are empty. Visual module will be disabled until fields are entered.")
         if self.line_smtp_address.text()!="" and self.line_smtp_port.text()!="" and self.line_smtp_email.text()!="":
                 data += "SMTP : " + self.line_smtp_address.text() + "\n"
-                data += "Port : " + self.line_smtp_port.text() +"\n"
+                data += "SMTP_Port : " + self.line_smtp_port.text() +"\n"
                 data += "From_Address : " + self.line_smtp_email.text() + "\n"
         else:
             self.dispMsg("One of the SMTP fields are empty.")

@@ -11,6 +11,8 @@ import sqlite3
 import os
 import sys
 import smtplib
+import imaplib
+import time
 
 if getattr(sys, 'frozen', False):
     # frozen
@@ -372,6 +374,7 @@ class Notifier(QtWidgets.QWidget):
         results = self.cursor.fetchall()
         message = f"<p>{doc_id} has been completed!</p><p>You can now view it in the completed section of your viewer.</p>"
         for result in results:
+            print(result[0],doc_id)
             receivers.append(self.userList[result[0]])
         #print(f"send email to these addresses: {receivers} notifying ecn completion")
         attach = []
@@ -485,9 +488,45 @@ class Notifier(QtWidgets.QWidget):
         if not isinstance(attach, list):
             attach = [attach]
         try:
-            with smtplib.SMTP(self.settings["SMTP"],self.settings["Port"]) as server:
+            #smtp with no authorization
+            if self.settings["Use_SMTP"]=="1":
+                with smtplib.SMTP(self.settings["SMTP"],self.settings["SMTP_Port"]) as server:
+                    msg = MIMEMultipart()
+                    msg['From'] = self.settings["From_Address"]
+                    msg['To'] = ", ".join(receivers)
+                    if subject=="User Info":
+                        msg['Subject']=f"{subject} Notification for ECN Manager"
+                    else:
+                        msg['Subject']=f"{subject} Notification for {doc_id}"
+                    
+                        message +="\n\n"
+                        if subject!="Online Reminder":
+                            if doc_id[:3]=="PCN":
+                                html = self.generateHTMLPCN(doc_id)
+                            elif doc_id[:3]=="PRQ":
+                                html = self.generateHTMLPRQ(doc_id)
+                            else:
+                                html = self.generateHTML(doc_id)
+                            message+=html
+                    
+                    msg.attach(MIMEText(message,'html'))
+                    #ecnx = os.path.join(program_location,ecn_id+'.ecnx')
+                    #filename = f'{ecn_id}.ecnx'
+                    for file in attach:
+                        attach_file = open(file,'rb')
+                        payload = MIMEBase('application', 'octet-stream')
+                        payload.set_payload(attach_file.read())
+                        encoders.encode_base64(payload)
+                        #print(ecnx, filename)
+                        payload.add_header('Content-Disposition','attachment',filename = os.path.basename(file))
+                        msg.attach(payload)
+                    server.sendmail(self.settings["From_Address"], receivers, msg.as_string())
+                    self.log_text.append(f"Successfully sent email to {receivers}")
+            
+            #smtp with authorization
+            if self.settings["Use_SMTP"]=="2":
                 msg = MIMEMultipart()
-                msg['From'] = self.settings["From_Address"]
+                msg['From'] = self.settings["From_Address2"]
                 msg['To'] = ", ".join(receivers)
                 if subject=="User Info":
                     msg['Subject']=f"{subject} Notification for ECN Manager"
@@ -515,7 +554,14 @@ class Notifier(QtWidgets.QWidget):
                     #print(ecnx, filename)
                     payload.add_header('Content-Disposition','attachment',filename = os.path.basename(file))
                     msg.attach(payload)
-                server.sendmail(self.settings["From_Address"], receivers, msg.as_string())
+                server = smtplib.SMTP_SSL(self.settings["SMTP2"],self.settings["SMTP_Port2"])
+                server.ehlo()
+                server.login(self.settings["From_Address2"],self.settings["Mail_Pass"])
+                server.sendmail(self.settings["From_Address2"], receivers, msg.as_string())
+                imap = imaplib.IMAP4_SSL(self.settings["IMAP"],self.settings["IMAP_Port"])
+                imap.login(self.settings["From_Address2"],self.settings["Mail_Pass"])
+                imap.append("INBOX.Sent","\\Seen",imaplib.Time2Internaldate(time.time()),msg.as_string().encode('utf8'))
+                imap.logout()
                 self.log_text.append(f"Successfully sent email to {receivers}")
         except Exception as e:
             print(e)
