@@ -17,6 +17,7 @@ initfile = os.path.join(program_location, "setting.ini")
 class UsersWindow(QtWidgets.QWidget):
     def __init__(self,parent=None):
         super(UsersWindow,self).__init__()
+        self.window_id = "Users_Window"
         self.windowWidth =  int(830*0.9)
         self.windowHeight = int(580*0.90)
         self.sorting = (0,QtCore.Qt.AscendingOrder)

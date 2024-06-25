@@ -25,6 +25,7 @@ else:
 class ECNWindow(QtWidgets.QWidget):
     def __init__(self, parent = None, doc_id = None):
         super(ECNWindow,self).__init__()
+        self.window_id = "ECN_Window"
         self.parent = parent
         self.cursor = self.parent.cursor
         self.db = self.parent.db

@@ -5,6 +5,7 @@ import sqlite3
 class NewDBWindow(QtWidgets.QWidget):
     def __init__(self,parent=None):
         super(NewDBWindow,self).__init__()
+        self.window_id = "New_DB_Window"
         self.windowHeight = 400
         self.windowWidth = 600
         self.initAtt()

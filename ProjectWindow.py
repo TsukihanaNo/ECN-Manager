@@ -16,6 +16,7 @@ else:
 class ProjectWindow(QtWidgets.QWidget):
     def __init__(self, parent = None, doc_id = None):
         super(ProjectWindow,self).__init__()
+        self.window_id = "Project_Window"
         self.parent = parent
         self.cursor = parent.cursor
         self.db = self.parent.db

@@ -17,6 +17,7 @@ initfile = os.path.join(program_location, "setting.ini")
 class SettingsWindow(QtWidgets.QWidget):
     def __init__(self,parent=None):
         super(SettingsWindow,self).__init__()
+        self.window_id = "Settings_Window"
         self.windowWidth =  int(830*1.1)
         self.windowHeight = int(580*1.1)
         self.parent = parent
@@ -261,7 +262,7 @@ class SettingsWindow(QtWidgets.QWidget):
         if "SMTP" in self.settings.keys():
             self.line_smtp_address.setText(self.settings["SMTP"])
         if "SMTP_Port" in self.settings.keys():
-            self.line_smtp_port.setText(self.settings["SMPT_Port"])
+            self.line_smtp_port.setText(self.settings["SMTP_Port"])
         if "From_Address" in self.settings.keys():
             self.line_smtp_email.setText(self.settings["From_Address"])
         if "Instant_Client" in self.settings.keys():

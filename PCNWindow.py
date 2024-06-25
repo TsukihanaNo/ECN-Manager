@@ -23,6 +23,7 @@ initfile = os.path.join(program_location, "setting.ini")
 class PCNWindow(QtWidgets.QWidget):
     def __init__(self,parent=None, doc_id = None):
         super(PCNWindow,self).__init__()
+        self.window_id = "PCN_Window"
         self.windowWidth =  950
         self.windowHeight = 800
         self.parent = parent

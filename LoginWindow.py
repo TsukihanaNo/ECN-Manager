@@ -7,6 +7,7 @@ from MyLineEdit import *
 class LoginWindow(QtWidgets.QWidget):
     def __init__(self,parent=None):
         super(LoginWindow,self).__init__()
+        self.window_id = "Login_Window"
         self.parent = parent
         self.windowWidth = 350
         self.windowHeight = 200

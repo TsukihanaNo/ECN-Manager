@@ -24,6 +24,8 @@ class SignatureTab(QtWidgets.QWidget):
         self.findJobTitles()
         self.initAtt()
         self.initUI()
+        if self.parent.window_id == "ECN_Window":
+            self.addDefaultUsers()
 
     def initAtt(self):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -179,6 +181,15 @@ class SignatureTab(QtWidgets.QWidget):
         else:
             self.dispMsg(f"Error: no role found for {user}")
             return None
+        
+    def addDefaultUsers(self):
+        users = self.parent.parent.settings["Sig_Tab_Default"].split(",")
+        # print(users)
+        for user in users:
+            # print(user)
+            self.cursor.execute(f"Select JOB_TITLE,NAME from USER where USER_ID='{user}'")
+            result = self.cursor.fetchone()
+            self.model.add_signature(result[0],result[1],user)
 
         
     def repopulateTable(self):

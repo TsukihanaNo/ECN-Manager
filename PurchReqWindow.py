@@ -19,6 +19,7 @@ else:
 class PurchReqWindow(QtWidgets.QWidget):
     def __init__(self, parent = None, doc_id = None, row = None, project_id = None):
         super(PurchReqWindow,self).__init__()
+        self.window_id = "Purch_Req_window"
         self.parent = parent
         self.cursor = parent.cursor
         self.db = parent.db
