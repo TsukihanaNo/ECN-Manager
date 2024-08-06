@@ -40,7 +40,7 @@ class Manager(QtWidgets.QWidget):
     def __init__(self,doc = None):
         super(Manager, self).__init__()
         self.window_id = "Main_Window"
-        self.clientVersion = "231017"
+        self.clientVersion = "240725"
         self.windowWidth = 1000
         self.windowHeight = 600
         self.setFixedSize(self.windowWidth,self.windowHeight)
@@ -69,8 +69,9 @@ class Manager(QtWidgets.QWidget):
         #print("Visual" in self.settings.keys())
         if "Visual" in self.settings.keys():
             user,pw,db = self.settings['Visual'].split(',')
-            ic = self.settings['Instant_Client']
-            self.visual = Visual(self,user, pw , db,ic)
+            # ic = self.settings['Instant_Client']
+            ic = os.path.join(program_location, self.settings['IC_Ver'])
+            self.visual = Visual(self,user, pw , db, ic)
         else:
             self.visual = None
 

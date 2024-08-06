@@ -70,12 +70,12 @@ class Visual():
         results = self.cur.fetchall()
         filtered_results = []
         for result in results:
-            if result[2]=="Y":
-                ptype="Purchased"
-            else:
-                ptype="Fabricated"
-            if not self.checkPartSetup(result[0],ptype):
-                filtered_results.append(result)
+            # if result[2]=="Y":
+            #     ptype="Purchased"
+            # else:
+            #     ptype="Fabricated"
+            # if not self.checkPartSetup(result[0],ptype):
+            filtered_results.append(result)
                 
         return filtered_results
     
@@ -89,12 +89,12 @@ class Visual():
         
         filtered_results = []
         for result in results:
-            if result[2]=="Y":
-                ptype="Purchased"
-            else:
-                ptype="Fabricated"
-            if not self.checkPartSetup(result[0],ptype):
-                filtered_results.append(result)
+            # if result[2]=="Y":
+            #     ptype="Purchased"
+            # else:
+            #     ptype="Fabricated"
+            # if not self.checkPartSetup(result[0],ptype):
+            filtered_results.append(result)
                 
         return filtered_results
 

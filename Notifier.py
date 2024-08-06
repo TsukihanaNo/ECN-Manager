@@ -11,6 +11,7 @@ import sqlite3
 import os
 import sys
 import smtplib
+import ssl
 import imaplib
 import time
 
@@ -54,6 +55,7 @@ class Notifier(QtWidgets.QWidget):
         if "Visual" in self.settings.keys():
             user,pw,db = self.settings['Visual'].split(',')
             ic = self.settings['Instant_Client']
+            ic = os.path.join(program_location, self.settings['IC_Ver'])
             self.visual = Visual(self,user, pw , db,ic)
         else:
             self.visual = None
@@ -316,6 +318,8 @@ class Notifier(QtWidgets.QWidget):
         message = f"<p>{doc_id} has been rejected to the author by {from_user}! All Signatures have been removed and the ECN approval will start from the beginning once the ECN is released again. See comment below.</p><p>Comment - {from_user}: {msg}</p>"
         #print(f"send email to these addresses: {receivers} notifying ecn rejection")
         #print(message)
+        comments = self.generateCommenthistory(doc_id,"Desc")
+        message +=comments
         attach = []
         attach.append(os.path.join(program_location,doc_id+'.ecnx'))
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
@@ -331,6 +335,8 @@ class Notifier(QtWidgets.QWidget):
         message = f"<p>{doc_id} has been rejected to : {users[0]} by {from_user}. Signatures for the following users have also been removed: {users}.See comment below.</p><p>Comment: {msg}</p>"
         #print(f"send email to these addresses: {receivers} notifying ecn completion")
         #print(message)
+        comments = self.generateCommenthistory(doc_id,"Desc")
+        message +=comments
         attach = []
         attach.append(os.path.join(program_location,doc_id+'.ecnx'))
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
@@ -355,7 +361,9 @@ class Notifier(QtWidgets.QWidget):
                 receivers.append(self.userList[result[0]])
             
         from_user = self.emailNameList[self.userList[from_user]]
-        message = f"<p>a comment has been added to {doc_id} by {from_user}! See comment below.</p><p>Comment - {from_user}: {msg}</p>"
+        message = f"<p>a comment has been added to {doc_id}! See comment history below.</p>"
+        comments = self.generateCommenthistory(doc_id,"Desc")
+        message +=comments
         #print(f"send email to these addresses: {receivers} notifying ecn comment")
         #print(message)
         attach = []
@@ -554,14 +562,16 @@ class Notifier(QtWidgets.QWidget):
                     #print(ecnx, filename)
                     payload.add_header('Content-Disposition','attachment',filename = os.path.basename(file))
                     msg.attach(payload)
-                server = smtplib.SMTP_SSL(self.settings["SMTP2"],self.settings["SMTP_Port2"])
+                context = ssl.SSLContext(ssl.PROTOCOL_TLS)
+                server = smtplib.SMTP(self.settings["SMTP2"],self.settings["SMTP_Port2"])
                 server.ehlo()
+                server.starttls(context=context)
                 server.login(self.settings["From_Address2"],self.settings["Mail_Pass"])
                 server.sendmail(self.settings["From_Address2"], receivers, msg.as_string())
-                imap = imaplib.IMAP4_SSL(self.settings["IMAP"],self.settings["IMAP_Port"])
-                imap.login(self.settings["From_Address2"],self.settings["Mail_Pass"])
-                imap.append("INBOX.Sent","\\Seen",imaplib.Time2Internaldate(time.time()),msg.as_string().encode('utf8'))
-                imap.logout()
+                # imap = imaplib.IMAP4_SSL(self.settings["IMAP"],self.settings["IMAP_Port"])
+                # imap.login(self.settings["From_Address2"],self.settings["Mail_Pass"])
+                # imap.append("INBOX.Sent","\\Seen",imaplib.Time2Internaldate(time.time()),msg.as_string().encode('utf8'))
+                # imap.logout()
                 self.log_text.append(f"Successfully sent email to {receivers}")
         except Exception as e:
             print(e)
@@ -616,7 +626,9 @@ class Notifier(QtWidgets.QWidget):
                         text += f"<li>Inspection Req.: {result['INSPEC']}</li>"
                         text += f"<li>Mfg.: {result['MFG']}</li>"
                         text += f"<li>Mfg.#: {result['MFG_PART']}</li>"
+                        text += f"<li>Reference: {result['REFERENCE']}</li>"
                         text += f"<li>Replacing: {result['REPLACING']}</li>"
+                        text += f"<li>Disposition Old: {result['DISPOSITION_OLD']}</li>"
                         text += "</ul>"
                         parts += text
                 
@@ -791,6 +803,19 @@ class Notifier(QtWidgets.QWidget):
             html = t.substitute(REQID=req_id,Title=title,AUTHOR=author,DOCID=doc_id,PRJID=project_id,ORDERSTATUS=status,VISUALSTATUS=visual_status,BUYER=assigned_buyer,TOTALCOST=total_cost,DETAILS=requisition_details,REQLINE=req_lines,Signature=signature)
 
             return html
+        
+    def generateCommenthistory(self,doc_id,sorting):
+        self.cursor.execute(f"SELECT * from COMMENTS where DOC_ID='{doc_id}' Order By COMM_DATE {sorting}")
+        results = self.cursor.fetchall()
+        comments = ""
+        for result in results:
+            if result[5]=="User Comment":
+                style = "background-color:#CAFFBF; margin:5px; padding: 5px"
+            else:
+                style = "background-color:#FFADAD; margin:5px; padding: 5px"
+            comments+=f'<div style="{style}"><p">{self.userList[result[2]]} [{result[3]}] : {result[4]}</p></div>'
+            
+        return comments 
         
     def exportPDF(self,doc_id,filepath,doc_type):
         try:
