@@ -40,7 +40,7 @@ class Manager(QtWidgets.QWidget):
     def __init__(self,doc = None):
         super(Manager, self).__init__()
         self.window_id = "Main_Window"
-        self.clientVersion = "240725"
+        self.clientVersion = "240806"
         self.windowWidth = 1000
         self.windowHeight = 600
         self.setFixedSize(self.windowWidth,self.windowHeight)

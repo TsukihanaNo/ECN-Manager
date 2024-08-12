@@ -134,9 +134,9 @@ class ECNWindow(QtWidgets.QWidget):
         self.tabwidget.setTabVisible(3, False)
         #self.tabwidget.setTabVisible(5, False)
                 
-        self.tab_purch = PurchaserTab(self)
-        self.tab_planner = PlannerTab(self)
-        self.tab_shop = ShopTab(self)
+        # self.tab_purch = PurchaserTab(self)
+        # self.tab_planner = PlannerTab(self)
+        # self.tab_shop = ShopTab(self)
         
         mainlayout.addWidget(self.toolbar)
         mainlayout.addWidget(self.tabwidget)
@@ -371,6 +371,7 @@ class ECNWindow(QtWidgets.QWidget):
         #inserting to ECN table
         try:
             doc_type = self.tab_ecn.combo_type.currentText()
+            doc_reason = self.tab_ecn.combo_reason.currentText()
             author = self.tab_ecn.line_author.text()
             requestor = self.tab_ecn.box_requestor.currentText()
             status = 'Draft'
@@ -380,8 +381,8 @@ class ECNWindow(QtWidgets.QWidget):
             modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             dept = self.tab_ecn.combo_dept.currentText()
 
-            data = (self.doc_id,dept,doc_type,author,requestor,status,title,reason,summary,modifieddate)
-            self.cursor.execute("INSERT INTO DOCUMENT(DOC_ID,DEPARTMENT,DOC_TYPE,AUTHOR,REQUESTOR,STATUS,DOC_TITLE,DOC_REASON,DOC_SUMMARY,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?,?,?)",(data))
+            data = (self.doc_id,dept,doc_type,doc_reason,author,requestor,status,title,reason,summary,modifieddate)
+            self.cursor.execute("INSERT INTO DOCUMENT(DOC_ID,DEPARTMENT,DOC_TYPE,DOC_REASON_CODE,AUTHOR,REQUESTOR,STATUS,DOC_TITLE,DOC_REASON,DOC_SUMMARY,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?,?,?,?)",(data))
             self.db.commit()
             
             if self.tab_parts.rowCount()>0:
@@ -534,16 +535,17 @@ class ECNWindow(QtWidgets.QWidget):
     def updateData(self):
         try:
             doc_type = self.tab_ecn.combo_type.currentText()
+            doc_reason = self.tab_ecn.combo_reason.currentText()
             dept = self.tab_ecn.combo_dept.currentText()
             requestor = self.tab_ecn.box_requestor.currentText()
             title = self.tab_ecn.line_ecntitle.text()
             reason =self.tab_ecn.text_reason.toHtml()
             summary = self.tab_ecn.text_summary.toHtml()
             modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            data = (dept,doc_type,requestor,title,reason,summary,modifieddate,self.doc_id)
+            data = (dept,doc_type,doc_reason,requestor,title,reason,summary,modifieddate,self.doc_id)
 
             #data = (self.combo_type.currentText(),self.box_requestor.text(),self.date_request.date().toString("yyyy-MM-dd"),'Unassigned',self.line_ecntitle.text(),self.text_detail.toPlainText(),self.line_id.text())
-            self.cursor.execute("UPDATE DOCUMENT SET DEPARTMENT = ?, DOC_TYPE = ?, REQUESTOR = ?, DOC_TITLE = ?, DOC_REASON = ?, DOC_SUMMARY = ?, LAST_MODIFIED = ? WHERE DOC_ID = ?",(data))
+            self.cursor.execute("UPDATE DOCUMENT SET DEPARTMENT = ?, DOC_TYPE = ?, DOC_REASON_CODE = ?, REQUESTOR = ?, DOC_TITLE = ?, DOC_REASON = ?, DOC_SUMMARY = ?, LAST_MODIFIED = ? WHERE DOC_ID = ?",(data))
             self.db.commit()
             
             if self.tab_parts.rowCount()>0:
@@ -576,6 +578,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.tab_ecn.line_id.setText(self.doc_data['DOC_ID'])
         #self.tab_ecn.combo_type.setCurrentIndex(self.typeindex[results['ECN_TYPE']])
         self.tab_ecn.combo_type.setCurrentText(self.doc_data['DOC_TYPE'])
+        self.tab_ecn.combo_reason.setCurrentText(self.doc_data['DOC_REASON_CODE'])
         self.tab_ecn.line_ecntitle.setText(self.doc_data['DOC_TITLE'])
         self.tab_ecn.text_reason.setHtml(self.doc_data['DOC_REASON'])
         self.tab_ecn.text_summary.setHtml(self.doc_data['DOC_SUMMARY'])
@@ -886,6 +889,9 @@ class ECNWindow(QtWidgets.QWidget):
         if self.checkSigNotiDuplicate():
             self.dispMsg("Error: Duplicate user found in Signature and Notifications. Please remove the duplicate before trying again.")
             return False
+        if not self.tab_ecn.checkFields():
+            self.dispMsg("Error: Empty fields in header. Please set them and try again")
+            return False
         return True
     
     def notificationSave(self):
@@ -910,6 +916,9 @@ class ECNWindow(QtWidgets.QWidget):
                     if self.tab_signature.rowCount()>0 and self.tab_ecn.line_status.text()!="Out For Approval":
                         self.button_release.setDisabled(False)
                     self.button_cancel.setDisabled(False)
+                ecn_folder = os.path.join(self.settings["ECN_Path"],self.tab_ecn.line_id.text())
+                if not os.path.exists(ecn_folder):
+                    os.mkdir(ecn_folder)
         else:
             if self.checkAllFields():
                 self.updateData()

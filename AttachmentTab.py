@@ -1,6 +1,7 @@
 from PySide6 import QtGui, QtCore, QtWidgets
 from pathlib import Path
-import os, sys
+import os, sys, shutil
+from FileTransferWidget import *
 
 if getattr(sys, 'frozen', False):
     # frozen
@@ -10,6 +11,8 @@ else:
     program_location = os.path.dirname(os.path.realpath(__file__))
 
 supported_type = ["doc","docx","dwg","stl","slddrw","sldprt","stp","sldasm","ppt","pptx",""]
+maxFileLoad = 1024*15000  #restrict max size limit to 15mb 
+blockSize = 1024 * 5000   #will read 5mb at a time
 
 class AttachmentTab(QtWidgets.QWidget):
     def __init__(self, parent = None):
@@ -84,32 +87,55 @@ class AttachmentTab(QtWidgets.QWidget):
 
 
     def dropEvent(self, e):
-        # print(self.settings["Buffer_Path"])
-        urlList = e.mimeData().urls()
-        cfiles=[]
-        for item in urlList:
-            url = item.toLocalFile()
-            url_path = str(Path(url).resolve())
-            if str(Path(url).resolve())[:2] ==r"\\":
-            # if self.settings["Buffer_Path"] in url_path:
-                if str(Path(url).resolve()) not in self.files:
-                    file_info = QtCore.QFileInfo(url)
-                    icon_provider=QtGui.QAbstractFileIconProvider()
-                    icon = icon_provider.icon(file_info)
-                    self.model.add_attachment(url[url.rfind("/")+1:], url_path,icon)
-                    self.files.append(url_path)
-            else:
-                cfiles.append(url_path)
-        if len(cfiles)>0:
-            self.dispMsg(f"The following files were not accepted as they reside on your local machine and is not accessible by other users:{cfiles}")
-            # buffer_path = self.settings["Buffer_Path"]
-            # self.dispMsg(f"The following files were not accepted as they reside out of the defined file buffer Location ({buffer_path}) : {cfiles}")
+        ecn_folder = os.path.join(self.settings["ECN_Path"],self.parent.tab_ecn.line_id.text())
+        if os.path.exists(ecn_folder):
+            self.fileTransferWidget = FileTransferWidget(self)
+            self.fileTransferWidget.setClose(False)
+            # print(self.settings["Buffer_Path"])
+            urlList = e.mimeData().urls()
+            cfiles=[]
+            for item in urlList:
+                url = item.toLocalFile()
+                url_path = str(Path(url).resolve())
+                if os.path.isdir(url_path):
+                # if self.settings["Buffer_Path"] in url_path:
+                    if str(Path(url).resolve()) not in self.files:
+                        file_info = QtCore.QFileInfo(url)
+                        icon_provider=QtGui.QAbstractFileIconProvider()
+                        icon = icon_provider.icon(file_info)
+                        dst = os.path.join(self.settings["ECN_Path"],self.parent.tab_ecn.line_id.text(),url[url.rfind("/")+1:])
+                        self.model.add_attachment(url[url.rfind("/")+1:], dst,icon)
+                        self.files.append(dst)
+                        # self.model.add_attachment(url[url.rfind("/")+1:], url_path,icon)
+                        # self.files.append(url_path)
+                        # shutil.copytree(url_path,dst)
+                        file_count = self.getFileCount(url_path)
+                        self.current_count = 0 
+                        os.mkdir(dst)
+                        self.fileTransferWidget.label_directory.setText("Current Item:" + url_path)
+                        self.fullDirCopy(url_path,dst,file_count)
+                        # QtWidgets.QApplication.processEvents()
+                else:
+                    cfiles.append(url_path)
+            self.fileTransferWidget.label_directory.setText("Completed! Please close this window.")
+            self.fileTransferWidget.label_count.setText("All files have been uploaded.")
+            self.fileTransferWidget.setClose(True)
+            self.parent.save()
+            if len(cfiles)>0:
+                self.dispMsg(f"The following files were not accepted as they are not directories:{cfiles}")
+                # buffer_path = self.settings["Buffer_Path"]
+                # self.dispMsg(f"The following files were not accepted as they reside out of the defined file buffer Location ({buffer_path}) : {cfiles}")
+        else:
+            self.dispMsg("ECN has not been saved yet. Please save ECN and try again.")
 
     def dragEnterEvent(self,e):
         if e.mimeData().hasUrls():
             e.accept()
         else:
             e.ignore()
+            
+    def upload(self):
+        pass
             
     def openFile(self):
         index = self.attachments.currentIndex()
@@ -127,23 +153,47 @@ class AttachmentTab(QtWidgets.QWidget):
             print(e)
         
     def addFiles(self):
-        dialog = QtWidgets.QFileDialog(self)
-        dialog.setFileMode(QtWidgets.QFileDialog.ExistingFiles)
-        cfiles = []
-        if dialog.exec():
-            fileNames = dialog.selectedFiles()
-            for url in fileNames:
-                if str(Path(url).resolve())[:2] ==r"\\":
-                    if str(Path(url).resolve()) not in self.files:
-                        file_info = QtCore.QFileInfo(url)
-                        icon_provider=QtGui.QAbstractFileIconProvider()
-                        icon = icon_provider.icon(file_info)
-                        self.model.add_attachment(url[url.rfind("/")+1:], str(Path(url).resolve()),icon)
-                        self.files.append(str(Path(url).resolve()))
-                else:
-                    cfiles.append(str(Path(url).resolve()))
-            if len(cfiles)>0:
-                self.dispMsg(f"The following were files not accepted as they reside on your local machine and is not accessible by other users:{cfiles}")
+        ecn_folder = os.path.join(self.settings["ECN_Path"],self.parent.tab_ecn.line_id.text())
+        if os.path.exists(ecn_folder):
+            dialog = QtWidgets.QFileDialog(self)
+            dialog.setFileMode(QtWidgets.QFileDialog.Directory)
+            dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly,True)
+            cfiles = []
+            if dialog.exec():
+                fileNames = dialog.selectedFiles()
+                self.fileTransferWidget = FileTransferWidget(self)
+                self.fileTransferWidget.setClose(False)
+                for url in fileNames:
+                    if os.path.isdir(url):
+                    # if self.settings["Buffer_Path"] in url_path:
+                        if str(Path(url).resolve()) not in self.files:
+                            file_info = QtCore.QFileInfo(url)
+                            icon_provider=QtGui.QAbstractFileIconProvider()
+                            icon = icon_provider.icon(file_info)
+                            dst = os.path.join(self.settings["ECN_Path"],self.parent.tab_ecn.line_id.text(),url[url.rfind("/")+1:])
+                            self.model.add_attachment(url[url.rfind("/")+1:], dst,icon)
+                            self.files.append(dst)
+                            # self.model.add_attachment(url[url.rfind("/")+1:], url_path,icon)
+                            # self.files.append(url_path)
+                            # shutil.copytree(url_path,dst)
+                            file_count = self.getFileCount(url)
+                            self.current_count = 0 
+                            os.mkdir(dst)
+                            self.fileTransferWidget.label_directory.setText("Current Item:" + url)
+                            self.fullDirCopy(url,dst,file_count)
+                            # QtWidgets.QApplication.processEvents()
+                    else:
+                        cfiles.append(url)
+                self.fileTransferWidget.label_directory.setText("Completed! Please close this window.")
+                self.fileTransferWidget.label_count.setText("All files have been uploaded.")
+                self.fileTransferWidget.setClose(True)
+                self.parent.save()
+                if len(cfiles)>0:
+                    self.dispMsg(f"The following files were not accepted as they are not directories:{cfiles}")
+                    # buffer_path = self.settings["Buffer_Path"]
+                    # self.dispMsg(f"The following files were not accepted as they reside out of the defined file buffer Location ({buffer_path}) : {cfiles}")
+        else:
+            self.dispMsg("ECN has not been saved yet. Please save ECN and try again.")
                 
                 
     def removeRow(self):
@@ -154,8 +204,10 @@ class AttachmentTab(QtWidgets.QWidget):
             #print(self.table.item(row, 1).text())
             #print(item.data(QtCore.Qt.DisplayRole)[1])
             #print(self.files)
+            shutil.rmtree(item.data(QtCore.Qt.DisplayRole)[1])
             self.files.remove(item.data(QtCore.Qt.DisplayRole)[1])
             self.model.removeRow(row)
+        self.parent.save()
             
     def rowCount(self):
         return self.model.rowCount(self.attachments)
@@ -181,6 +233,82 @@ class AttachmentTab(QtWidgets.QWidget):
             icon = icon_provider.icon(file_info)
             self.model.add_attachment(result['FILENAME'], result['FILEPATH'],icon)
             self.files.append(result['FILEPATH'])
+            
+    def copyFile(self,pathFrom,pathTo,maxFileLoad = maxFileLoad):
+        """
+        copy one file pathFrom to pathTo, byte for byte
+        uses binary file modes
+        """
+        chunksize = 0
+        if os.path.isfile(pathTo) == False:
+            if os.path.getsize(pathFrom)<=maxFileLoad:
+                #if file is less than 15mb
+                #read the entire image file into memory
+                fileFrom = open(pathFrom,'rb')
+                bytesFrom = fileFrom.read()
+                #write all bytes into new file
+                bytesTo = open(pathTo, 'wb')
+                bytesTo.write(bytesFrom)
+                #manual closure of file objects
+                fileFrom.close()
+                bytesTo.close()
+                QtWidgets.QApplication.processEvents()
+            else:
+                #if file is bigger than 15mb
+                fileFrom = open(pathFrom,'rb')
+                fileTo = open(pathTo,'wb')
+                # totalsize = os.path.getsize(pathFrom)
+                while True:
+                    QtWidgets.QApplication.processEvents()
+                    #reads the data from the original file 5mb at a time into the memory
+                    bytesFrom = fileFrom.read(blockSize)
+                    #when there is no more data comming in from the read(), break from while loop
+                    if not bytesFrom: break
+                    #copy the 5mb read into memory into the new file
+                    # print ('Nom nom nom...digesting byte chunks... ',100*(float(chunksize)/totalsize),'%')
+                    chunksize += blockSize
+                    fileTo.write(bytesFrom)
+                # print ('Digesting complete... 100.0%')
+                #manual closure of file objects
+                fileFrom.close()
+                fileTo.close()
+        else:
+            pass
+            # dupDecision(pathFrom)
+            
+    def fullDirCopy(self,dirFrom,dirTo,file_count):
+        for filename in os.listdir(dirFrom):
+            pathFrom = os.path.join(dirFrom,filename)
+            pathTo = os.path.join(dirTo,filename)
+            if not os.path.isdir(pathFrom): #if the tested file is not a directory
+                try:
+                    # print ('Copying: ',pathFrom,' to ',pathTo)
+                    self.current_count+=1
+                    self.copyFile(pathFrom,pathTo)
+                    self.fileTransferWidget.label_count.setText(f"Uploading {self.current_count} / {file_count}")
+                except:
+                    self.fileTransferWidget.text_error.append('Error copying: ', pathFrom,' to ',pathTo,'--skipped')
+                    self.fileTransferWidget.text_error.append(sys.exc_info()[0],sys.exc_info()[1])
+            else:
+                try:
+                    if not os.path.exists(pathTo):
+                        os.mkdir(pathTo)
+                        self.fullDirCopy(pathFrom,pathTo,file_count)
+                except:
+                    self.fileTransferWidget.text_error.append('Error Diving into directory ',pathFrom)
+                    self.fileTransferWidget.text_error.append(sys.exc_info()[0],sys.exc_info()[1])
+    
+    def getFileCount(self,dirFrom):
+        fileCount = 0
+        for filename in os.listdir(dirFrom):
+            pathFrom = os.path.join(dirFrom,filename)
+            # pathTo = os.path.join(dirTo,filename)
+            if not os.path.isdir(pathFrom): #if the tested file is not a directory
+                fileCount +=1
+                # print(pathFrom)
+            else:
+                fileCount += self.getFileCount(pathFrom)
+        return (fileCount)
             
     def resizeEvent(self, e):
         self.model.layoutChanged.emit()

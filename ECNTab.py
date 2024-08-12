@@ -22,6 +22,7 @@ class ECNTab(QtWidgets.QWidget):
 
         self.label_id = QtWidgets.QLabel("ECN ID:")
         self.label_type = QtWidgets.QLabel("ECN Type:")
+        self.label_reason = QtWidgets.QLabel("ECN Reason:")
         self.label_author = QtWidgets.QLabel("Author:")
         self.label_requestor = QtWidgets.QLabel("Requested By:")
         self.label_title = QtWidgets.QLabel("ECN Title:")
@@ -35,10 +36,17 @@ class ECNTab(QtWidgets.QWidget):
         self.line_id.setFixedWidth(130)
         self.combo_type = QtWidgets.QComboBox(self)
         ecn_types = self.parent.settings["ECN_Types"].split(",")
+        ecn_types.append("")
         ecn_types.sort()
         self.combo_type.addItems(ecn_types)
+        self.combo_reason = QtWidgets.QComboBox(self)
+        ecn_reasons = self.parent.settings["ECN_Reasons"].split(",")
+        ecn_reasons.append("")
+        ecn_reasons.sort()
+        self.combo_reason.addItems(ecn_reasons)
         self.combo_dept = QtWidgets.QComboBox(self)
         depts = self.parent.settings["Dept"].split(",")
+        depts.append("")
         depts.sort()
         self.combo_dept.addItems(depts)
         self.line_status = QtWidgets.QLineEdit(self)
@@ -54,6 +62,7 @@ class ECNTab(QtWidgets.QWidget):
         self.box_requestor.completer().setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
         self.box_requestor.setFixedWidth(150)
         self.box_requestor.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
+        self.box_requestor.addItem("")
         self.box_requestor.addItems(self.userList) 
         self.line_ecntitle = QtWidgets.QLineEdit(self)
         #self.edit_date = QtWidgets.QDateEdit(self,calendarPopup=True)
@@ -85,10 +94,12 @@ class ECNTab(QtWidgets.QWidget):
         headersubLayout.addWidget(self.line_author,1,2)
         headersubLayout.addWidget(self.label_requestor,0,3)
         headersubLayout.addWidget(self.box_requestor,1,3)
-        headersubLayout.addWidget(self.label_type,0,4)
-        headersubLayout.addWidget(self.combo_type,1,4)
-        headersubLayout.addWidget(self.label_dept,0,5)
-        headersubLayout.addWidget(self.combo_dept,1,5)
+        headersubLayout.addWidget(self.label_type,2,0)
+        headersubLayout.addWidget(self.combo_type,3,0)
+        headersubLayout.addWidget(self.label_reason,2,1)
+        headersubLayout.addWidget(self.combo_reason,3,1)
+        headersubLayout.addWidget(self.label_dept,2,2)
+        headersubLayout.addWidget(self.combo_dept,3,2)
         
         # headersubLayout2.addWidget(self.label_status)
         # headersubLayout2.addWidget(self.line_status)
@@ -154,4 +165,15 @@ class ECNTab(QtWidgets.QWidget):
             self.userList.append(result[0])
         self.userList.sort()
         self.userList.remove("admin")
+        
+    def checkFields(self):
+        if self.combo_dept.currentText()==" ":
+            return False
+        if self.combo_reason.currentText()==" ":
+            return False
+        if self.combo_type.currentText()==" ":
+            return False
+        if len(self.line_ecntitle.text())<3:
+            return False
+        return True
 

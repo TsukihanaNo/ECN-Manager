@@ -10,5 +10,6 @@ db_inquiries.py
 *.csv
 *.xlsx
 instantclient_19_13
+TestFolder/
 
 .vscode
