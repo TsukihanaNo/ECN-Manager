@@ -8,7 +8,7 @@ from string import Template
 from WebView import *
 from Visual import *
 import sqlite3
-import os
+import os, shutil
 import sys
 import smtplib
 import ssl
@@ -393,6 +393,8 @@ class Notifier(QtWidgets.QWidget):
             os.mkdir(filepath)
             self.exportPDF(doc_id,filepath ,"PCN")
             self.exportHTMLPCNWeb(doc_id, filepath)
+        if doc_id[:3]=="ECN":
+            self.releaseFiles(doc_id)
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
         self.sendEmail(doc_id,receivers, message,"Completion",attach)
         self.log_text.append(f"-Completion Email sent for {doc_id} to {receivers}")
@@ -854,6 +856,20 @@ class Notifier(QtWidgets.QWidget):
         #return elapsed.days
         #print(elapsed)
         return elapsed
+    
+    def releaseFiles(self,doc_id):
+        self.cursor.execute(f"SELECT FILENAME,FILEPATH FROM ATTACHMENTS WHERE DOC_ID='{doc_id}'")
+        results = self.cursor.fetchall()
+        for result in results:
+            dst = os.path.join(self.settings["Released_Path"],result[0])
+            self.log_text.append(f"copying -- {result[1]} to {dst}")
+            if os.path.exists(dst):
+                self.log_text.append(f"destination folder found, starting removal")
+                shutil.rmtree(dst)
+                QtWidgets.QApplication.processEvents()
+                self.log_text.append(f"destination folder removed, initiating copy")
+            shutil.copytree(result[1],dst)
+            QtWidgets.QApplication.processEvents()
     
     def checkForReminder(self):
         self.cursor.execute("SELECT DOC_ID, LAST_NOTIFIED, FIRST_RELEASE, LAST_MODIFIED FROM DOCUMENT WHERE STATUS !='Completed' and STATUS!='Draft' and STATUS!='Approved'and STAGE!='0'")

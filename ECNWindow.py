@@ -649,6 +649,8 @@ class ECNWindow(QtWidgets.QWidget):
                 self.cursor.execute(f"DELETE FROM ATTACHMENTS where DOC_ID='{doc_id}'")
                 self.cursor.execute(f"DELETE FROM CHANGELOG where DOC_ID='{doc_id}'")
                 self.db.commit()
+                # self.tab_attach.removeAllAttachments()
+                shutil.rmtree(os.path.join(self.settings["ECN_Path"],doc_id))
                 self.dispMsg("ECN has been deleted")
                 self.parent.repopulateTable()
                 self.close()

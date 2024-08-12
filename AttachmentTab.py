@@ -208,6 +208,10 @@ class AttachmentTab(QtWidgets.QWidget):
             self.files.remove(item.data(QtCore.Qt.DisplayRole)[1])
             self.model.removeRow(row)
         self.parent.save()
+        
+    def removeAllAttachments(self):
+        for item in self.model.getAllFilePath():
+            shutil.rmtree(item[1])
             
     def rowCount(self):
         return self.model.rowCount(self.attachments)
@@ -385,6 +389,9 @@ class AttachmentModel(QtCore.QAbstractListModel):
 
     def rowCount(self, index):
         return len(self.attachments)
+    
+    def getAllFilePath(self):
+        return self.attachments
     
     def removeRow(self, row):
         del self.attachments[row]
