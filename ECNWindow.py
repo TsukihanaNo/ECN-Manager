@@ -650,7 +650,7 @@ class ECNWindow(QtWidgets.QWidget):
                 self.cursor.execute(f"DELETE FROM CHANGELOG where DOC_ID='{doc_id}'")
                 self.db.commit()
                 # self.tab_attach.removeAllAttachments()
-                shutil.rmtree(os.path.join(self.settings["ECN_Path"],doc_id))
+                shutil.rmtree(os.path.join(self.settings["ECN_Temp"],doc_id))
                 self.dispMsg("ECN has been deleted")
                 self.parent.repopulateTable()
                 self.close()
@@ -918,7 +918,7 @@ class ECNWindow(QtWidgets.QWidget):
                     if self.tab_signature.rowCount()>0 and self.tab_ecn.line_status.text()!="Out For Approval":
                         self.button_release.setDisabled(False)
                     self.button_cancel.setDisabled(False)
-                ecn_folder = os.path.join(self.settings["ECN_Path"],self.tab_ecn.line_id.text())
+                ecn_folder = os.path.join(self.settings["ECN_Temp"],self.tab_ecn.line_id.text())
                 if not os.path.exists(ecn_folder):
                     os.mkdir(ecn_folder)
         else:

@@ -395,6 +395,7 @@ class Notifier(QtWidgets.QWidget):
             self.exportHTMLPCNWeb(doc_id, filepath)
         if doc_id[:3]=="ECN":
             self.releaseFiles(doc_id)
+            self.archiveFiles(doc_id)
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
         self.sendEmail(doc_id,receivers, message,"Completion",attach)
         self.log_text.append(f"-Completion Email sent for {doc_id} to {receivers}")
@@ -861,7 +862,7 @@ class Notifier(QtWidgets.QWidget):
         self.cursor.execute(f"SELECT FILENAME,FILEPATH FROM ATTACHMENTS WHERE DOC_ID='{doc_id}'")
         results = self.cursor.fetchall()
         for result in results:
-            dst = os.path.join(self.settings["Released_Path"],result[0])
+            dst = os.path.join(self.settings["ECN_Released"],result[0])
             self.log_text.append(f"copying -- {result[1]} to {dst}")
             if os.path.exists(dst):
                 self.log_text.append(f"destination folder found, starting removal")
@@ -870,6 +871,13 @@ class Notifier(QtWidgets.QWidget):
                 self.log_text.append(f"destination folder removed, initiating copy")
             shutil.copytree(result[1],dst)
             QtWidgets.QApplication.processEvents()
+            
+    def archiveFiles(self,doc_id):
+        src = os.path.join(self.settings["ECN_Temp"],doc_id)
+        dst = os.path.join(self.settings["ECN_Archive"],doc_id)
+        self.log_text.append(f"Moving -- {src} to {dst}")
+        shutil.move(src,dst)
+        QtWidgets.QApplication.processEvents()
     
     def checkForReminder(self):
         self.cursor.execute("SELECT DOC_ID, LAST_NOTIFIED, FIRST_RELEASE, LAST_MODIFIED FROM DOCUMENT WHERE STATUS !='Completed' and STATUS!='Draft' and STATUS!='Approved'and STAGE!='0'")

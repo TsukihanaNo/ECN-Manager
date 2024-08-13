@@ -87,7 +87,7 @@ class AttachmentTab(QtWidgets.QWidget):
 
 
     def dropEvent(self, e):
-        ecn_folder = os.path.join(self.settings["ECN_Path"],self.parent.tab_ecn.line_id.text())
+        ecn_folder = os.path.join(self.settings["ECN_Temp"],self.parent.tab_ecn.line_id.text())
         if os.path.exists(ecn_folder):
             self.fileTransferWidget = FileTransferWidget(self)
             self.fileTransferWidget.setClose(False)
@@ -103,7 +103,7 @@ class AttachmentTab(QtWidgets.QWidget):
                         file_info = QtCore.QFileInfo(url)
                         icon_provider=QtGui.QAbstractFileIconProvider()
                         icon = icon_provider.icon(file_info)
-                        dst = os.path.join(self.settings["ECN_Path"],self.parent.tab_ecn.line_id.text(),url[url.rfind("/")+1:])
+                        dst = os.path.join(self.settings["ECN_Temp"],self.parent.tab_ecn.line_id.text(),url[url.rfind("/")+1:])
                         self.model.add_attachment(url[url.rfind("/")+1:], dst,icon)
                         self.files.append(dst)
                         # self.model.add_attachment(url[url.rfind("/")+1:], url_path,icon)
@@ -153,7 +153,7 @@ class AttachmentTab(QtWidgets.QWidget):
             print(e)
         
     def addFiles(self):
-        ecn_folder = os.path.join(self.settings["ECN_Path"],self.parent.tab_ecn.line_id.text())
+        ecn_folder = os.path.join(self.settings["ECN_Temp"],self.parent.tab_ecn.line_id.text())
         if os.path.exists(ecn_folder):
             dialog = QtWidgets.QFileDialog(self)
             dialog.setFileMode(QtWidgets.QFileDialog.Directory)
@@ -170,7 +170,7 @@ class AttachmentTab(QtWidgets.QWidget):
                             file_info = QtCore.QFileInfo(url)
                             icon_provider=QtGui.QAbstractFileIconProvider()
                             icon = icon_provider.icon(file_info)
-                            dst = os.path.join(self.settings["ECN_Path"],self.parent.tab_ecn.line_id.text(),url[url.rfind("/")+1:])
+                            dst = os.path.join(self.settings["ECN_Temp"],self.parent.tab_ecn.line_id.text(),url[url.rfind("/")+1:])
                             self.model.add_attachment(url[url.rfind("/")+1:], dst,icon)
                             self.files.append(dst)
                             # self.model.add_attachment(url[url.rfind("/")+1:], url_path,icon)
