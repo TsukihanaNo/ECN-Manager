@@ -58,8 +58,8 @@ class MyQueueTab(QtWidgets.QWidget):
     def repopulateTable(self):
         self.table.clearContents()
         self.table.setRowCount(0)
-        #command = "Select ECN_ID from SIGNATURE where USER_ID ='" + self.user_info['user'] + "'"
-        self.cursor.execute(f"select DOC_ID from SIGNATURE where USER_ID='{self.user_info['user']}'")
+        #command = "Select ECN_ID from signatures where user_id ='" + self.user_info['user'] + "'"
+        self.cursor.execute(f"select doc_id from signatures where user_id='{self.user_info['user']}'")
         results = self.cursor.fetchall()
         doc_id = []
         for result in results:
@@ -67,15 +67,15 @@ class MyQueueTab(QtWidgets.QWidget):
         #print(ecn_id)
         rowcount=0
         for doc in doc_id:
-            command = f"Select * from DOCUMENT where DOC_ID ='{doc}' and STATUS='Out For Approval' and STAGE>={self.stage}"
+            command = f"Select * from document where doc_id ='{doc}' and status='Out For Approval' and stage>={self.stage}"
             self.cursor.execute(command)
             test = self.cursor.fetchall()
             for item in test:
                 self.table.insertRow(rowcount)
-                self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['DOC_ID']))
-                self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['DOC_TYPE']))
-                self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['DOC_TITLE']))
-                self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
-                self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
+                self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['doc_id']))
+                self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['doc_type']))
+                self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['doc_title']))
+                self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['status']))
+                self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['last_modified']))
                 rowcount+=1
 

@@ -694,12 +694,12 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 for x in range(item.childCount()):
                     # print(self.tasks.itemWidget(item.child(x),7).text())
                     data = (self.doc_id,task_id,item.child(x).text(7))
-                    self.cursor.execute(f"INSERT INTO TASK_LINK(PROJECT_ID, PARENT_TASK_ID, CHILD_TASK_ID) VALUES(?,?,?)",(data))
+                    self.cursor.execute(f"INSERT INTO TASK_LINK(PROJECT_ID, PARENT_TASK_ID, CHILD_TASK_ID) VALUES(%s,%s,%s)",(data))
             else:
                 task_type = "child"
             data = (self.doc_id,task_name,owner,start_date,end_date,status,duration,predecessors,task_id,task_type,milestone)
             # print(data)
-            self.cursor.execute(f"INSERT INTO PROJECT_TASKS(PROJECT_ID,TASK_NAME,ASSIGNED_TO,START_DATE,END_DATE,STATUS,DURATION,PREDECESSORS,TASK_ID,TYPE,MILESTONE) VALUES(?,?,?,?,?,?,?,?,?,?,?)",(data))
+            self.cursor.execute(f"INSERT INTO PROJECT_TASKS(PROJECT_ID,TASK_NAME,ASSIGNED_TO,START_DATE,END_DATE,STATUS,DURATION,PREDECESSORS,TASK_ID,TYPE,MILESTONE) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(data))
             iterator+=1
         self.db.commit()
     

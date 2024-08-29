@@ -131,7 +131,7 @@ class ProjectWindow(QtWidgets.QWidget):
         self.setLayout(mainlayout)
         
     def getMembers(self):
-        self.cursor.execute(f"Select * from PROJECT_MEMBERS where PROJECT_ID ='{self.doc_id}'")
+        self.cursor.execute(f"Select * from project_members where project_id ='{self.doc_id}'")
         results = self.cursor.fetchall()
         for result in results:
             self.members.append(result[1])
@@ -158,7 +158,7 @@ class ProjectWindow(QtWidgets.QWidget):
         self.members_window = ProjectMembers(self)
     
     def checkID(self):
-        self.cursor.execute(f"select DOC_ID from DOCUMENT where DOC_ID='{self.line_id.text()}'")
+        self.cursor.execute(f"select doc_id from document where doc_id='{self.line_id.text()}'")
         result = self.cursor.fetchone()
         if result is not None:
             return True
@@ -186,7 +186,7 @@ class ProjectWindow(QtWidgets.QWidget):
             first_released = modifieddate
             author = self.user_info['user']
             data = (self.doc_id,doc_type,status,title,author,modifieddate,first_released)
-            self.cursor.execute("INSERT INTO DOCUMENT(DOC_ID,DOC_TYPE,STATUS,DOC_TITLE,AUTHOR,LAST_MODIFIED,FIRST_RELEASE) VALUES(?,?,?,?,?,?,?)",(data))
+            self.cursor.execute("INSERT INTO document(doc_id,doc_type,status,doc_title,author,last_modified,first_release) VALUES(%s,%s,%s,%s,%s,%s,%s)",(data))
             self.db.commit()
             self.tab_parts.saveData()
             self.tab_schedule.saveData()
@@ -203,7 +203,7 @@ class ProjectWindow(QtWidgets.QWidget):
             first_released = modifieddate
             author = self.user_info['user']
             data = (self.doc_id,doc_type,status,title,author,modifieddate,first_released)
-            # self.cursor.execute("INSERT INTO DOCUMENT(DOC_ID,DOC_TYPE,STATUS,DOC_TITLE,AUTHOR,LAST_MODIFIED,FIRST_RELEASE) VALUES(?,?,?,?,?,?,?)",(data))
+            # self.cursor.execute("INSERT INTO document(doc_id,doc_type,status,doc_title,author,last_modified,first_release) VALUES(%s,%s,%s,%s,%s,%s,%s)",(data))
             # self.db.commit()
             self.tab_parts.saveData()
             self.tab_schedule.saveData()
@@ -212,30 +212,30 @@ class ProjectWindow(QtWidgets.QWidget):
             self.dispMsg(f"Error occured during data insertion (insertData)!\n Error: {e}")
     
     def loadData(self):
-        self.cursor.execute(f"select * from DOCUMENT where DOC_ID='{self.doc_id}'")
+        self.cursor.execute(f"select * from document where doc_id='{self.doc_id}'")
         result = self.cursor.fetchone()
-        self.line_id.setText(result['DOC_ID'])
-        self.line_title.setText(result["DOC_TITLE"])
-        self.line_status.setText(result["STATUS"])
-        self.line_author.setText(result['AUTHOR'])
+        self.line_id.setText(result['doc_id'])
+        self.line_title.setText(result["doc_title"])
+        self.line_status.setText(result["status"])
+        self.line_author.setText(result['author'])
         self.tab_purch_req.repopulateTable()
         self.tab_parts.loadData()
         self.tab_schedule.loadData()
         
     def getAuthor(self):
-        self.cursor.execute(f"select author from DOCUMENT where DOC_ID='{self.doc_id}'")
+        self.cursor.execute(f"select author from document where doc_id='{self.doc_id}'")
         result = self.cursor.fetchone()
         return result[0]
         
     # def addParts(self):
     #     # part_id, desc,fab_type,status,vendor, vendor_part_id,tooling_po, tooling_cost,cost_per,notes,part_po,ecn, qty_on_hand, qty_incoming
     #     try:
-    #         self.cursor.execute("DELETE FROM PARTS WHERE DOC_ID = '" + self.doc_id + "'")
+    #         self.cursor.execute("DELETE FROM PARTS WHERE doc_id = '" + self.doc_id + "'")
     #         self.db.commit()
     #         for row in range(self.tab_parts.rowCount()):
     #             part_data = self.tab_parts.model.get_part_data(row)
     #             data = (self.doc_id, part, desc,ptype,disposition,mfg,mfg_part,rep,ref,insp)
-    #             self.cursor.execute("INSERT INTO PROJECT_PARTS(DOC_ID,PART_ID,DESC,TYPE,DISPOSITION,MFG,MFG_PART,REPLACING,REFERENCE,INSPEC) VALUES(?,?,?,?,?,?,?,?,?,?)",(data))
+    #             self.cursor.execute("INSERT INTO PROJECT_PARTS(doc_id,PART_ID,DESC,TYPE,DISPOSITION,MFG,MFG_PART,REPLACING,REFERENCE,INSPEC) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(data))
                 
     #         self.db.commit()
     #         #self.tab_parts.setStatusColor()

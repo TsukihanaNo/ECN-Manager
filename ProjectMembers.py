@@ -89,7 +89,7 @@ class ProjectMembers(QtWidgets.QWidget):
         for row in range(self.rowCount()):
             data = (self.doc_id,self.model.get_user(row),self.model.get_name(row),self.model.get_job_title(row))
             self.parent.members.append(self.model.get_user(row))
-            self.cursor.execute("INSERT INTO PROJECT_MEMBERS(PROJECT_ID,USER_ID,USER_NAME,JOB_TITLE) VALUES(?,?,?,?)",(data))
+            self.cursor.execute("INSERT INTO PROJECT_MEMBERS(PROJECT_ID,USER_ID,USER_NAME,JOB_TITLE) VALUES(%s,%s,%s,%s)",(data))
         self.db.commit
         self.parent.members.sort()
         self.dispMsg("Saved!")

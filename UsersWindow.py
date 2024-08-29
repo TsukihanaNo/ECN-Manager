@@ -77,7 +77,7 @@ class UsersWindow(QtWidgets.QWidget):
         button_layout.addWidget(self.button_add)
         button_layout.addWidget(self.button_remove)
         button_layout.addWidget(self.button_edit)
-        #USER(USER_ID TEXT, PASSWORD TEXT, NAME TEXT, ROLE TEXT, JOB_TITLE TEXT, DEPT TEXT, STATUS TEXT, EMAIL TEXT)
+        #user_id(user_id TEXT, PASSWORD TEXT, name TEXT, ROLE TEXT, job_title TEXT, DEPT TEXT, status TEXT, email TEXT)
         titles = ['User ID','Name','Job Title','Status','Email','Signed In']
         self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
@@ -114,18 +114,18 @@ class UsersWindow(QtWidgets.QWidget):
     
     def repopulateTable(self):
         self.table.clearContents()
-        command = "Select * from USER"
+        command = "Select * from users"
         self.cursor.execute(command)
         results = self.cursor.fetchall()
         self.table.setRowCount(len(results))
         rowcount=0
         for result in results:
-            self.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['USER_ID']))
-            self.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['NAME']))
-            self.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['JOB_TITLE']))
-            self.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['STATUS']))
-            self.table.setItem(rowcount, 4, QtWidgets.QTableWidgetItem(result['EMAIL']))
-            self.table.setItem(rowcount,5,QtWidgets.QTableWidgetItem(result['SIGNED_IN']))
+            self.table.setItem(rowcount, 0, QtWidgets.QTableWidgetItem(result['user_id']))
+            self.table.setItem(rowcount, 1, QtWidgets.QTableWidgetItem(result['name']))
+            self.table.setItem(rowcount, 2, QtWidgets.QTableWidgetItem(result['job_title']))
+            self.table.setItem(rowcount, 3, QtWidgets.QTableWidgetItem(result['status']))
+            self.table.setItem(rowcount, 4, QtWidgets.QTableWidgetItem(result['email']))
+            self.table.setItem(rowcount,5,QtWidgets.QTableWidgetItem(result['signed_in']))
             rowcount+=1
         self.table.sortItems(self.sorting[0],self.sorting[1])
             
@@ -140,7 +140,7 @@ class UsersWindow(QtWidgets.QWidget):
             user = self.table.item(row,0).text()
             status = self.table.item(row, 4).text()
             if self.checkRemovable(user, status):
-                self.cursor.execute(f"DELETE from USER where USER_ID='{user}'")
+                self.cursor.execute(f"DELETE from users where user_id='{user}'")
                 self.db.commit()
                 self.dispMsg(f"{user} has been removed.")
                 self.repopulateTable()
@@ -153,15 +153,15 @@ class UsersWindow(QtWidgets.QWidget):
     def checkRemovable(self,user,status):
         if status=="Active":
             return False
-        self.cursor.execute(f"Select * from DOCUMENT where AUTHOR='{user}'")
+        self.cursor.execute(f"Select * from document where author='{user}'")
         result = self.cursor.fetchone()
         if result is not None:
             return False
-        self.cursor.execute(f"Select * from SIGNATURE where USER_ID='{user}'")
+        self.cursor.execute(f"Select * from signatures where user_id='{user}'")
         result = self.cursor.fetchone()
         if result is not None:
             return False
-        self.cursor.execute(f"Select * from COMMENTS where USER='{user}'")
+        self.cursor.execute(f"Select * from comments where user_id='{user}'")
         result = self.cursor.fetchone()
         if result is not None:
             return False

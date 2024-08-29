@@ -54,14 +54,14 @@ class CompletedTab(QtWidgets.QWidget):
     def repopulateTable(self):
         self.table.clearContents()
         rowcount=0
-        command = "Select * from DOCUMENT where STATUS='Completed'"
+        command = "Select * from document where status='Completed'"
         self.cursor.execute(command)
         results = self.cursor.fetchall()
         self.table.setRowCount(len(results))
         for item in results:
-            self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['DOC_ID']))
-            self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['DOC_TYPE']))
-            self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['DOC_TITLE']))
-            self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
-            self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
+            self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['doc_id']))
+            self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['doc_type']))
+            self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['doc_title']))
+            self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['status']))
+            self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['last_modified']))
             rowcount+=1

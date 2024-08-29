@@ -114,11 +114,11 @@ class AnalyticsWindow(QtWidgets.QWidget):
             row = self.table.currentRow()
             user = self.table.item(row, 0).text()
             matches = []
-            self.cursor.execute(f"select JOB_TITLE from USER where USER_ID='{user}'")
+            self.cursor.execute(f"select job_title from users where user_id='{user}'")
             result = self.cursor.fetchone()
             title = result[0]
-            command = f"Select SIGNATURE.DOC_ID from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{user}' and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing' and DOCUMENT.STAGE='{self.stageDict[title]}'"
-            #self.cursor.execute(f"select ECN_ID from SIGNATURE where USER_ID='{user}' and TYPE='Signing' and SIGNED_DATE is Null")
+            command = f"Select signatures.doc_id from signatures INNER JOIN document ON signatures.doc_id=document.doc_id WHERE document.status='Out For Approval' and signatures.user_id='{user}' and signatures.signed_date is NULL and signatures.type='Signing' and document.stage='{self.stageDict[title]}'"
+            #self.cursor.execute(f"select ECN_ID from signatures where user_id='{user}' and type='Signing' and signed_date is Null")
             self.cursor.execute(command)
             results = self.cursor.fetchall()
             for result in results:
@@ -127,18 +127,18 @@ class AnalyticsWindow(QtWidgets.QWidget):
         
     def showECNWaitUserDistribution(self):
         users = {}
-        self.cursor.execute("Select DISTINCT(SIGNATURE.USER_ID) from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID where SIGNATURE.TYPE='Signing' and SIGNATURE.SIGNED_DATE is Null and DOCUMENT.STATUS='Out For Approval'")
+        self.cursor.execute("Select DISTINCT(signatures.user_id) from signatures INNER JOIN document ON signatures.doc_id=document.doc_id where signatures.type='Signing' and signatures.signed_date is Null and document.status='Out For Approval'")
         results = self.cursor.fetchall()
         for result in results:
             users[result[0]]=0
         remove_key = []
         for key in users.keys():
-            self.cursor.execute(f"select JOB_TITLE from USER where USER_ID='{key}'")
+            self.cursor.execute(f"select job_title from users where user_id='{key}'")
             result = self.cursor.fetchone()
             title = result[0]
-            command = f"Select COUNT(SIGNATURE.DOC_ID) from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{key}' and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing' and DOCUMENT.STAGE='{self.stageDict[title]}'"
+            command = f"Select COUNT(signatures.doc_id) from signatures INNER JOIN document ON signatures.doc_id=document.doc_id WHERE document.status='Out For Approval' and signatures.user_id='{key}' and signatures.signed_date is NULL and signatures.type='Signing' and document.stage='{self.stageDict[title]}'"
             self.cursor.execute(command)
-            #self.cursor.execute(f"Select COUNT(ECN_ID) from SIGNATURE where TYPE='Signing' and SIGNED_DATE is Null and USER_ID='{key}'")
+            #self.cursor.execute(f"Select COUNT(ECN_ID) from signatures where type='Signing' and signed_date is Null and user_id='{key}'")
             result = self.cursor.fetchone()
             if result[0]==0:
                 remove_key.append(key)
@@ -204,14 +204,14 @@ class AnalyticsWindow(QtWidgets.QWidget):
         for year in years:
             for month in months.keys():
                 check_date = f"{year}-{month}"
-                self.cursor.execute(f"select COUNT(DOC_ID) from DOCUMENT where STATUS!='Draft' and STATUS!='Completed' and FIRST_RELEASE like '{check_date}%'")
+                self.cursor.execute(f"select COUNT(doc_id) from document where status!='Draft' and status!='Completed' and first_release like '{check_date}%'")
                 result = self.cursor.fetchone()
                 #print(date,result[0])
                 if year in data_release.keys():
                     data_release[year].append((month,result[0]))
                 else:
                     data_release[year]=[(month,result[0])]
-                self.cursor.execute(f"select COUNT(DOC_ID) from DOCUMENT where STATUS='Completed' and COMP_DATE like '{check_date}%'")
+                self.cursor.execute(f"select COUNT(doc_id) from document where status='Completed' and comp_date like '{check_date}%'")
                 result = self.cursor.fetchone()
                 #print(date,result[0])
                 if year in data_complete.keys():
@@ -281,10 +281,10 @@ class AnalyticsWindow(QtWidgets.QWidget):
             days.append(datetime.strftime(today-timedelta(days=x),'%Y-%m-%d'))
         days = sorted(days)
         for day in days:
-            self.cursor.execute(f"select COUNT(DOC_ID) from DOCUMENT where date(FIRST_RELEASE) = '{day}'")
+            self.cursor.execute(f"select COUNT(doc_id) from document where date(first_release) = '{day}'")
             result = self.cursor.fetchone()
             release_counts[day]=result[0]
-            self.cursor.execute(f"select COUNT(DOC_ID) from DOCUMENT where date(COMP_DATE)='{day}'")
+            self.cursor.execute(f"select COUNT(doc_id) from document where date(comp_date)='{day}'")
             result = self.cursor.fetchone()
             complete_counts[day]=result[0]
             
@@ -333,7 +333,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
     def showECNStageDistribution(self):
         stages = []
         current_stages = {}
-        # self.cursor.execute("select DISTINCT(STAGE) from ECN where STATUS!='Completed' and STATUS!='Draft'")
+        # self.cursor.execute("select DISTINCT(stage) from ECN where status!='Completed' and status!='Draft'")
         # results = self.cursor.fetchall()
         # for result in results:
         #     stages.append(result[0])
@@ -342,7 +342,7 @@ class AnalyticsWindow(QtWidgets.QWidget):
         stages = sorted(set(stages))
         #print(stages)
         for stage in stages:
-            self.cursor.execute(f"select COUNT(DOC_ID) from DOCUMENT where STAGE='{stage}' and STATUS!='Completed' and STATUS!='Draft' and STATUS!='Canceled'")
+            self.cursor.execute(f"select COUNT(doc_id) from document where stage='{stage}' and status!='Completed' and status!='Draft' and status!='Canceled'")
             result = self.cursor.fetchone()
             current_stages[stage]=result[0]
         set0 = QtCharts.QBarSet("stage")
@@ -388,14 +388,14 @@ class AnalyticsWindow(QtWidgets.QWidget):
         self.chartview.setChart(chart)
             
     def showECNAuthorDistribution(self):
-        self.cursor.execute("Select DISTINCT(AUTHOR) from DOCUMENT")
+        self.cursor.execute("Select DISTINCT(author) from document")
         results = self.cursor.fetchall()
         authors = []
         for result in results:
             authors.append(result[0])
         counts = {}
         for author in authors:
-            self.cursor.execute(f"select COUNT(DOC_ID) from DOCUMENT where AUTHOR='{author}' and STATUS!='Draft'")
+            self.cursor.execute(f"select COUNT(doc_id) from document where author='{author}' and status!='Draft'")
             result = self.cursor.fetchone()
             counts[author]=result[0]
         row = 0 
@@ -463,19 +463,19 @@ class AnalyticsWindow(QtWidgets.QWidget):
         
         
     def ECNDistribution(self):
-        self.cursor.execute("select COUNT(STATUS) from DOCUMENT")
+        self.cursor.execute("select COUNT(status) from document")
         result = self.cursor.fetchone()
         total = result[0]
-        self.cursor.execute("select COUNT(DOC_ID) from DOCUMENT where STATUS='Rejected'")
+        self.cursor.execute("select COUNT(doc_id) from document where status='Rejected'")
         result = self.cursor.fetchone()
         count_RJ = result[0]
-        self.cursor.execute("select COUNT(DOC_ID) from DOCUMENT where STATUS='Out For Approval'")
+        self.cursor.execute("select COUNT(doc_id) from document where status='Out For Approval'")
         result = self.cursor.fetchone()
         count_OFA = result[0]
-        self.cursor.execute("select COUNT(DOC_ID) from DOCUMENT where STATUS='Completed'")
+        self.cursor.execute("select COUNT(doc_id) from document where status='Completed'")
         result = self.cursor.fetchone()
         count_C = result[0]
-        self.cursor.execute("select COUNT(DOC_ID) from DOCUMENT where STATUS='Canceled'")
+        self.cursor.execute("select COUNT(doc_id) from document where status='Canceled'")
         result = self.cursor.fetchone()
         count_cl = result[0]
         return {"Out For Approval":count_OFA,"Rejected":count_RJ,"Completed":count_C,"Canceled":count_cl}

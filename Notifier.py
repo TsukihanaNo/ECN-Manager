@@ -77,7 +77,7 @@ class Notifier(QtWidgets.QWidget):
     def initUI(self):
         mainLayout = QtWidgets.QVBoxLayout(self)
         
-        titles = ['DOC_ID','STATUS','TYPE']
+        titles = ['doc_id','status','type']
         self.table = QtWidgets.QTableWidget(0,len(titles),self)
         self.table.setHorizontalHeaderLabels(titles)
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
@@ -169,29 +169,29 @@ class Notifier(QtWidgets.QWidget):
         os.remove(lockfile)
             
     def getUserList(self):
-        self.cursor.execute("select USER_ID, EMAIL from USER")
+        self.cursor.execute("select user_id, email from users")
         results = self.cursor.fetchall()
         for result in results:
             self.userList[result[0]]=result[1]
         #print(self.userList)
         
     def getEmailNameDict(self):
-        self.cursor.execute("select EMAIL, NAME from USER")
+        self.cursor.execute("select email, name from users")
         results = self.cursor.fetchall()
         for result in results:
             self.emailNameList[result[0]]=result[1].split(" ")[0]
             
     def repopulateTable(self):
         self.table.clearContents()
-        command = "Select * from NOTIFICATION"
+        command = "Select * from notifications"
         self.cursor.execute(command)
         test = self.cursor.fetchall()
         rowcount=0
         self.table.setRowCount(len(test))
         for item in test:
-            self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['DOC_ID']))
-            self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['STATUS']))
-            self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['TYPE']))
+            self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['doc_id']))
+            self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['status']))
+            self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['type']))
 
             rowcount+=1
             
@@ -199,7 +199,7 @@ class Notifier(QtWidgets.QWidget):
         users = []
         usr_str = ""
         for title in titles:
-            self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{ecn}' and JOB_TITLE='{title}' and SIGNED_DATE is Null and TYPE='Signing'")
+            self.cursor.execute(f"select user_id from signatures where doc_id='{ecn}' and job_title='{title}' and signed_date is Null and type='Signing'")
             results = self.cursor.fetchall()
             for result in results:
                 if result is not None:
@@ -260,33 +260,33 @@ class Notifier(QtWidgets.QWidget):
     
             
     def sendNotification(self):
-        self.cursor.execute("Select * from NOTIFICATION where STATUS='Not Sent'")
+        self.cursor.execute("Select * from notifications where status='Not Sent'")
         results = self.cursor.fetchall()
         
         if len(results)>0:
             for result in results:
-                if result["DOC_ID"] is not None:
+                if result["doc_id"] is not None:
                     self.generateECNX(result[0])
                 #self.generateHTML(result[0])
-                if result['TYPE']=="Rejected To Author":
-                    self.rejectNotification(result[0],result['FROM_USER'],result['MSG'])
-                elif result['TYPE']=="Rejected To Signer":
-                    self.rejectSignerNotification(result[0],result['FROM_USER'],result['USERS'],result['MSG'])
-                elif result['TYPE']=="Approved":
+                if result['type']=="Rejected To Author":
+                    self.rejectNotification(result[0],result['from_user'],result['msg'])
+                elif result['type']=="Rejected To Signer":
+                    self.rejectSignerNotification(result[0],result['from_user'],result['users'],result['msg'])
+                elif result['type']=="Approved":
                     self.ApprovedNotification(result[0])
-                elif result['TYPE']=="Completed":
+                elif result['type']=="Completed":
                     self.completionNotification(result[0])
-                elif result['TYPE']=="Stage Moved":
+                elif result['type']=="Stage Moved":
                     self.stageReleaseNotification(result[0])
-                elif result['TYPE']=="User Comment":
-                    self.commentNotification(result[0],result['FROM_USER'],result['MSG'])
-                elif result['TYPE']=="Canceling":
-                    self.cancelNotification(result[0],result['MSG'])
-                elif result['TYPE']=="User Info":
-                    self.userInfoNotification(result['MSG'])
+                elif result['type']=="User Comment":
+                    self.commentNotification(result[0],result['from_user'],result['msg'])
+                elif result['type']=="Canceling":
+                    self.cancelNotification(result[0],result['msg'])
+                elif result['type']=="User Info":
+                    self.userInfoNotification(result['msg'])
                 else:
                     self.releaseNotification(result[0])
-                if result["DOC_ID"] is not None:
+                if result["doc_id"] is not None:
                     self.removeECNX(result[0])
                     #self.removeHTML(result[0])
                     self.updateStatus(result[0])
@@ -297,20 +297,20 @@ class Notifier(QtWidgets.QWidget):
     def updateStatus(self,doc_id):
         self.log_text.append("-updating status")
         data = ("Sent",doc_id)
-        self.cursor.execute("UPDATE NOTIFICATION SET STATUS = ? WHERE DOC_ID = ?",(data))
+        self.cursor.execute("UPDATE notifications SET status = %s WHERE doc_id = %s",(data))
         self.db.commit()
         now  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         data = (now,doc_id)
-        self.cursor.execute("UPDATE DOCUMENT SET LAST_NOTIFIED = ? WHERE DOC_ID = ?",(data))
+        self.cursor.execute("UPDATE document SET last_notified = %s WHERE doc_id = %s",(data))
         self.db.commit()
         self.log_text.append("-status updated")
         
     def rejectNotification(self,doc_id,from_user,msg):
         receivers = []
-        self.cursor.execute(f"select Author from DOCUMENT where DOC_ID='{doc_id}'")
+        self.cursor.execute(f"select Author from document where doc_id='{doc_id}'")
         result = self.cursor.fetchone()
         receivers.append(self.userList[result[0]])
-        self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing'")
+        self.cursor.execute(f"select user_id from signatures where doc_id='{doc_id}' and type='Signing'")
         results = self.cursor.fetchall()
         for result in results:
             receivers.append(self.userList[result[0]])
@@ -345,16 +345,16 @@ class Notifier(QtWidgets.QWidget):
         
     def commentNotification(self,doc_id,from_user,msg):
         receivers = []
-        self.cursor.execute(f"select Author from DOCUMENT where DOC_ID='{doc_id}'")
+        self.cursor.execute(f"select Author from document where doc_id='{doc_id}'")
         result = self.cursor.fetchone()
         if result[0]!=from_user:
             receivers.append(self.userList[result[0]])
-        self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing' and SIGNED_DATE!=''")
+        self.cursor.execute(f"select user_id from signatures where doc_id='{doc_id}' and type='Signing' and signed_date!=''")
         results = self.cursor.fetchall()
         for result in results:
             if result[0]!=from_user:
                 receivers.append(self.userList[result[0]])
-        self.cursor.execute(f"select distinct USER from COMMENTS where DOC_ID='{doc_id}'")
+        self.cursor.execute(f"select distinct user from comments where doc_id='{doc_id}'")
         results = self.cursor.fetchall()
         for result in results:
             if self.userList[result[0]] not in receivers and result[0]!=from_user:
@@ -375,10 +375,10 @@ class Notifier(QtWidgets.QWidget):
     
     def completionNotification(self,doc_id):
         receivers = []
-        self.cursor.execute(f"select Author from DOCUMENT where DOC_ID='{doc_id}'")
+        self.cursor.execute(f"select Author from document where doc_id='{doc_id}'")
         result = self.cursor.fetchone()
         receivers.append(self.userList[result[0]])
-        self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{doc_id}'")
+        self.cursor.execute(f"select user_id from signatures where doc_id='{doc_id}'")
         results = self.cursor.fetchall()
         message = f"<p>{doc_id} has been completed!</p><p>You can now view it in the completed section of your viewer.</p>"
         for result in results:
@@ -403,10 +403,10 @@ class Notifier(QtWidgets.QWidget):
         
     def ApprovedNotification(self,doc_id):
         receivers = []
-        self.cursor.execute(f"select Author from DOCUMENT where DOC_ID='{doc_id}'")
+        self.cursor.execute(f"select Author from document where doc_id='{doc_id}'")
         result = self.cursor.fetchone()
         receivers.append(self.userList[result[0]])
-        self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{doc_id}'")
+        self.cursor.execute(f"select user_id from signatures where doc_id='{doc_id}'")
         results = self.cursor.fetchall()
         message = f"<p>{doc_id} has been Approved!</p><p>You can now view it in the Inprogress section of your viewer.</p>"
         for result in results:
@@ -426,7 +426,7 @@ class Notifier(QtWidgets.QWidget):
         
         
     def cancelNotification(self,doc_id,msg):
-        self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing'")
+        self.cursor.execute(f"select user_id from signatures where doc_id='{doc_id}' and type='Signing'")
         results = self.cursor.fetchall()
         receivers = []
         message = f"<p>{doc_id} has been canceled by the author! See comment below.</p><p>Comment: {msg}</p>"
@@ -439,7 +439,7 @@ class Notifier(QtWidgets.QWidget):
         self.log_text.append(f"-Rejection Email sent for {doc_id} to {receivers}")
         
     def releaseNotification(self,doc_id):
-        self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing'")
+        self.cursor.execute(f"select user_id from signatures where doc_id='{doc_id}' and type='Signing'")
         results = self.cursor.fetchall()
         receivers = []
         message = f"<p>{doc_id} has been released! You can see it in the queue section once it is your turn for approval.<\p><p>You can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN in the open section in the ECN Manager application.</p>"
@@ -453,7 +453,7 @@ class Notifier(QtWidgets.QWidget):
         
     def stageReleaseNotification(self,doc_id):
         #get stage
-        self.cursor.execute(f"Select Stage from DOCUMENT where DOC_ID='{doc_id}'")
+        self.cursor.execute(f"Select stage from document where doc_id='{doc_id}'")
         result = self.cursor.fetchone()
         stage = result[0]
         if doc_id[:3]=="ECN":
@@ -473,7 +473,7 @@ class Notifier(QtWidgets.QWidget):
         self.log_text.append(f"-Stage Release Email sent for {doc_id} to {receivers}")
         
     def userInfoNotification(self,email):
-        self.cursor.execute(f"Select USER_ID, PASSWORD from USER where EMAIL='{email}'")
+        self.cursor.execute(f"Select user_id, PASSWORD from user where email='{email}'")
         result = self.cursor.fetchone()
         attach = []
         receivers = [email]
@@ -481,7 +481,7 @@ class Notifier(QtWidgets.QWidget):
         print(f"send email to {email} with user info: {result[0]} | {result[1]}")
         self.sendEmail("", receivers, message, "User Info", attach)
         self.log_text.append(f"- user info email has been sent to {receivers}")
-        self.cursor.execute(f"DELETE FROM NOTIFICATION WHERE MSG = '{email}' ")
+        self.cursor.execute(f"DELETE FROM notifications WHERE msg = '{email}' ")
         self.db.commit()
         self.log_text.append(f"- entry has been deleted from notifications table")
         
@@ -604,60 +604,60 @@ class Notifier(QtWidgets.QWidget):
                 f.close()
 
                 t = Template(lines)
-                self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
+                self.cursor.execute(f"SELECT * from document where doc_id='{doc_id}'")
                 result = self.cursor.fetchone()
-                title = result['DOC_TITLE']
-                author = result['AUTHOR']
-                dept = result['DEPARTMENT']
-                requestor = result['REQUESTOR']
-                reason = result['DOC_REASON']
-                summary = result['DOC_SUMMARY']
+                title = result['doc_title']
+                author = result['author']
+                dept = result['department']
+                requestor = result['requestor']
+                reason = result['doc_reason']
+                summary = result['doc_summary']
                 signature = "<tr>"
                 attachment ="<tr>"
                 parts = ""
                 
                 #parts
                 #print('exporting parts')
-                self.cursor.execute(f"SELECT * from PARTS where DOC_ID='{doc_id}'")
+                self.cursor.execute(f"SELECT * from PARTS where doc_id='{doc_id}'")
                 results = self.cursor.fetchall()
                 if results is not None:
                     for result in results:
-                        text = f"<p> {result['PART_ID']}</p>"
+                        text = f"<p> {result['part_id']}</p>"
                         text += "<ul>"
-                        text += f"<li>Desc: {result['DESC']}</li>"
-                        text += f"<li>Type: {result['TYPE']}</li>"
-                        text += f"<li>Disposition: {result['DISPOSITION']}</li>"
-                        text += f"<li>Inspection Req.: {result['INSPEC']}</li>"
-                        text += f"<li>Mfg.: {result['MFG']}</li>"
-                        text += f"<li>Mfg.#: {result['MFG_PART']}</li>"
-                        text += f"<li>Reference: {result['REFERENCE']}</li>"
-                        text += f"<li>Replacing: {result['REPLACING']}</li>"
-                        text += f"<li>Disposition Old: {result['DISPOSITION_OLD']}</li>"
+                        text += f"<li>Desc: {result['description']}</li>"
+                        text += f"<li>Type: {result['type']}</li>"
+                        text += f"<li>Disposition: {result['disposition']}</li>"
+                        text += f"<li>Inspection Req.: {result['inspection']}</li>"
+                        text += f"<li>Mfg.: {result['mfg']}</li>"
+                        text += f"<li>Mfg.#: {result['mfg_part']}</li>"
+                        text += f"<li>Reference: {result['reference']}</li>"
+                        text += f"<li>Replacing: {result['replacing']}</li>"
+                        text += f"<li>Disposition Old: {result['disposition_old']}</li>"
                         text += "</ul>"
                         parts += text
                 
 
                 #attachments
                 #print('exporting attachments')
-                self.cursor.execute(f"SELECT * FROM ATTACHMENTS where DOC_ID='{doc_id}'")
+                self.cursor.execute(f"SELECT * FROM atttachments where doc_id='{doc_id}'")
                 results = self.cursor.fetchall()
                 if results is not None:
                     for result in results:
-                        attachment += "<td>"+result['FILENAME']+"</td>"
-                        attachment += "<td>"+result['FILEPATH']+"</td></tr>"
+                        attachment += "<td>"+result['filename']+"</td>"
+                        attachment += "<td>"+result['filepath']+"</td></tr>"
                 else:
                     attachment="<tr><td></td><td></td></tr>"
 
                 
                 #print('exporting signatures')
-                self.cursor.execute(f"SELECT * from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing'")
+                self.cursor.execute(f"SELECT * from signatures where doc_id='{doc_id}' and type='Signing'")
                 results = self.cursor.fetchall()
                 if results is not None:
                     for result in results:
-                        signature += "<td>"+result['JOB_TITLE']+"</td>"
-                        signature += "<td>"+result['NAME']+"</td>"
-                        if result['SIGNED_DATE'] is not None:
-                            signature += "<td>"+str(result['SIGNED_DATE'])+"</td></tr>"
+                        signature += "<td>"+result['job_title']+"</td>"
+                        signature += "<td>"+result['name']+"</td>"
+                        if result['signed_date'] is not None:
+                            signature += "<td>"+str(result['signed_date'])+"</td></tr>"
                         else:
                             signature += "<td></td></tr>"
                 else:
@@ -686,15 +686,15 @@ class Notifier(QtWidgets.QWidget):
             f.close()
             t = Template(lines)
             
-            self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
+            self.cursor.execute(f"SELECT * from document where doc_id='{doc_id}'")
             result = self.cursor.fetchone()
-            overview = result['DOC_TEXT_1']
-            products = result['DOC_TEXT_2']
-            change = result['DOC_SUMMARY']
-            reason = result['DOC_REASON']
-            replacement = result['DOC_TEXT_3']
-            reference = result['DOC_TEXT_4']
-            response = result['DOC_TEXT_5']
+            overview = result['doc_text_1']
+            products = result['doc_text_2']
+            change = result['doc_summary']
+            reason = result['doc_reason']
+            replacement = result['doc_text_3']
+            reference = result['doc_text_4']
+            response = result['doc_text_5']
 
             #print('substituting text')
             
@@ -709,12 +709,12 @@ class Notifier(QtWidgets.QWidget):
             f.close()
             t = Template(lines)
             
-            self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
+            self.cursor.execute(f"SELECT * from document where doc_id='{doc_id}'")
             result = self.cursor.fetchone()
-            date = result['COMP_DATE']
+            date = result['comp_date']
             date = datetime.strptime(date,'%Y-%m-%d %H:%M:%S')
             date = date.strftime("%b %d, %Y")
-            web_desc = result['DOC_TEXT_6']
+            web_desc = result['doc_text_6']
             pcn_link = self.settings["PCN_Web_Href"]+doc_id+".pdf"
 
             #print('substituting text')
@@ -730,20 +730,20 @@ class Notifier(QtWidgets.QWidget):
             f.close()
             t = Template(lines)
             
-            self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
+            self.cursor.execute(f"SELECT * from document where doc_id='{doc_id}'")
             result = self.cursor.fetchone()
             # print("generating header 1")
-            title = result["DOC_TITLE"]
-            author = result["AUTHOR"]
-            status = result["STATUS"]
-            requisition_details = result["DOC_SUMMARY"]
+            title = result["doc_title"]
+            author = result["author"]
+            status = result["status"]
+            requisition_details = result["doc_summary"]
             
             # print("generating header 2")
-            self.cursor.execute(f"SELECT * from PURCH_REQ_DOC_LINK where DOC_ID='{doc_id}'")
+            self.cursor.execute(f"SELECT * from purch_req_doc_link where doc_id='{doc_id}'")
             result = self.cursor.fetchone()
             print(result)
-            req_id = result["REQ_ID"]
-            project_id = result["PROJECT_ID"]
+            req_id = result["req_id"]
+            project_id = result["project_id"]
             
             # print("generating header 3")
             # print(req_id)
@@ -788,14 +788,14 @@ class Notifier(QtWidgets.QWidget):
                     
             # print("generating header 5")
             signature = "<tr>"
-            self.cursor.execute(f"SELECT * from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing'")
+            self.cursor.execute(f"SELECT * from signatures where doc_id='{doc_id}' and type='Signing'")
             results = self.cursor.fetchall()
             if results is not None:
                 for result in results:
-                    signature += "<td>"+result['JOB_TITLE']+"</td>"
-                    signature += "<td>"+result['NAME']+"</td>"
-                    if result['SIGNED_DATE'] is not None:
-                        signature += "<td>"+str(result['SIGNED_DATE'])+"</td></tr>"
+                    signature += "<td>"+result['job_title']+"</td>"
+                    signature += "<td>"+result['name']+"</td>"
+                    if result['signed_date'] is not None:
+                        signature += "<td>"+str(result['signed_date'])+"</td></tr>"
                     else:
                         signature += "<td></td></tr>"
             else:
@@ -804,12 +804,12 @@ class Notifier(QtWidgets.QWidget):
 
             # print('substituting text')
             
-            html = t.substitute(REQID=req_id,Title=title,AUTHOR=author,DOCID=doc_id,PRJID=project_id,ORDERSTATUS=status,VISUALSTATUS=visual_status,BUYER=assigned_buyer,TOTALCOST=total_cost,DETAILS=requisition_details,REQLINE=req_lines,Signature=signature)
+            html = t.substitute(REQID=req_id,Title=title,author=author,DOCID=doc_id,PRJID=project_id,ORDERSTATUS=status,VISUALSTATUS=visual_status,BUYER=assigned_buyer,TOTALCOST=total_cost,DETAILS=requisition_details,REQLINE=req_lines,Signature=signature)
 
             return html
         
     def generateCommenthistory(self,doc_id,sorting):
-        self.cursor.execute(f"SELECT * from COMMENTS where DOC_ID='{doc_id}' Order By COMM_DATE {sorting}")
+        self.cursor.execute(f"SELECT * from comments where doc_id='{doc_id}' Order By COMM_DATE {sorting}")
         results = self.cursor.fetchall()
         comments = ""
         for result in results:
@@ -860,7 +860,7 @@ class Notifier(QtWidgets.QWidget):
         return elapsed
     
     def releaseFiles(self,doc_id):
-        self.cursor.execute(f"SELECT FILENAME,FILEPATH FROM ATTACHMENTS WHERE DOC_ID='{doc_id}'")
+        self.cursor.execute(f"SELECT filename,filepath FROM atttachments WHERE doc_id='{doc_id}'")
         results = self.cursor.fetchall()
         for result in results:
             dst = os.path.join(self.settings["ECN_Released"],result[0])
@@ -881,13 +881,13 @@ class Notifier(QtWidgets.QWidget):
         QtWidgets.QApplication.processEvents()
         
     def updateFileLocation(self,doc_id):
-        self.cursor.execute(f"SELECT FILEPATH FROM ATTACHMENTS WHERE DOC_ID='{doc_id}'")
+        self.cursor.execute(f"SELECT filepath FROM atttachments WHERE doc_id='{doc_id}'")
         results = self.cursor.fetchall()
         for result in results:
             src = result[0]
             dst = result[0].replace(self.settings["ECN_Temp"],self.settings["ECN_Archive"])
             data = (dst,src,doc_id)
-            self.cursor.execute("UPDATE ATTACHMENTS SET FILEPATH = ? WHERE FILEPATH = ? and DOC_ID = ?",(data))
+            self.cursor.execute("UPDATE atttachments SET filepath = %s WHERE filepath = %s and doc_id = %s",(data))
             self.log_text.append(f"DB reference updated from {src} to {dst}")
             QtWidgets.QApplication.processEvents()
         self.db.commit()
@@ -895,22 +895,22 @@ class Notifier(QtWidgets.QWidget):
         
     
     def checkForReminder(self):
-        self.cursor.execute("SELECT DOC_ID, LAST_NOTIFIED, FIRST_RELEASE, LAST_MODIFIED FROM DOCUMENT WHERE STATUS !='Completed' and STATUS!='Draft' and STATUS!='Approved'and STAGE!='0'")
+        self.cursor.execute("SELECT doc_id, last_notified, first_release, last_modified FROM document WHERE status !='Completed' and status!='Draft' and status!='Approved'and stage!='0'")
         results = self.cursor.fetchall()
         today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         for result in results:
-            if result['LAST_NOTIFIED'] is not None:
-                elapsed = self.getElapsedDays(today, result["LAST_NOTIFIED"])
+            if result['last_notified'] is not None:
+                elapsed = self.getElapsedDays(today, result["last_notified"])
                 #print(elapsed.days)
             else:
-                elapsed = self.getElapsedDays(today, result["FIRST_RELEASE"])
+                elapsed = self.getElapsedDays(today, result["first_release"])
                 #print(elapsed.days)
             if elapsed.days >= int(self.settings['Reminder_Days']):
-                doc_id = result["DOC_ID"]
-                first_release = result["FIRST_RELEASE"]
+                doc_id = result["doc_id"]
+                first_release = result["first_release"]
                 direct_receivers = []
                 secondary_receivers = []
-                self.cursor.execute(f"Select Stage from DOCUMENT where DOC_ID='{doc_id}'")
+                self.cursor.execute(f"Select stage from document where doc_id='{doc_id}'")
                 result = self.cursor.fetchone()
                 stage = result[0]
                 if doc_id[:3]=="ECN":
@@ -929,39 +929,39 @@ class Notifier(QtWidgets.QWidget):
                 
                 
         #check for prq reminders
-        self.cursor.execute("SELECT DOC_ID, LAST_NOTIFIED, FIRST_RELEASE, LAST_MODIFIED FROM DOCUMENT WHERE STATUS ='Approved'")
+        self.cursor.execute("SELECT doc_id, last_notified, first_release, last_modified FROM document WHERE status ='Approved'")
         results = self.cursor.fetchall()
         today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         for result in results:
             #check for prq visual status
-            doc_id = result["DOC_ID"]
-            self.cursor.execute(f"SELECT REQ_ID FROM PURCH_REQ_DOC_LINK WHERE DOC_ID='{doc_id}'")
+            doc_id = result["doc_id"]
+            self.cursor.execute(f"SELECT req_id FROM purch_req_doc_link WHERE doc_id='{doc_id}'")
             get_req = self.cursor.fetchone()
             req_id = get_req[0]
             req_status = self.visual.getReqHeader(req_id)[1]
             if req_status=="C" or req_status=="O": #Closed
                 completeddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                elapsed = self.getElapsedDays(completeddate,result["FIRST_RELEASE"])
+                elapsed = self.getElapsedDays(completeddate,result["first_release"])
                 elapsed = elapsed.days + round(elapsed.seconds/86400,2)
                 data = (completeddate,completeddate,elapsed,"Completed",doc_id)
                 print(data)
-                self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?,COMP_DATE = ?, COMP_DAYS = ?, STATUS = ? WHERE DOC_ID = ?",(data))
-                # self.cursor.execute("UPDATE DOCUMENT SET STATUS = ? WHERE DOC_ID = ?",(data))
+                self.cursor.execute("UPDATE document SET last_modified = %s,comp_date = %s, COMP_DAYS = %s, status = %s WHERE doc_id = %s",(data))
+                # self.cursor.execute("UPDATE document SET status = %s WHERE doc_id = %s",(data))
                 self.db.commit()
                 self.log_text.append(f"{doc_id} has been set as completed")
                 self.generateECNX(doc_id)
                 self.completionNotification(doc_id)
                 self.removeECNX(doc_id)
             else:
-                if result['LAST_NOTIFIED'] is not None:
-                    elapsed = self.getElapsedDays(today, result["LAST_NOTIFIED"])
+                if result['last_notified'] is not None:
+                    elapsed = self.getElapsedDays(today, result["last_notified"])
                     #print(elapsed.days)
                 else:
-                    elapsed = self.getElapsedDays(today, result["FIRST_RELEASE"])
+                    elapsed = self.getElapsedDays(today, result["first_release"])
                     #print(elapsed.days)
                 if elapsed.days >= int(self.settings['Reminder_Days']):
-                    # doc_id = result["DOC_ID"]
-                    first_release = result["FIRST_RELEASE"]
+                    # doc_id = result["doc_id"]
+                    first_release = result["first_release"]
                     direct_receivers = []
                     secondary_receivers = []
                     #users are people in the notification tab
@@ -976,7 +976,7 @@ class Notifier(QtWidgets.QWidget):
 
 
     def setElapsedDays(self):
-        self.cursor.execute(f"Select DOC_ID, FIRST_RELEASE, LAST_STATUS from DOCUMENT where STATUS!='Completed'")
+        self.cursor.execute(f"Select doc_id, first_release, last_status from document where status!='Completed'")
         results = self.cursor.fetchall()
         for result in results:
             today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -985,7 +985,7 @@ class Notifier(QtWidgets.QWidget):
             last_status = datetime.strptime(result[2],'%Y-%m-%d %H:%M:%S')
             release_elapse = today - first_release
             status_elapse = today - last_status
-            self.cursor.execute(f"UPDATE DOCUMENT SET RELEASE_ELAPSE ='{release_elapse.day}', STATUS_ELAPSE='{status_elapse.day}' WHERE DOC_ID='{doc_id}'")
+            self.cursor.execute(f"UPDATE document SET release_elapse ='{release_elapse.day}', status_elapse='{status_elapse.day}' WHERE doc_id='{doc_id}'")
         self.db.commit()
 
     def lateReminder(self,doc_id,direct_receivers,secondary_receivers,total_days):
@@ -1010,15 +1010,15 @@ class Notifier(QtWidgets.QWidget):
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
         self.sendEmail(doc_id,receivers, message,"Reminder",attach)
         data = (doc_id,"Sent","Reminder")
-        self.cursor.execute("INSERT INTO NOTIFICATION(DOC_ID, STATUS, TYPE) VALUES(?,?,?)",(data))
-        self.cursor.execute(f"UPDATE DOCUMENT SET LAST_NOTIFIED='{today}' WHERE DOC_ID='{doc_id}'")
+        self.cursor.execute("INSERT INTO notifications(doc_id, status, type) VALUES(%s,%s,%s)",(data))
+        self.cursor.execute(f"UPDATE document SET last_notified='{today}' WHERE doc_id='{doc_id}'")
         self.db.commit()
         self.log_text.append(f"-lateness Email sent for {doc_id} to {receivers}")
         self.removeECNX(doc_id)
         #self.removeHTML(ecn_id)
 
     def getReminderUsers(self):
-        self.cursor.execute(f"select USER_ID from SIGNATURE where SIGNED_DATE is NULL")
+        self.cursor.execute(f"select user_id from signatures where signed_date is NULL")
         results = self.cursor.fetchall()
         receivers = []
         for result in results:
@@ -1026,7 +1026,7 @@ class Notifier(QtWidgets.QWidget):
         return receivers
     
     def getNotificationUsers(self,doc_id):
-        self.cursor.execute(f"select USER_ID from SIGNATURE where TYPE='Notify' and DOC_ID='{doc_id}'")
+        self.cursor.execute(f"select user_id from signatures where type='Notify' and doc_id='{doc_id}'")
         results = self.cursor.fetchall()
         receivers = []
         for result in results:

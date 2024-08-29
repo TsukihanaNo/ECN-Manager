@@ -248,7 +248,7 @@ class Manager(QtWidgets.QWidget):
         timer.start(30000)
         
     def selfKillcheck(self):
-        self.cursor.execute(f"SELECT shutdown from shutdown")
+        self.cursor.execute(f"SELECT shut_down from shut_down")
         result = self.cursor.fetchone()
         print(result[0])
         if result[0]=="Y":

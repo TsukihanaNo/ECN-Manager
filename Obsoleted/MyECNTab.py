@@ -68,19 +68,19 @@ class MyECNTab(QtWidgets.QWidget):
 
     def repopulateTable(self):
         self.table.clearContents()
-        command = "Select * from DOCUMENT where AUTHOR ='" + self.user_info['user'] + "' and STATUS !='Completed'"
+        command = "Select * from document where author ='" + self.user_info['user'] + "' and status !='Completed'"
         self.cursor.execute(command)
         test = self.cursor.fetchall()
         rowcount=0
         self.table.setRowCount(len(test))
         for item in test:
-            self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['DOC_ID']))
-            self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['DOC_TYPE']))
-            self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['DOC_TITLE']))
-            self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
-            self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
-            if item["STATUS"]=="Rejected":
+            self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['doc_id']))
+            self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['doc_type']))
+            self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['doc_title']))
+            self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['status']))
+            self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['last_modified']))
+            if item["status"]=="Rejected":
                 self.table.item(rowcount, 3).setBackground(QtGui.QColor("#FFADAD")) #red
-            if item["STATUS"]=="Out For Approval":
+            if item["status"]=="Out For Approval":
                 self.table.item(rowcount, 3).setBackground(QtGui.QColor("#CAFFBF")) #green
             rowcount+=1

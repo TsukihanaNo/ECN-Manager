@@ -62,7 +62,7 @@ class ProjectPartsTab(QtWidgets.QWidget):
         if self.access == "read":
             self.button_add.setDisabled(True)
         
-        headers = ["Part ID","Description","Status","Part Type","Drawing?","Quoted?","Vendor","Tooling Cost", "Tooling PO", "ECN?","Qty On Hand","Qty On Order","Notes"]
+        headers = ["Part ID","Description","Status","Part Type","Drawing","Quoted","Vendor","Tooling Cost", "Tooling PO", "ECN","Qty On Hand","Qty On Order","Notes"]
         self.parts = QtWidgets.QTableWidget(0,len(headers),self)
         self.parts.setHorizontalHeaderLabels(headers)
         self.parts.selectionModel().selectionChanged.connect(self.onRowSelect)
@@ -212,7 +212,7 @@ class ProjectPartsTab(QtWidgets.QWidget):
                 
                 # print(part_id,description,status,part_type)
                 data = (self.doc_id,part_id,description,status,part_type,drawing_made,quoted,vendor,tooling_cost,tooling_po,note)
-                self.cursor.execute(f"INSERT INTO PROJECT_PARTS(PROJECT_ID,PART_ID,DESCRIPTION,STATUS,PART_TYPE,DRAWING_MADE,QUOTED,VENDOR,TOOLING_COST,TOOLING_PO,NOTE) VALUES(?,?,?,?,?,?,?,?,?,?,?)",(data))
+                self.cursor.execute(f"INSERT INTO PROJECT_PARTS(PROJECT_ID,PART_ID,DESCRIPTION,STATUS,PART_TYPE,DRAWING_MADE,QUOTED,VENDOR,TOOLING_COST,TOOLING_PO,NOTE) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(data))
             self.db.commit()
             self.checkData()
         except Exception as e:
@@ -257,7 +257,7 @@ class ProjectPartsTab(QtWidgets.QWidget):
         self.checkData()
         
     def export(self):
-        main_list = [["PART ID","Description","Status","Part Type","Drawing?","Quoted?","Vendor","Tooling Cost","Tooling PO","ECN?","Qty On Hand","Qty On Order","Note"]]
+        main_list = [["PART ID","Description","Status","Part Type","Drawing","Quoted","Vendor","Tooling Cost","Tooling PO","ECN","Qty On Hand","Qty On Order","Note"]]
         for row in range(self.parts.rowCount()):            
             part = self.parts.item(row,0).text()
             desc = self.parts.item(row,1).text()

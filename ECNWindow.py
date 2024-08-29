@@ -833,7 +833,7 @@ class ECNWindow(QtWidgets.QWidget):
                 #print(elapsed)
                 #elapsed = self.getElapsedDays(first_release, completeddate)
                 data = (completeddate,completeddate,elapsed, "Completed",self.doc_id)
-                self.cursor.execute("UPDATE document SET last_modified = %s,COMP_DATE = %s, COMP_DAYS = %s, status = %s WHERE doc_id = %s",(data))
+                self.cursor.execute("UPDATE document SET last_modified = %s,comp_date = %s, COMP_DAYS = %s, status = %s WHERE doc_id = %s",(data))
                 #self.db.commit()
                 self.parent.repopulateTable()
                 self.dispMsg("ECN is now completed")
@@ -970,7 +970,7 @@ class ECNWindow(QtWidgets.QWidget):
                 for result in results:
                     text = f"<p> {result['part_id']}</p>"
                     text += "<ul>"
-                    text += f"<li>Desc: {result['DESC']}</li>"
+                    text += f"<li>Desc: {result['description']}</li>"
                     text += f"<li>Type: {result['type']}</li>"
                     text += f"<li>Disposition: {result['disposition']}</li>"
                     text += f"<li>Inspection Req.: {result['inspection']}</li>"

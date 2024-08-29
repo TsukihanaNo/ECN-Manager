@@ -64,7 +64,7 @@ class SearchResults(QtWidgets.QWidget):
         self.button_open.clicked.connect(self.openDoc)
         self.button_open.setDisabled(True)
 
-        #USER(USER_ID TEXT, PASSWORD TEXT, NAME TEXT, ROLE TEXT, JOB_TITLE TEXT, DEPT TEXT, STATUS TEXT, EMAIL TEXT)
+        #USER(user_id TEXT, PASSWORD TEXT, NAME TEXT, ROLE TEXT, job_title TEXT, DEPT TEXT, status TEXT, EMAIL TEXT)
         titles = ['ECN ID','Type', 'Title', 'Status', 'Last Modified', 'Stage','Waiting On', 'Elapsed Days']
         self.table = QtWidgets.QTableWidget(1,len(titles),self)
         delegate = AlignDelegate(self.table)
@@ -101,31 +101,31 @@ class SearchResults(QtWidgets.QWidget):
         self.table.setRowCount(0)
         rowcount=0
         for match in self.matches:
-            self.parent.cursor.execute(f"Select * FROM DOCUMENT where DOC_ID ='{match}'")
+            self.parent.cursor.execute(f"Select * FROM document where doc_id ='{match}'")
             results = self.parent.cursor.fetchall()
             self.table.insertRow(rowcount)
             for item in results: #['ECN ID','ECN Title','Status','Author']
-                self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['DOC_ID']))
-                self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['DOC_TYPE']))
-                self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['DOC_TITLE']))
-                self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['STATUS']))
-                self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['LAST_MODIFIED']))
-                if item['STATUS']!='Draft':
-                    self.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(str(item['STAGE'])))
-                    if item['STATUS']!="Completed":
+                self.table.setItem(rowcount,0,QtWidgets.QTableWidgetItem(item['doc_id']))
+                self.table.setItem(rowcount,1,QtWidgets.QTableWidgetItem(item['doc_type']))
+                self.table.setItem(rowcount,2,QtWidgets.QTableWidgetItem(item['doc_title']))
+                self.table.setItem(rowcount,3,QtWidgets.QTableWidgetItem(item['status']))
+                self.table.setItem(rowcount,4,QtWidgets.QTableWidgetItem(item['last_modified']))
+                if item['status']!='Draft':
+                    self.table.setItem(rowcount, 5, QtWidgets.QTableWidgetItem(str(item['stage'])))
+                    if item['status']!="Completed":
                         today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        elapsed = self.getElapsedDays(today, item['FIRST_RELEASE'])
+                        elapsed = self.getElapsedDays(today, item['first_release'])
                         elapsed_days = "{:.2f}".format(elapsed.days + round(elapsed.seconds/86400,2))
                         self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(elapsed_days))
                     else:
-                        self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(item["COMP_DAYS"])))
-                    if item['STAGE']!=0 and item['STAGE'] is not None:
-                        # print(item['DOC_ID'],self.titleStageDict[str(item['STAGE'])])
-                        users = self.getWaitingUser(item['DOC_ID'], self.titleStageDict[str(item['STAGE'])])
+                        self.table.setItem(rowcount, 7, QtWidgets.QTableWidgetItem(str(item["comp_days"])))
+                    if item['stage']!=0 and item['stage'] is not None:
+                        # print(item['doc_id'],self.titleStageDict[str(item['stage'])])
+                        users = self.getWaitingUser(item['doc_id'], self.titleStageDict[str(item['stage'])])
                         self.table.setItem(rowcount, 6, QtWidgets.QTableWidgetItem(users))
-                if item["STATUS"]=="Rejected":
+                if item["status"]=="Rejected":
                     self.table.item(rowcount, 3).setBackground(QtGui.QColor("#FFADAD")) #red
-                if item["STATUS"]=="Out For Approval":
+                if item["status"]=="Out For Approval":
                     self.table.item(rowcount, 3).setBackground(QtGui.QColor("#CAFFBF")) #green
                 rowcount+=1
             self.table.sortItems(self.sorting[0],self.sorting[1])
@@ -179,7 +179,7 @@ class SearchResults(QtWidgets.QWidget):
         usr_str = ""
         #print(titles)
         for title in titles:
-            self.parent.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{ecn}' and JOB_TITLE='{title}' and SIGNED_DATE is Null and TYPE='Signing'")
+            self.parent.cursor.execute(f"select user_id from signatures where doc_id='{ecn}' and job_title='{title}' and signed_date is Null and type='Signing'")
             results = self.parent.cursor.fetchall()
             for result in results:
                 if result is not None:
@@ -196,17 +196,17 @@ class SearchResults(QtWidgets.QWidget):
         if self.line_search.text()!="":
             search = self.line_search.text()
             self.matches = []
-            self.parent.cursor.execute(f"Select DOC_ID from DOCUMENT where DOC_TITLE like '%{search}%' OR DOC_REASON like '%{search}%' OR DOC_SUMMARY like '%{search}%' OR DOC_ID like '%{search}%'")
+            self.parent.cursor.execute(f"Select doc_id from document where doc_title like '%{search}%' OR doc_reason like '%{search}%' OR doc_summary like '%{search}%' OR doc_id like '%{search}%'")
             results = self.parent.cursor.fetchall()
             for result in results:
                 if result[0] not in self.matches:
                     self.matches.append(result[0])
-            self.parent.cursor.execute(f"Select DOC_ID from ATTACHMENTS where FILENAME like '%{search}%'")
+            self.parent.cursor.execute(f"Select doc_id from attachments where filename like '%{search}%'")
             results = self.parent.cursor.fetchall()
             for result in results:
                 if result[0] not in self.matches:
                     self.matches.append(result[0])
-            self.parent.cursor.execute(f"Select DOC_ID from PARTS where PART_ID like '%{search}%' OR DESC like '%{search}%'")
+            self.parent.cursor.execute(f"Select doc_id from parts where part_id like '%{search}%' OR description like '%{search}%'")
             results = self.parent.cursor.fetchall()
             for result in results:
                 if result[0] not in self.matches:
