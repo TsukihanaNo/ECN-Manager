@@ -85,7 +85,7 @@ class ECNWindow(QtWidgets.QWidget):
         self.tabwidget = QtWidgets.QTabWidget(self)
         self.tab_ecn = ECNTab(self)
         self.tab_ecn.line_author.setText(self.user_info['user'])
-        self.tab_ecn.box_requestor.setCurrentText(self.user_info['user'])
+        # self.tab_ecn.box_requestor.setCurrentText(self.user_info['user'])
         self.tab_ecn.line_status.setText("Draft")
         #self.tab_ecn.edit_date.setDate(QtCore.QDate.currentDate())
         #self.tab_ecn.edit_date.setMinimumDate(QtCore.QDate.currentDate())

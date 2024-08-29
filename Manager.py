@@ -531,15 +531,15 @@ class Manager(QtWidgets.QWidget):
             # command =f"Select * from signatures INNER JOIN document ON signatures.doc_id=document.doc_id WHERE document.status='Out For Approval' and signatures.user_id='{self.user_info['user']}' and document.stage>={self.user_info['stage']} and signatures.signed_date is NULL and signatures.type='Signing'"
             command =f"Select * from signatures INNER JOIN document ON signatures.doc_id=document.doc_id WHERE document.status='Out For Approval' and signatures.user_id='{self.user_info['user']}'and signatures.signed_date is NULL and signatures.type='Signing'"
         elif self.table_type=="Open":
-            command = f"select * from document where (status=='Out For Approval' OR status=='Rejected' OR status='Started' or status='Approved') {filter_type}"
+            command = f"select * from document where (status='Out For Approval' OR status='Rejected' OR status='Started' or status='Approved') {filter_type}"
         elif self.table_type=="Canceled":
-            command = f"select * from document where status =='Canceled' {filter_type}"
+            command = f"select * from document where status ='Canceled' {filter_type}"
         elif self.table_type=="Draft":
-            command = f"select * from document where status =='Draft' {filter_type}"
+            command = f"select * from document where status ='Draft' {filter_type}"
         # elif self.table_type=="Deleted":
         #     command = f"select * from document where status =='Deleted' {filter_type}"
         else:
-            command = f"select * from document where status='Completed' {filter_type} ORDER BY rowid DESC"
+            command = f"select * from document where status='Completed' {filter_type} ORDER BY first_release DESC"
 
         self.cursor.execute(command)
         self.table_data = self.cursor.fetchall()
@@ -584,7 +584,7 @@ class Manager(QtWidgets.QWidget):
                 else:
                     elapsed_days =""
             else:
-                elapsed_days = str(self.table_data[x]["COMP_DAYS"])
+                elapsed_days = str(self.table_data[x]["comp_days"])
                 
             self.cursor.execute(f"SELECT COUNT(comment) from comments where doc_id='{self.table_data[x]['doc_id']}'")
             comment_count = self.cursor.fetchone()
@@ -641,7 +641,7 @@ class Manager(QtWidgets.QWidget):
                     else:
                         elapsed_days =""
                 else:
-                    elapsed_days = str(self.table_data[x]["COMP_DAYS"])
+                    elapsed_days = str(self.table_data[x]["comp_days"])
                     
                 self.cursor.execute(f"SELECT COUNT(comment) from comments where doc_id='{self.table_data[x]['doc_id']}'")
                 comment_count = self.cursor.fetchone()
@@ -986,7 +986,7 @@ class Manager(QtWidgets.QWidget):
             for result in results:
                 if result[0] not in matches:
                     matches.append(result[0])
-            self.cursor.execute(f"Select doc_id from parts where part_id like '%{search}%' OR descriptiom like '%{search}%'")
+            self.cursor.execute(f"Select doc_id from parts where part_id like '%{search}%' OR description like '%{search}%'")
             results = self.cursor.fetchall()
             for result in results:
                 if result[0] not in matches:

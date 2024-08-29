@@ -73,7 +73,7 @@ class PurchReqTab(QtWidgets.QWidget):
         self.reqs.setItemDelegate(ReqsDelegate())
         self.reqs.doubleClicked.connect(self.editReq)
         # if self.parent.doc_data is not None:
-        #     if self.parent.parent.user_info['user']==self.parent.doc_data["AUTHOR"]:
+        #     if self.parent.parent.user_info['user']==self.parent.doc_data["author"]:
         #         self.reqs.doubleClicked.connect(self.editPart)
         #     else:
         #         self.button_add.setDisabled(True)

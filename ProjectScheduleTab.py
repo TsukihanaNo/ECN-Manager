@@ -673,8 +673,8 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             self.bubbleDate(parent)
         
     def saveData(self):
-        self.cursor.execute(f"delete from PROJECT_TASKS where PROJECT_ID='{self.doc_id}'")
-        self.cursor.execute(f"delete from TASK_LINK where PROJECT_ID='{self.doc_id}'")
+        self.cursor.execute(f"delete from project_tasks where project_id='{self.doc_id}'")
+        self.cursor.execute(f"delete from task_link where project_id='{self.doc_id}'")
         self.db.commit()
         iterator = QtWidgets.QTreeWidgetItemIterator(self.tasks)
         while iterator.value():
@@ -694,39 +694,39 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 for x in range(item.childCount()):
                     # print(self.tasks.itemWidget(item.child(x),7).text())
                     data = (self.doc_id,task_id,item.child(x).text(7))
-                    self.cursor.execute(f"INSERT INTO TASK_LINK(PROJECT_ID, PARENT_TASK_ID, CHILD_TASK_ID) VALUES(%s,%s,%s)",(data))
+                    self.cursor.execute(f"INSERT INTO task_link(project_id, parent_task_id, child_task_id) VALUES(%s,%s,%s)",(data))
             else:
                 task_type = "child"
             data = (self.doc_id,task_name,owner,start_date,end_date,status,duration,predecessors,task_id,task_type,milestone)
             # print(data)
-            self.cursor.execute(f"INSERT INTO PROJECT_TASKS(PROJECT_ID,TASK_NAME,ASSIGNED_TO,START_DATE,END_DATE,STATUS,DURATION,PREDECESSORS,TASK_ID,TYPE,MILESTONE) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(data))
+            self.cursor.execute(f"INSERT INTO project_tasks(project_id,task_name,assigned_to,start_date,end_date,status,duration,predecessors,task_id,type,milestone) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(data))
             iterator+=1
         self.db.commit()
     
     def loadData(self):
-        self.cursor.execute(f"select * from PROJECT_TASKS where PROJECT_ID='{self.doc_id}'")
+        self.cursor.execute(f"select * from project_tasks where project_id='{self.doc_id}'")
         results = self.cursor.fetchall()
         for result in results:
-            # print(result["TASK_ID"])
-            parent = self.getParentTask(result["TASK_ID"])
+            # print(result["task_id"])
+            parent = self.getParentTask(result["task_id"])
             if parent is None:
                 item = QtWidgets.QTreeWidgetItem(self.tasks)
             else:
                 item = QtWidgets.QTreeWidgetItem(self.task_items[str(parent[0])])
-            self.task_items[str(result["TASK_ID"])]=item
-            # self.generateWidgets(item,str(result["TASK_ID"]))
+            self.task_items[str(result["task_id"])]=item
+            # self.generateWidgets(item,str(result["task_id"]))
             #setting data
-            if result["TYPE"]!="parent" and self.access=="write":
+            if result["type"]!="parent" and self.access=="write":
                 item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
-            item.setText(0,result["TASK_NAME"])
-            item.setText(1,result["ASSIGNED_TO"])
-            item.setText(2,result["START_DATE"])
-            item.setText(3,result["END_DATE"])
-            item.setText(4,result["STATUS"])
-            item.setText(5,result["DURATION"])
-            item.setText(6,result["PREDECESSORS"])
-            item.setText(7,str(result["TASK_ID"]))
-            item.setText(8,result["MILESTONE"])
+            item.setText(0,result["task_name"])
+            item.setText(1,result["assigned_to"])
+            item.setText(2,result["start_date"])
+            item.setText(3,result["end_date"])
+            item.setText(4,result["status"])
+            item.setText(5,result["duration"])
+            item.setText(6,result["predecessors"])
+            item.setText(7,str(result["task_id"]))
+            item.setText(8,result["milestone"])
             self.updateDependents(item)
         self.generateDependents()
         self.loadCounter()
@@ -779,7 +779,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
                 else:
                     item = QtWidgets.QTreeWidgetItem(self.task_items[parent])
                 self.task_items[task_id]=item
-                # self.generateWidgets(item,str(result["TASK_ID"]))
+                # self.generateWidgets(item,str(result["task_id"]))
                 #setting data
                 if item_type!="parent":
                     item.setFlags(item.flags()|QtCore.Qt.ItemIsEditable)
@@ -799,7 +799,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
             self.expandAll()
         
     def loadCounter(self):
-        self.cursor.execute(f"select max(TASK_ID) from PROJECT_TASKS where PROJECT_ID='{self.doc_id}'")
+        self.cursor.execute(f"select max(task_id) from project_tasks where project_id='{self.doc_id}'")
         result = self.cursor.fetchone()
         if result[0] is not None:
             self.task_counter=int(result[0])
@@ -816,7 +816,7 @@ class ProjectScheduleTab(QtWidgets.QWidget):
         self.updateDependents(item)
     
     def getParentTask(self,task_id):
-        self.cursor.execute(f"select PARENT_TASK_ID from TASK_LINK where PROJECT_ID ='{self.doc_id}' and CHILD_TASK_ID='{task_id}'")
+        self.cursor.execute(f"select parent_task_id from task_link where project_id ='{self.doc_id}' and child_task_id='{task_id}'")
         result = self.cursor.fetchone()
         return result
     

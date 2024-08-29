@@ -14,6 +14,7 @@ import smtplib
 import ssl
 import imaplib
 import time
+import psycopg2, psycopg2.extras
 
 if getattr(sys, 'frozen', False):
     # frozen
@@ -132,9 +133,16 @@ class Notifier(QtWidgets.QWidget):
             ret = msgbox.exec()
             if msgbox.clickedButton() == openbutton:
                 db_loc = QtWidgets.QFileDialog.getOpenFileName(self,self.tr("Open DB"),program_location,self.tr("DB Files (*.DB)"))[0]
-                self.db = sqlite3.connect(db_loc)
-                self.cursor = self.db.cursor()
-                self.cursor.row_factory = sqlite3.Row
+                # self.db = sqlite3.connect(db_loc)
+                # self.cursor = self.db.cursor()
+                # self.cursor.row_factory = sqlite3.Row
+                self.db = psycopg2.connect(database=self.settings['database'],
+                        host=self.settings['host'],
+                        user=self.settings['user'],
+                        password=self.settings['password'],
+                        port=self.settings['port'])
+                # self.db.autocommit = True
+                self.cursor = self.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
                 #save setting
                 if db_loc!="":
                     f = open(initfile,"w+")
@@ -150,9 +158,16 @@ class Notifier(QtWidgets.QWidget):
                 self.settings[key]=value.strip()
             #print(self.settings)
             f.close()
-            self.db = sqlite3.connect(self.settings["DB_LOC"])
-            self.cursor = self.db.cursor()
-            self.cursor.row_factory = sqlite3.Row
+            # self.db = sqlite3.connect(self.settings["DB_LOC"])
+            # self.cursor = self.db.cursor()
+            # self.cursor.row_factory = sqlite3.Row
+            self.db = psycopg2.connect(database=self.settings['database'],
+                        host=self.settings['host'],
+                        user=self.settings['user'],
+                        password=self.settings['password'],
+                        port=self.settings['port'])
+            # self.db.autocommit = True
+            self.cursor = self.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
             
     # def checkLockFile(self):
     #     if os.path.exists(lockfile):

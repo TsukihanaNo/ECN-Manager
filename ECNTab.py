@@ -167,6 +167,8 @@ class ECNTab(QtWidgets.QWidget):
         self.userList.remove("admin")
         
     def checkFields(self):
+        if self.box_requestor.currentText()=="":
+            return False
         if self.combo_dept.currentText()==" ":
             return False
         if self.combo_reason.currentText()==" ":

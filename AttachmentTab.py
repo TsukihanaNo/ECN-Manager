@@ -80,7 +80,7 @@ class AttachmentTab(QtWidgets.QWidget):
 
         
     def onRowSelect(self):
-        if self.user_info['user']==self.parent.doc_data["AUTHOR"] and self.parent.doc_data["STATUS"]!="Completed":
+        if self.user_info['user']==self.parent.doc_data["author"] and self.parent.doc_data["status"]!="Completed":
             self.button_remove.setEnabled(bool(self.attachments.selectionModel().selectedIndexes()))
         self.button_open.setEnabled(bool(self.attachments.selectionModel().selectedIndexes()))
         self.button_open_loc.setEnabled(bool(self.attachments.selectionModel().selectedIndexes()))
