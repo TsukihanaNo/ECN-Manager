@@ -117,12 +117,12 @@ class PurchReqTab(QtWidgets.QWidget):
             
     def repopulateTable(self):
         self.model.clear_reqs()
-        self.parent.cursor.execute(f"select * from DOCUMENT LEFT JOIN PURCH_REQ_DOC_LINK ON DOCUMENT.DOC_ID=PURCH_REQ_DOC_LINK.DOC_ID WHERE PURCH_REQ_DOC_LINK.PROJECT_ID='{self.doc_id}'")
+        self.parent.cursor.execute(f"select * from document LEFT JOIN purch_req_doc_link ON document.doc_id=purch_req_doc_link.doc_id WHERE purch_req_doc_link.project_id='{self.doc_id}'")
         results = self.parent.cursor.fetchall()
         for result in results:
-            req_header = self.visual.getReqHeader(result['REQ_ID'])
+            req_header = self.visual.getReqHeader(result['req_id'])
             visual_status = VISUAL_REQ_STATUS[req_header[1]]
-            self.model.add_req(result['DOC_ID'],result["DOC_TITLE"], result['REQ_ID'],result['STATUS'],visual_status)
+            self.model.add_req(result['doc_id'],result["doc_title"], result['req_id'],result['status'],visual_status)
             
     def rowCount(self):
         return self.model.rowCount(self.reqs)

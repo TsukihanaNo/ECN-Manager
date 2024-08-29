@@ -35,9 +35,9 @@ class PCNWindow(QtWidgets.QWidget):
         self.db = self.parent.db
         self.cursor = self.parent.cursor
         if self.doc_id is None:
-            self.doc_data = {"AUTHOR":self.parent.user_info["user"],"STATUS":"Draft"}
+            self.doc_data = {"author":self.parent.user_info["user"],"status":"Draft"}
         else:
-            command = "Select * from DOCUMENT where DOC_ID = '"+self.doc_id +"'"
+            command = "Select * from document where doc_id = '"+self.doc_id +"'"
             self.cursor.execute(command)
             self.doc_data = self.cursor.fetchone()
         #self.getPCNCounter()
@@ -82,7 +82,7 @@ class PCNWindow(QtWidgets.QWidget):
         self.button_preview.setIcon(QtGui.QIcon(icon_loc))
         self.button_preview.clicked.connect(self.previewHTML)
         
-        if self.doc_data["STATUS"]!="Completed":
+        if self.doc_data["status"]!="Completed":
             icon_loc = icon = os.path.join(program_location,"icons","save.png")
             self.button_save = QtWidgets.QPushButton("Save")
             self.button_save.setIcon(QtGui.QIcon(icon_loc))
@@ -93,11 +93,11 @@ class PCNWindow(QtWidgets.QWidget):
             self.button_comment.setIcon(QtGui.QIcon(icon_loc))
             self.button_comment.clicked.connect(self.addUserComment)
             self.toolbar.addWidget(self.button_save)
-            if self.parent.user_info["user"]==self.doc_data["AUTHOR"]:
+            if self.parent.user_info["user"]==self.doc_data["author"]:
                 self.button_cancel = QtWidgets.QPushButton("Delete")
                 icon_loc = icon = os.path.join(program_location,"icons","cancel.png")
                 self.button_cancel.setIcon(QtGui.QIcon(icon_loc))
-                self.button_cancel.setEnabled(self.doc_data["STATUS"]=="Draft" or self.doc_data["STATUS"]=="Rejected")
+                self.button_cancel.setEnabled(self.doc_data["status"]=="Draft" or self.doc_data["status"]=="Rejected")
                 self.button_cancel.clicked.connect(self.cancel)
                 
                 icon_loc = icon = os.path.join(program_location,"icons","release.png")
@@ -105,11 +105,11 @@ class PCNWindow(QtWidgets.QWidget):
                 self.button_release.setIcon(QtGui.QIcon(icon_loc))
                 self.button_release.clicked.connect(self.release)
                 self.button_release.setDisabled(True)
-                if self.doc_data["STATUS"]=="Rejected":
+                if self.doc_data["status"]=="Rejected":
                     self.button_cancel.setText("Cancel")
                 self.toolbar.addWidget(self.button_cancel)
                 self.toolbar.addWidget(self.button_release)
-            if self.parent.user_info["user"]!=self.doc_data["AUTHOR"] and self.doc_data["STATUS"]=="Out For Approval":
+            if self.parent.user_info["user"]!=self.doc_data["author"] and self.doc_data["status"]=="Out For Approval":
                 icon_loc = icon = os.path.join(program_location,"icons","approve.png")
                 self.button_approve = QtWidgets.QPushButton("Approve")
                 self.button_approve.setIcon(QtGui.QIcon(icon_loc))
@@ -189,7 +189,7 @@ class PCNWindow(QtWidgets.QWidget):
                     self.dispMsg("duplicates found in signature and notification tab")
                 else:
                     data = (doc_id,doc_type,author,status,title,overview,reason,change,products,replacement,reference,response,web_desc,modifieddate)
-                    self.cursor.execute("INSERT INTO DOCUMENT(DOC_ID,DOC_TYPE,AUTHOR,STATUS,DOC_TITLE,DOC_TEXT_1,DOC_REASON,DOC_SUMMARY,DOC_TEXT_2,DOC_TEXT_3,DOC_TEXT_4,DOC_TEXT_5,DOC_TEXT_6,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",(data))
+                    self.cursor.execute("INSERT INTO document(doc_id,doc_type,author,status,doc_title,doc_text_1,doc_reason,doc_summary,doc_text_2,doc_text_3,doc_text_4,doc_text_5,doc_text_6,last_modified) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(data))
                     self.AddSignatures()
                     self.dispMsg("PCN Saved!")
             else:
@@ -197,7 +197,7 @@ class PCNWindow(QtWidgets.QWidget):
                     self.dispMsg("duplicates found in signature and notification tab")
                 else:
                     data = (title,overview,reason,change,products,replacement,reference,response,web_desc,modifieddate,doc_id)
-                    self.cursor.execute("UPDATE DOCUMENT SET DOC_TITLE = ?, DOC_TEXT_1 = ?, DOC_REASON = ?, DOC_SUMMARY = ?, DOC_TEXT_2 = ?, DOC_TEXT_3 = ?, DOC_TEXT_4 = ?, DOC_TEXT_5 = ?, DOC_TEXT_6 = ?, LAST_MODIFIED = ? WHERE DOC_ID = ?",(data))
+                    self.cursor.execute("UPDATE document SET doc_title = %s, doc_text_1 = %s, doc_reason = %s, doc_summary = %s, doc_text_2 = %s, doc_text_3 = %s, doc_text_4 = %s, doc_text_5 = %s, doc_text_6 = %s, last_modified = %s WHERE doc_id = %s",(data))
                     self.AddSignatures()
                     if not msg:
                         self.dispMsg("PCN Updated!")
@@ -217,14 +217,14 @@ class PCNWindow(QtWidgets.QWidget):
             return False
         titles = self.getTitlesForStage()
         titles = titles[str(curStage)]
-        self.cursor.execute(f"SELECT USER_ID from SIGNATURE where DOC_ID='{self.doc_id}' and USER_ID='{self.user_info['user']}'")
+        self.cursor.execute(f"SELECT user_id from signatures where doc_id='{self.doc_id}' and user_id='{self.user_info['user']}'")
         result = self.cursor.fetchone()
         if self.user_info['title'] in titles and result is not None:
             return True
         return False
             
     def hasUserSigned(self):
-        self.cursor.execute(f"SELECT SIGNED_DATE from SIGNATURE where DOC_ID='{self.doc_id}' and USER_ID='{self.user_info['user']}'")
+        self.cursor.execute(f"SELECT signed_date from signatures where doc_id='{self.doc_id}' and user_id='{self.user_info['user']}'")
         result = self.cursor.fetchone()
         if result is None or result[0] is None:
             #print("found none returning false")
@@ -233,26 +233,26 @@ class PCNWindow(QtWidgets.QWidget):
             return True
             
     def loadData(self):
-        self.cursor.execute(f"Select * from DOCUMENT WHERE DOC_ID='{self.doc_id}'")
+        self.cursor.execute(f"Select * from document WHERE doc_id='{self.doc_id}'")
         result = self.cursor.fetchone()
-        self.tab_pcn.line_id.setText(result["DOC_ID"])
-        self.tab_pcn.line_title.setText(result["DOC_TITLE"])
-        self.tab_pcn.line_author.setText(result["AUTHOR"])
-        self.tab_pcn.line_status.setText(result["STATUS"])
-        self.tab_pcn.text_overview.setHtml(result["DOC_TEXT_1"])
-        self.tab_pcn.text_reason.setHtml(result["DOC_REASON"])
-        self.tab_pcn.text_change.setHtml(result["DOC_SUMMARY"])
-        self.tab_pcn.text_products.setHtml(result["DOC_TEXT_2"])
-        self.tab_pcn.text_replacement.setHtml(result["DOC_TEXT_3"])
-        self.tab_pcn.text_reference.setHtml(result["DOC_TEXT_4"])
-        self.tab_pcn.text_response.setHtml(result["DOC_TEXT_5"])
-        self.tab_pcn.line_web.setText(result["DOC_TEXT_6"])
+        self.tab_pcn.line_id.setText(result["doc_id"])
+        self.tab_pcn.line_title.setText(result["doc_title"])
+        self.tab_pcn.line_author.setText(result["author"])
+        self.tab_pcn.line_status.setText(result["status"])
+        self.tab_pcn.text_overview.setHtml(result["doc_text_1"])
+        self.tab_pcn.text_reason.setHtml(result["doc_reason"])
+        self.tab_pcn.text_change.setHtml(result["doc_summary"])
+        self.tab_pcn.text_products.setHtml(result["doc_text_2"])
+        self.tab_pcn.text_replacement.setHtml(result["doc_text_3"])
+        self.tab_pcn.text_reference.setHtml(result["doc_text_4"])
+        self.tab_pcn.text_response.setHtml(result["doc_text_5"])
+        self.tab_pcn.line_web.setText(result["doc_text_6"])
         
         self.tab_signature.repopulateTable()
-        if self.doc_data["AUTHOR"]==self.parent.user_info["user"] and self.doc_data["STATUS"]!="Out For Approval" and self.doc_data["STATUS"]!="Completed":
+        if self.doc_data["author"]==self.parent.user_info["user"] and self.doc_data["status"]!="Out For Approval" and self.doc_data["status"]!="Completed":
             self.button_release.setEnabled(self.tab_signature.rowCount()>0)
         self.tab_notification.repopulateTable()
-        if self.doc_data["STATUS"]=="Completed":
+        if self.doc_data["status"]=="Completed":
             self.tab_signature.button_add.setDisabled(True)
             self.tab_notification.button_add.setDisabled(True)
         self.tab_comments.loadComments()
@@ -283,9 +283,9 @@ class PCNWindow(QtWidgets.QWidget):
             
     def deletePCN(self,doc_id):
         try:
-            self.cursor.execute(f"DELETE FROM DOCUMENT where DOC_ID='{doc_id}'")
-            self.cursor.execute(f"DELETE FROM COMMENTS where DOC_ID='{doc_id}'")
-            self.cursor.execute(f"DELETE FROM SIGNATURE where DOC_ID='{doc_id}'")
+            self.cursor.execute(f"DELETE FROM document where doc_id='{doc_id}'")
+            self.cursor.execute(f"DELETE FROM comments where doc_id='{doc_id}'")
+            self.cursor.execute(f"DELETE FROM signatures where doc_id='{doc_id}'")
             self.db.commit()
             self.dispMsg("PCN has been deleted")
             self.parent.repopulateTable()
@@ -298,7 +298,7 @@ class PCNWindow(QtWidgets.QWidget):
         if ok and comment!="":
             try:
                 self.addComment(self.doc_id, comment,"Canceling")
-                self.cursor.execute(f"UPDATE DOCUMENT SET STATUS='Canceled' where DOC_ID='{doc_id}'")
+                self.cursor.execute(f"UPDATE document SET status='Canceled' where doc_id='{doc_id}'")
                 self.db.commit()
                 self.dispMsg("PCN has been canceled")
                 self.tab_pcn.line_status.setText("Canceled")
@@ -318,9 +318,9 @@ class PCNWindow(QtWidgets.QWidget):
             #self.dispMsg("Comment has been added!")
 
     def addComment(self,doc_id,comment,commentType):
-        #COMMENTS(ECN_ID TEXT, NAME TEXT, USER TEXT, COMM_DATE DATE, COMMENT TEXT
+        #comments(ECN_ID TEXT, name TEXT, user_id TEXT, comm_date DATE, comment TEXT
         data = (doc_id, self.parent.user_info['user'],datetime.now().strftime('%Y-%m-%d %H:%M:%S'),comment,commentType)
-        self.cursor.execute("INSERT INTO COMMENTS(DOC_ID, USER, COMM_DATE, COMMENT,TYPE) VALUES(?,?,?,?,?)",(data))
+        self.cursor.execute("INSERT INTO comments(doc_id, user_id, comm_date, comment,type) VALUES(%s,%s,%s,%s,%s)",(data))
         self.db.commit()
         # self.tab_comments.enterText.clear()
         #self.tab_comments.mainText.clear()
@@ -329,12 +329,12 @@ class PCNWindow(QtWidgets.QWidget):
         #self.tab_widget.setCurrentIndex(3)
         
     def setCommentCount(self):
-        self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where DOC_ID='{self.doc_id}'")
+        self.cursor.execute(f"SELECT COUNT(comment) from comments where doc_id='{self.doc_id}'")
         result = self.cursor.fetchone()
         self.tab_widget.setTabText(1, "Comments ("+str(result[0])+")")
     
     def existNotification(self,doc_id):
-        self.cursor.execute(f"Select * from NOTIFICATION where DOC_ID='{doc_id}' and STATUS='Not Sent'")
+        self.cursor.execute(f"Select * from notifications where doc_id='{doc_id}' and status='Not Sent'")
         result = self.cursor.fetchone()
         if result is not None:
             return True
@@ -361,15 +361,15 @@ class PCNWindow(QtWidgets.QWidget):
                 
         if self.existNotification(doc_id) and notificationType!="User Comment":
             data = (notificationType,from_user,users,msg, doc_id)
-            self.cursor.execute("UPDATE NOTIFICATION SET TYPE = ?, FROM_USER = ?, USERS = ?, MSG = ? WHERE DOC_ID = ?",(data))
+            self.cursor.execute("UPDATE notifications SET type = %s, from_user = %s, users = %s, msg = %s WHERE doc_id = %s",(data))
         else:
             data = (doc_id,"Not Sent",notificationType,from_user, users, msg)
-            self.cursor.execute("INSERT INTO NOTIFICATION(DOC_ID, STATUS, TYPE,FROM_USER, USERS, MSG) VALUES(?,?,?,?,?,?)",(data))
+            self.cursor.execute("INSERT INTO notifications(doc_id, status, type,from_user, users, msg) VALUES(%s,%s,%s,%s,%s,%s)",(data))
         self.db.commit()
         
         
     def getPCNCounter(self):
-        self.cursor.execute("select * from PCNCOUNTER")
+        self.cursor.execute("select * from pcncounter")
         result = self.cursor.fetchone()
         if result is not None:
             return (result[0],result[1])
@@ -381,11 +381,11 @@ class PCNWindow(QtWidgets.QWidget):
         #print(old_month,new_month,counter)
         if old_month == "00":
             data = (new_month,counter)
-            self.cursor.execute(f"INSERT INTO PCNCOUNTER(MONTH,COUNTER) VALUES(?,?)",(data))
+            self.cursor.execute(f"INSERT INTO pcncounter(month,counter) VALUES(%s,%s)",(data))
             #print("inserting data")
         else:
             data = (new_month,counter,old_month)
-            self.cursor.execute(f"UPDATE PCNCOUNTER SET MONTH = ?, COUNTER=? where MONTH = ?",(data))
+            self.cursor.execute(f"UPDATE pcncounter SET month = %s, counter=%s where month = %s",(data))
         self.db.commit()
         
     def checkStage(self):
@@ -400,7 +400,7 @@ class PCNWindow(QtWidgets.QWidget):
         
     def getPCNStage(self):
         try:
-            self.cursor.execute(f"Select TEMPSTAGE from DOCUMENT where DOC_ID='{self.doc_id}'")
+            self.cursor.execute(f"Select TEMPSTAGE from document where doc_id='{self.doc_id}'")
             result = self.cursor.fetchone()
             #print("current stage",result[0])
             if result[0] is None:
@@ -413,7 +413,7 @@ class PCNWindow(QtWidgets.QWidget):
     def setPCNStage(self,stage):
         try:
             #print('setting ecn to ', stage)
-            self.cursor.execute(f"UPDATE DOCUMENT SET STAGE ='{stage}', TEMPSTAGE = '{stage}' where DOC_ID='{self.doc_id}'")
+            self.cursor.execute(f"UPDATE document SET stage ='{stage}', tempstage = '{stage}' where doc_id='{self.doc_id}'")
             self.db.commit()
         except Exception as e:
             self.dispMsg(f"Error trying to set PCN stage. Error: {e}")
@@ -425,11 +425,11 @@ class PCNWindow(QtWidgets.QWidget):
     #     #print("here are the titles",titles)
     #     move = True
     #     for title in titles:
-    #         self.cursor.execute(f"Select SIGNED_DATE from SIGNATURE where DOC_ID = '{self.doc_id}' and JOB_TITLE='{title}' and TYPE='Signing'")
+    #         self.cursor.execute(f"Select signed_date from signatures where doc_id = '{self.doc_id}' and job_title='{title}' and type='Signing'")
     #         results = self.cursor.fetchall()
     #         for result in results:
-    #             #print(result['SIGNED_DATE'])
-    #             if result['SIGNED_DATE'] is None:
+    #             #print(result['signed_date'])
+    #             if result['signed_date'] is None:
     #                 move = False
     #                 #print("not moving to next stage")
     #                 break
@@ -452,7 +452,7 @@ class PCNWindow(QtWidgets.QWidget):
                 self.addNotification(self.doc_id, "Stage Moved")
                 
     def getSigStages(self):
-        self.cursor.execute(f"select JOB_TITLE from SIGNATURE where DOC_ID='{self.doc_id}' and TYPE='Signing' and SIGNED_DATE is NULL")
+        self.cursor.execute(f"select job_title from signatures where doc_id='{self.doc_id}' and type='Signing' and signed_date is NULL")
         results = self.cursor.fetchall()
         stages = []
         for result in results:
@@ -462,7 +462,7 @@ class PCNWindow(QtWidgets.QWidget):
         # print(stages)
             
     def getNextStage(self):
-        self.cursor.execute(f"Select JOB_TITLE from SIGNATURE where DOC_ID='{self.doc_id}' and SIGNED_DATE is NULL and TYPE='Signing'")
+        self.cursor.execute(f"Select job_title from signatures where doc_id='{self.doc_id}' and signed_date is NULL and type='Signing'")
         results = self.cursor.fetchall()
         stage = []
         for result in results:
@@ -507,12 +507,12 @@ class PCNWindow(QtWidgets.QWidget):
                 self.save(1)
                 modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 
-                self.cursor.execute(f"SELECT FIRST_RELEASE from DOCUMENT where DOC_ID='{self.doc_id}'")
+                self.cursor.execute(f"SELECT first_release from document where doc_id='{self.doc_id}'")
                 result = self.cursor.fetchone()
                 if result[0] is None:
-                    self.cursor.execute(f"UPDATE DOCUMENT SET FIRST_RELEASE = '{modifieddate}' where DOC_ID='{self.doc_id}'")
+                    self.cursor.execute(f"UPDATE document SET first_release = '{modifieddate}' where doc_id='{self.doc_id}'")
                 data = (modifieddate, "Out For Approval",self.doc_id)
-                self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?, STATUS = ? WHERE DOC_ID = ?",(data))
+                self.cursor.execute("UPDATE document SET last_modified = %s, status = %s WHERE doc_id = %s",(data))
                 self.db.commit()
                 currentStage = self.getPCNStage()
                 if currentStage==0:
@@ -535,8 +535,8 @@ class PCNWindow(QtWidgets.QWidget):
         try:
             approvedate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             data = (approvedate,self.doc_id,self.parent.user_info['user'])
-            self.cursor.execute("UPDATE SIGNATURE SET SIGNED_DATE = ? WHERE DOC_ID = ? and USER_ID = ?",(data))
-            self.cursor.execute(f"UPDATE DOCUMENT SET LAST_MODIFIED = '{approvedate}' where DOC_ID='{self.doc_id}'")
+            self.cursor.execute("UPDATE signatures SET signed_date = %s WHERE doc_id = %s and user_id = %s",(data))
+            self.cursor.execute(f"UPDATE document SET last_modified = '{approvedate}' where doc_id='{self.doc_id}'")
             self.tab_signature.repopulateTable()
             self.dispMsg("PCN has been signed!")
             self.button_approve.setDisabled(True)
@@ -555,8 +555,8 @@ class PCNWindow(QtWidgets.QWidget):
             try:
                 modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 data = (modifieddate, "Rejected",self.doc_id)
-                self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?, STATUS = ? WHERE DOC_ID = ?",(data))
-                self.cursor.execute(f"UPDATE SIGNATURE SET SIGNED_DATE=Null where DOC_ID='{self.doc_id}'")
+                self.cursor.execute("UPDATE document SET last_modified = %s, status = %s WHERE doc_id = %s",(data))
+                self.cursor.execute(f"UPDATE signatures SET signed_date=Null where doc_id='{self.doc_id}'")
                 self.db.commit()
                 self.setPCNStage(0)
                 self.parent.repopulateTable()
@@ -573,16 +573,16 @@ class PCNWindow(QtWidgets.QWidget):
     
     def checkComplete(self):
         try:
-            command = f"Select * from SIGNATURE where DOC_ID ='{self.doc_id}' and TYPE='Signing'"
+            command = f"Select * from signatures where doc_id ='{self.doc_id}' and type='Signing'"
             self.cursor.execute(command)
             results = self.cursor.fetchall()
             completed = True
             for result in results:
-                if result['SIGNED_DATE'] == None or result['SIGNED_DATE']== "":
+                if result['signed_date'] == None or result['signed_date']== "":
                     completed = False
             if completed:
                 completeddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                self.cursor.execute(f"select FIRST_RELEASE from DOCUMENT where DOC_ID='{self.doc_id}'")
+                self.cursor.execute(f"select first_release from document where doc_id='{self.doc_id}'")
                 result = self.cursor.fetchone()
                 #print(result[0])
                 #first_release = datetime.strptime(str(result[0]),'%Y-%m-%d %H:%M:%S')
@@ -590,7 +590,7 @@ class PCNWindow(QtWidgets.QWidget):
                 #print(elapsed)
                 #elapsed = self.getElapsedDays(first_release, completeddate)
                 data = (completeddate,completeddate,elapsed, "Completed",self.doc_id)
-                self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?,COMP_DATE = ?, COMP_DAYS = ?, STATUS = ? WHERE DOC_ID = ?",(data))
+                self.cursor.execute("UPDATE document SET last_modified = %s,comp_date = %s, comp_days = %s, status = %s WHERE doc_id = %s",(data))
                 #self.db.commit()
                 self.parent.repopulateTable()
                 self.dispMsg("PCN is now completed")
@@ -605,11 +605,11 @@ class PCNWindow(QtWidgets.QWidget):
             
     def AddSignatures(self):
         #inserting to signature table
-        #SIGNATURE(ECN_ID TEXT, NAME TEXT, USER_ID TEXT, HAS_SIGNED TEXT, SIGNED_DATE TEXT)
+        #signatures(ECN_ID TEXT, name TEXT, user_id TEXT, HAS_SIGNED TEXT, signed_date TEXT)
         try:
             #get current values in db
             current_list = []
-            self.cursor.execute(f"SELECT USER_ID FROM SIGNATURE WHERE DOC_ID='{self.doc_id}' and TYPE='Signing'")
+            self.cursor.execute(f"SELECT user_id FROM signatures WHERE doc_id='{self.doc_id}' and type='Signing'")
             results = self.cursor.fetchall()
             for result in results:
                 current_list.append(result[0])
@@ -626,7 +626,7 @@ class PCNWindow(QtWidgets.QWidget):
             for element in new_list:
                 if element[3] not in current_list:
                     #print(f'insert {element[3]} into signature db')
-                    self.cursor.execute("INSERT INTO SIGNATURE(DOC_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(element))
+                    self.cursor.execute("INSERT INTO signatures(doc_id,job_title,name,user_id,type) VALUES(%s,%s,%s,%s,%s)",(element))
             for element in current_list:
                 no_match = True
                 for elements in new_list:
@@ -634,11 +634,11 @@ class PCNWindow(QtWidgets.QWidget):
                         no_match = False
                 if no_match:
                     #print(f"remove {element} from signature db")
-                    self.cursor.execute(f"DELETE FROM SIGNATURE WHERE DOC_ID = '{self.doc_id}' and USER_ID='{element}'")
+                    self.cursor.execute(f"DELETE FROM signatures WHERE doc_id = '{self.doc_id}' and user_id='{element}'")
                     
                     
             current_list = []
-            self.cursor.execute(f"SELECT USER_ID FROM SIGNATURE WHERE DOC_ID='{self.doc_id}' and TYPE='Notify'")
+            self.cursor.execute(f"SELECT user_id FROM signatures WHERE doc_id='{self.doc_id}' and type='Notify'")
             results = self.cursor.fetchall()
             for result in results:
                 current_list.append(result[0])
@@ -653,7 +653,7 @@ class PCNWindow(QtWidgets.QWidget):
             for element in new_list:
                 if element[3] not in current_list:
                     #print(f'insert {element[3]} into notify db')
-                    self.cursor.execute("INSERT INTO SIGNATURE(DOC_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(element))
+                    self.cursor.execute("INSERT INTO signatures(doc_id,job_title,name,user_id,type) VALUES(%s,%s,%s,%s,%s)",(element))
             for element in current_list:
                 no_match = True
                 for elements in new_list:
@@ -661,10 +661,10 @@ class PCNWindow(QtWidgets.QWidget):
                         no_match = False
                 if no_match:
                     #print(f"remove {element} from notify db")
-                    self.cursor.execute(f"DELETE FROM SIGNATURE WHERE DOC_ID = '{self.doc_id}' and USER_ID='{element}'")
+                    self.cursor.execute(f"DELETE FROM signatures WHERE doc_id = '{self.doc_id}' and user_id='{element}'")
             
             self.db.commit()
-            if self.doc_data["AUTHOR"]==self.parent.user_info["user"]:
+            if self.doc_data["author"]==self.parent.user_info["user"]:
                 self.button_release.setEnabled(self.tab_signature.rowCount()>0)
             #print('data updated')
         except Exception as e:
@@ -714,15 +714,15 @@ class PCNWindow(QtWidgets.QWidget):
             f.close()
             t = Template(lines)
             
-            self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{self.doc_id}'")
+            self.cursor.execute(f"SELECT * from document where doc_id='{self.doc_id}'")
             result = self.cursor.fetchone()
-            overview = result['DOC_TEXT_1']
-            products = result['DOC_TEXT_2']
-            change = result['DOC_SUMMARY']
-            reason = result['DOC_REASON']
-            replacement = result['DOC_TEXT_3']
-            reference = result['DOC_TEXT_4']
-            response = result['DOC_TEXT_5']
+            overview = result['doc_text_1']
+            products = result['doc_text_2']
+            change = result['doc_summary']
+            reason = result['doc_reason']
+            replacement = result['doc_text_3']
+            reference = result['doc_text_4']
+            response = result['doc_text_5']
 
             #print('substituting text')
             

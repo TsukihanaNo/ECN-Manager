@@ -100,19 +100,19 @@ class LoginWindow(QtWidgets.QWidget):
 
     def checkUserPass(self):
         #print("initiating check")
-        self.cursor.execute("SELECT USER_ID, PASSWORD, NAME, JOB_TITLE  FROM USER WHERE USER_ID=:id",{"id":self.text_user.text()})
+        self.cursor.execute(f"SELECT user_id, password, name, job_title  FROM users WHERE user_id='{self.text_user.text()}'")
         info = self.cursor.fetchone()
         # print(len(info))
         # for item in info:
         #     print(item)
         if info is not None:
-            if self.text_pass.text()==info['PASSWORD']:
-                self.parent.user_info['user'] = info['USER_ID']
-                self.parent.user_info['name'] = info['NAME']
-                self.parent.user_info['title'] = info['JOB_TITLE']
-                self.parent.user_info['stage_ecn'] = self.parent.stageDict[info['JOB_TITLE']]
-                self.parent.user_info['stage_pcn'] = self.parent.stageDictPCN[info['JOB_TITLE']]
-                self.cursor.execute(f"Select * from PERMISSIONS where USER_ID='{self.text_user.text()}'")
+            if self.text_pass.text()==info['password']:
+                self.parent.user_info['user'] = info['user_id']
+                self.parent.user_info['name'] = info['name']
+                self.parent.user_info['title'] = info['job_title']
+                self.parent.user_info['stage_ecn'] = self.parent.stageDict[info['job_title']]
+                self.parent.user_info['stage_pcn'] = self.parent.stageDictPCN[info['job_title']]
+                self.cursor.execute(f"Select * from permissions where user_id='{self.text_user.text()}'")
                 permissions = self.cursor.fetchone()
                 if permissions is None:
                     self.parent.user_permissions["create_ecn"] = "n"
@@ -125,15 +125,15 @@ class LoginWindow(QtWidgets.QWidget):
                     self.parent.user_permissions["view_analytics"] = "n"
                     self.parent.user_permissions["rerouting"] = "n"
                 else:
-                    self.parent.user_permissions["create_ecn"] = permissions["CREATE_ECN"]
-                    self.parent.user_permissions["create_pcn"] = permissions["CREATE_PCN"]
-                    self.parent.user_permissions["create_prj"] = permissions["CREATE_PRJ"]
-                    self.parent.user_permissions["create_prq"] = permissions["CREATE_PRQ"]
-                    self.parent.user_permissions["create_user"] = permissions["CREATE_USER"]
-                    self.parent.user_permissions["reject_signer"] = permissions["REJECT_SIGNER"]
-                    self.parent.user_permissions["access_settings"] = permissions["ACCESS_SETTINGS"]
-                    self.parent.user_permissions["view_analytics"] = permissions["VIEW_ANALYTICS"]
-                    self.parent.user_permissions["rerouting"] = permissions["REROUTING"]
+                    self.parent.user_permissions["create_ecn"] = permissions["create_ecn"]
+                    self.parent.user_permissions["create_pcn"] = permissions["create_pcn"]
+                    self.parent.user_permissions["create_prj"] = permissions["create_prj"]
+                    self.parent.user_permissions["create_prq"] = permissions["create_prq"]
+                    self.parent.user_permissions["create_user"] = permissions["create_user"]
+                    self.parent.user_permissions["reject_signer"] = permissions["reject_signer"]
+                    self.parent.user_permissions["access_settings"] = permissions["access_settings"]
+                    self.parent.user_permissions["view_analytics"] = permissions["view_analytics"]
+                    self.parent.user_permissions["rerouting"] = permissions["rerouting"]
                 self.parent.loginDone()
                 self.logged = True
                 self.setUserOnline()
@@ -146,12 +146,12 @@ class LoginWindow(QtWidgets.QWidget):
     def addNotification(self,notificationType,msg=""):
         print('adding notification')
         data = ("Not Sent",notificationType,msg)
-        self.cursor.execute("INSERT INTO NOTIFICATION(STATUS, TYPE, MSG) VALUES(?,?,?)",(data))
+        self.cursor.execute("INSERT INTO notifications(status, type, msg) VALUES(%s,%s,%s)",(data))
         self.db.commit()
             
             
     def setUserOnline(self):
-        self.cursor.execute(f"UPDATE USER SET SIGNED_IN ='Y' where USER_ID='{self.parent.user_info['user']}'")
+        self.cursor.execute(f"UPDATE users SET signed_in ='Y' where user_id='{self.parent.user_info['user']}'")
         self.db.commit()
             
     def closeEvent(self, event):

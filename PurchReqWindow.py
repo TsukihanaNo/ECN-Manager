@@ -42,7 +42,7 @@ class PurchReqWindow(QtWidgets.QWidget):
         if self.doc_id is not None:
             self.loadData()
         else:
-            self.doc_data = {"AUTHOR":self.user_info["user"],"STATUS":"Draft"}
+            self.doc_data = {"author":self.user_info["user"],"status":"Draft"}
         self.setButtons()
 
             
@@ -132,19 +132,19 @@ class PurchReqWindow(QtWidgets.QWidget):
     )
         
     def setButtons(self):
-        if self.user_info['user']==self.doc_data['AUTHOR']:
-            if self.doc_data["STATUS"]!="Completed":
+        if self.user_info['user']==self.doc_data['author']:
+            if self.doc_data["status"]!="Completed":
                 self.button_save.setEnabled(True)
-            if self.doc_data["STATUS"]=="Draft" or self.doc_data["STATUS"]=="Rejected":
+            if self.doc_data["status"]=="Draft" or self.doc_data["status"]=="Rejected":
                 self.button_release.setEnabled(True)
-            if self.doc_data["STATUS"]!="Draft":
+            if self.doc_data["status"]!="Draft":
                 self.button_cancel.setText("Cancel")
         else:
-            if self.doc_data["STATUS"]=="Out For Approval":
+            if self.doc_data["status"]=="Out For Approval":
                 if self.isUserSignable():
                     self.button_approve.setEnabled(True)
                     self.button_reject.setEnabled(True)
-        if self.doc_data["STATUS"]=="Out For Approval":
+        if self.doc_data["status"]=="Out For Approval":
             self.button_comment.setEnabled(True)
             
     def generateHTML(self,doc_id):
@@ -154,20 +154,20 @@ class PurchReqWindow(QtWidgets.QWidget):
             f.close()
             t = Template(lines)
             
-            self.cursor.execute(f"SELECT * from DOCUMENT where DOC_ID='{doc_id}'")
+            self.cursor.execute(f"SELECT * from document where doc_id='{doc_id}'")
             result = self.cursor.fetchone()
             # print("generating header 1")
-            title = result["DOC_TITLE"]
-            author = result["AUTHOR"]
-            status = result["STATUS"]
-            requisition_details = result["DOC_SUMMARY"]
+            title = result["doc_title"]
+            author = result["author"]
+            status = result["status"]
+            requisition_details = result["doc_summary"]
             
             # print("generating header 2")
-            self.cursor.execute(f"SELECT * from PURCH_REQ_DOC_LINK where DOC_ID='{doc_id}'")
+            self.cursor.execute(f"SELECT * from purch_req_doc_link where doc_id='{doc_id}'")
             result = self.cursor.fetchone()
             print(result)
-            req_id = result["REQ_ID"]
-            project_id = result["PROJECT_ID"]
+            req_id = result["req_id"]
+            project_id = result["project_id"]
             
             # print("generating header 3")
             # print(req_id)
@@ -212,14 +212,14 @@ class PurchReqWindow(QtWidgets.QWidget):
                     
             # print("generating header 5")
             signature = "<tr>"
-            self.cursor.execute(f"SELECT * from SIGNATURE where DOC_ID='{doc_id}' and TYPE='Signing'")
+            self.cursor.execute(f"SELECT * from signatures where doc_id='{doc_id}' and type='Signing'")
             results = self.cursor.fetchall()
             if results is not None:
                 for result in results:
-                    signature += "<td>"+result['JOB_TITLE']+"</td>"
-                    signature += "<td>"+result['NAME']+"</td>"
-                    if result['SIGNED_DATE'] is not None:
-                        signature += "<td>"+str(result['SIGNED_DATE'])+"</td></tr>"
+                    signature += "<td>"+result['job_title']+"</td>"
+                    signature += "<td>"+result['name']+"</td>"
+                    if result['signed_date'] is not None:
+                        signature += "<td>"+str(result['signed_date'])+"</td></tr>"
                     else:
                         signature += "<td></td></tr>"
             else:
@@ -228,7 +228,7 @@ class PurchReqWindow(QtWidgets.QWidget):
 
             # print('substituting text')
             
-            html = t.substitute(REQID=req_id,Title=title,AUTHOR=author,DOCID=doc_id,PRJID=project_id,ORDERSTATUS=status,VISUALSTATUS=visual_status,BUYER=assigned_buyer,TOTALCOST=total_cost,DETAILS=requisition_details,REQLINE=req_lines,Signature=signature)
+            html = t.substitute(REQID=req_id,Title=title,author=author,DOCID=doc_id,PRJID=project_id,ORDERSTATUS=status,VISUALSTATUS=visual_status,BUYER=assigned_buyer,TOTALCOST=total_cost,DETAILS=requisition_details,REQLINE=req_lines,Signature=signature)
 
             return html
 
@@ -285,12 +285,12 @@ class PurchReqWindow(QtWidgets.QWidget):
         
     def AddSignatures(self):
         #inserting to signature table
-        #SIGNATURE(ECN_ID TEXT, NAME TEXT, USER_ID TEXT, HAS_SIGNED TEXT, SIGNED_DATE TEXT)
+        #signatures(ECN_ID TEXT, name TEXT, user_id TEXT, HAS_SIGNED TEXT, signed_date TEXT)
         try:
             #get current values in db
             # print("adding sigs")
             current_list = []
-            self.cursor.execute(f"SELECT USER_ID FROM SIGNATURE WHERE DOC_ID='{self.doc_id}' and TYPE='Signing'")
+            self.cursor.execute(f"SELECT user_id FROM signatures WHERE doc_id='{self.doc_id}' and type='Signing'")
             results = self.cursor.fetchall()
             for result in results:
                 current_list.append(result[0])
@@ -307,7 +307,7 @@ class PurchReqWindow(QtWidgets.QWidget):
             for element in new_list:
                 if element[3] not in current_list:
                     #print(f'insert {element[3]} into signature db')
-                    self.cursor.execute("INSERT INTO SIGNATURE(DOC_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(element))
+                    self.cursor.execute("INSERT INTO signatures(doc_id,job_title,name,user_id,type) VALUES(%s,%s,%s,%s,%s)",(element))
             for element in current_list:
                 no_match = True
                 for elements in new_list:
@@ -315,11 +315,11 @@ class PurchReqWindow(QtWidgets.QWidget):
                         no_match = False
                 if no_match:
                     #print(f"remove {element} from signature db")
-                    self.cursor.execute(f"DELETE FROM SIGNATURE WHERE DOC_ID = '{self.doc_id}' and USER_ID='{element}'")
+                    self.cursor.execute(f"DELETE FROM signatures WHERE doc_id = '{self.doc_id}' and user_id='{element}'")
                     
                     
             current_list = []
-            self.cursor.execute(f"SELECT USER_ID FROM SIGNATURE WHERE DOC_ID='{self.doc_id}' and TYPE='Notify'")
+            self.cursor.execute(f"SELECT user_id FROM signatures WHERE doc_id='{self.doc_id}' and type='Notify'")
             results = self.cursor.fetchall()
             for result in results:
                 current_list.append(result[0])
@@ -334,7 +334,7 @@ class PurchReqWindow(QtWidgets.QWidget):
             for element in new_list:
                 if element[3] not in current_list:
                     #print(f'insert {element[3]} into notify db')
-                    self.cursor.execute("INSERT INTO SIGNATURE(DOC_ID,JOB_TITLE,NAME,USER_ID,TYPE) VALUES(?,?,?,?,?)",(element))
+                    self.cursor.execute("INSERT INTO signatures(doc_id,job_title,name,user_id,type) VALUES(%s,%s,%s,%s,%s)",(element))
             for element in current_list:
                 no_match = True
                 for elements in new_list:
@@ -342,9 +342,9 @@ class PurchReqWindow(QtWidgets.QWidget):
                         no_match = False
                 if no_match:
                     #print(f"remove {element} from notify db")
-                    self.cursor.execute(f"DELETE FROM SIGNATURE WHERE DOC_ID = '{self.doc_id}' and USER_ID='{element}'")
+                    self.cursor.execute(f"DELETE FROM signatures WHERE doc_id = '{self.doc_id}' and user_id='{element}'")
             
-            if self.doc_data["AUTHOR"]==self.parent.user_info["user"]:
+            if self.doc_data["author"]==self.parent.user_info["user"]:
                 self.button_release.setEnabled(self.tab_signature.rowCount()>0)
             #print('data updated')
         except Exception as e:
@@ -364,7 +364,7 @@ class PurchReqWindow(QtWidgets.QWidget):
             return True
         
     def isUserSignable(self):
-        self.cursor.execute(f"SELECT USER_ID from SIGNATURE where DOC_ID='{self.doc_id}' and USER_ID='{self.user_info['user']}'")
+        self.cursor.execute(f"SELECT user_id from signatures where doc_id='{self.doc_id}' and user_id='{self.user_info['user']}'")
         result = self.cursor.fetchone()
         if result is not None:
             return True
@@ -382,7 +382,7 @@ class PurchReqWindow(QtWidgets.QWidget):
         return elapsed.days + round(elapsed.seconds/86400,2)
     
     def checkID(self):
-        self.cursor.execute(f"select DOC_ID from DOCUMENT where DOC_ID='{self.tab_purch_req.line_doc_id.text()}'")
+        self.cursor.execute(f"select doc_id from document where doc_id='{self.tab_purch_req.line_doc_id.text()}'")
         result = self.cursor.fetchone()
         if result is not None:
             return True
@@ -414,10 +414,10 @@ class PurchReqWindow(QtWidgets.QWidget):
             author = self.user_info['user']
             detail = self.tab_purch_req.text_details.toHtml()
             data = (self.doc_id,doc_type,title,detail,status,author,modifieddate)
-            self.cursor.execute("INSERT INTO DOCUMENT(DOC_ID,DOC_TYPE,DOC_TITLE,DOC_SUMMARY,STATUS,AUTHOR,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?)",(data))
+            self.cursor.execute("INSERT INTO document(doc_id,doc_type,doc_title,doc_summary,status,author,last_modified) VALUES(%s,%s,%s,%s,%s,%s,%s)",(data))
             data = (self.doc_id,req_id,self.project_id)
-            self.cursor.execute("INSERT INTO PURCH_REQ_DOC_LINK(DOC_ID,REQ_ID,PROJECT_ID) VALUES(?,?,?)",(data))
-            # self.cursor.execute("INSERT INTO PURCH_REQS(PROJECT_ID,DOC_ID,REQ_ID,DOC_TITLE,DETAILS,STATUS,AUTHOR,LAST_MODIFIED) VALUES(?,?,?,?,?,?,?,?)",(data))
+            self.cursor.execute("INSERT INTO purch_req_doc_link(doc_id,req_id,project_id) VALUES(%s,%s,%s)",(data))
+            # self.cursor.execute("INSERT INTO PURCH_REQS(project_id,doc_id,req_id,doc_title,DETAILS,status,author,last_modified) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)",(data))
             if self.checkSigNotiDuplicate():
                 self.dispMsg("Duplicate signatures found")
             else:
@@ -437,10 +437,10 @@ class PurchReqWindow(QtWidgets.QWidget):
             data = (req_id,title, detail,self.doc_id)
             status = self.tab_purch_req.line_status.text()
             data = (title,detail,self.doc_id)
-            self.cursor.execute("UPDATE DOCUMENT SET DOC_TITLE = ?, DOC_SUMMARY = ? WHERE DOC_ID = ?",(data))
+            self.cursor.execute("UPDATE document SET doc_title = %s, doc_summary = %s WHERE doc_id = %s",(data))
             data = (req_id,self.doc_id)
-            self.cursor.execute("UPDATE PURCH_REQ_DOC_LINK SET REQ_ID = ? WHERE DOC_ID = ?",(data))
-            # self.cursor.execute("UPDATE PURCH_REQS SET REQ_ID = ?, DOC_TITLE = ?, DETAILS = ? WHERE DOC_ID = ?",(data))
+            self.cursor.execute("UPDATE purch_req_doc_link SET req_id = %s WHERE doc_id = %s",(data))
+            # self.cursor.execute("UPDATE PURCH_REQS SET req_id = %s, doc_title = %s, DETAILS = %s WHERE doc_id = %s",(data))
             if self.checkSigNotiDuplicate():
                 self.dispMsg("Duplicate signatures found")
             else:
@@ -457,15 +457,15 @@ class PurchReqWindow(QtWidgets.QWidget):
             self.dispMsg(f"Error occured during data update (updateData)!\n Error: {e}")
     
     def loadData(self):
-        self.cursor.execute(f"select * from DOCUMENT left join PURCH_REQ_DOC_LINK ON DOCUMENT.DOC_ID=PURCH_REQ_DOC_LINK.DOC_ID where DOCUMENT.DOC_ID='{self.doc_id}'")
+        self.cursor.execute(f"select * from document left join purch_req_doc_link ON document.doc_id=purch_req_doc_link.doc_id where document.doc_id='{self.doc_id}'")
         self.doc_data = self.cursor.fetchone()
-        self.tab_purch_req.line_doc_id.setText(self.doc_data['DOC_ID'])
-        self.tab_purch_req.line_title.setText(self.doc_data["DOC_TITLE"])
-        self.tab_purch_req.line_status.setText(self.doc_data["STATUS"])
-        self.tab_purch_req.text_details.setHtml(self.doc_data["DOC_SUMMARY"])
-        self.tab_purch_req.line_author.setText(self.doc_data["AUTHOR"])
+        self.tab_purch_req.line_doc_id.setText(self.doc_data['doc_id'])
+        self.tab_purch_req.line_title.setText(self.doc_data["doc_title"])
+        self.tab_purch_req.line_status.setText(self.doc_data["status"])
+        self.tab_purch_req.text_details.setHtml(self.doc_data["doc_summary"])
+        self.tab_purch_req.line_author.setText(self.doc_data["author"])
         
-        self.tab_purch_req.line_id.setText(self.doc_data["REQ_ID"])
+        self.tab_purch_req.line_id.setText(self.doc_data["req_id"])
         self.tab_purch_req.loadHeader()
         self.tab_purch_req.loadItems()
         self.tab_signature.repopulateTable()
@@ -480,13 +480,13 @@ class PurchReqWindow(QtWidgets.QWidget):
                 self.save(1)
                 modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 
-                self.cursor.execute(f"SELECT FIRST_RELEASE from DOCUMENT where DOC_ID='{self.doc_id}'")
+                self.cursor.execute(f"SELECT first_release from document where doc_id='{self.doc_id}'")
                 print("getting first release")
                 result = self.cursor.fetchone()
                 if result[0] is None:
-                    self.cursor.execute(f"UPDATE DOCUMENT SET FIRST_RELEASE = '{modifieddate}' where DOC_ID='{self.doc_id}'")
+                    self.cursor.execute(f"UPDATE document SET first_release = '{modifieddate}' where doc_id='{self.doc_id}'")
                 data = (modifieddate, "Out For Approval",self.doc_id)
-                self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?, STATUS = ? WHERE DOC_ID = ?",(data))
+                self.cursor.execute("UPDATE document SET last_modified = %s, status = %s WHERE doc_id = %s",(data))
                 self.db.commit()
                 print("getting prq stage")
                 currentStage = self.getPRQStage()
@@ -514,8 +514,8 @@ class PurchReqWindow(QtWidgets.QWidget):
         try:
             approvedate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             data = (approvedate,self.doc_id,self.parent.user_info['user'])
-            self.cursor.execute("UPDATE SIGNATURE SET SIGNED_DATE = ? WHERE DOC_ID = ? and USER_ID = ?",(data))
-            self.cursor.execute(f"UPDATE DOCUMENT SET LAST_MODIFIED = '{approvedate}' where DOC_ID='{self.doc_id}'")
+            self.cursor.execute("UPDATE signatures SET signed_date = %s WHERE doc_id = %s and user_id = %s",(data))
+            self.cursor.execute(f"UPDATE document SET last_modified = '{approvedate}' where doc_id='{self.doc_id}'")
             self.tab_signature.repopulateTable()
             self.dispMsg("PRQ has been signed!")
             self.button_approve.setDisabled(True)
@@ -534,8 +534,8 @@ class PurchReqWindow(QtWidgets.QWidget):
             try:
                 modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 data = (modifieddate, "Rejected",self.doc_id)
-                self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?, STATUS = ? WHERE DOC_ID = ?",(data))
-                self.cursor.execute(f"UPDATE SIGNATURE SET SIGNED_DATE=Null where DOC_ID='{self.doc_id}'")
+                self.cursor.execute("UPDATE document SET last_modified = %s, status = %s WHERE doc_id = %s",(data))
+                self.cursor.execute(f"UPDATE signatures SET signed_date=Null where doc_id='{self.doc_id}'")
                 self.db.commit()
                 self.setPRQStage(0)
                 self.parent.repopulateTable()
@@ -552,16 +552,16 @@ class PurchReqWindow(QtWidgets.QWidget):
     
     def checkComplete(self):
         try:
-            command = f"Select * from SIGNATURE where DOC_ID ='{self.doc_id}' and TYPE='Signing'"
+            command = f"Select * from signatures where doc_id ='{self.doc_id}' and type='Signing'"
             self.cursor.execute(command)
             results = self.cursor.fetchall()
             completed = True
             for result in results:
-                if result['SIGNED_DATE'] is None or result['SIGNED_DATE']== "":
+                if result['signed_date'] is None or result['signed_date']== "":
                     completed = False
             if completed:
                 completeddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                self.cursor.execute(f"select FIRST_RELEASE from DOCUMENT where DOC_ID='{self.doc_id}'")
+                self.cursor.execute(f"select first_release from document where doc_id='{self.doc_id}'")
                 result = self.cursor.fetchone()
                 #print(result[0])
                 #first_release = datetime.strptime(str(result[0]),'%Y-%m-%d %H:%M:%S')
@@ -569,7 +569,7 @@ class PurchReqWindow(QtWidgets.QWidget):
                 #print(elapsed)
                 #elapsed = self.getElapsedDays(first_release, completeddate)
                 data = (completeddate,completeddate,elapsed, "Approved",self.doc_id)
-                self.cursor.execute("UPDATE DOCUMENT SET LAST_MODIFIED = ?,COMP_DATE = ?, COMP_DAYS = ?, STATUS = ? WHERE DOC_ID = ?",(data))
+                self.cursor.execute("UPDATE document SET last_modified = %s,comp_date = %s, comp_days = %s, status = %s WHERE doc_id = %s",(data))
                 #self.db.commit()
                 self.parent.repopulateTable()
                 self.dispMsg("PRQ is now Approved")
@@ -591,9 +591,9 @@ class PurchReqWindow(QtWidgets.QWidget):
             #self.dispMsg("Comment has been added!")
 
     def addComment(self,doc_id,comment,commentType):
-        #COMMENTS(ECN_ID TEXT, NAME TEXT, USER TEXT, COMM_DATE DATE, COMMENT TEXT
+        #comments(ECN_ID TEXT, name TEXT, user_id TEXT, comm_date DATE, comment TEXT
         data = (doc_id, self.parent.user_info['user'],datetime.now().strftime('%Y-%m-%d %H:%M:%S'),comment,commentType)
-        self.cursor.execute("INSERT INTO COMMENTS(DOC_ID, USER, COMM_DATE, COMMENT,TYPE) VALUES(?,?,?,?,?)",(data))
+        self.cursor.execute("INSERT INTO comments(doc_id, user_id, comm_date, comment,type) VALUES(%s,%s,%s,%s,%s)",(data))
         self.db.commit()
         # self.tab_comments.enterText.clear()
         #self.tab_comments.mainText.clear()
@@ -602,12 +602,12 @@ class PurchReqWindow(QtWidgets.QWidget):
         #self.tab_widget.setCurrentIndex(3)
         
     def setCommentCount(self):
-        self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where DOC_ID='{self.doc_id}'")
+        self.cursor.execute(f"SELECT COUNT(comment) from comments where doc_id='{self.doc_id}'")
         result = self.cursor.fetchone()
         self.tab_widget.setTabText(1, "Comments ("+str(result[0])+")")
     
     def existNotification(self,doc_id):
-        self.cursor.execute(f"Select * from NOTIFICATION where DOC_ID='{doc_id}' and STATUS='Not Sent'")
+        self.cursor.execute(f"Select * from notifications where doc_id='{doc_id}' and status='Not Sent'")
         result = self.cursor.fetchone()
         if result is not None:
             return True
@@ -634,10 +634,10 @@ class PurchReqWindow(QtWidgets.QWidget):
                 
         if self.existNotification(doc_id) and notificationType!="User Comment":
             data = (notificationType,from_user,users,msg, doc_id)
-            self.cursor.execute("UPDATE NOTIFICATION SET TYPE = ?, FROM_USER = ?, USERS = ?, MSG = ? WHERE DOC_ID = ?",(data))
+            self.cursor.execute("UPDATE notifications SET type = %s, from_user = %s, users = %s, msg = %s WHERE doc_id = %s",(data))
         else:
             data = (doc_id,"Not Sent",notificationType,from_user, users, msg)
-            self.cursor.execute("INSERT INTO NOTIFICATION(DOC_ID, STATUS, TYPE,FROM_USER, USERS, MSG) VALUES(?,?,?,?,?,?)",(data))
+            self.cursor.execute("INSERT INTO notifications(doc_id, status, type,from_user, users, msg) VALUES(%s,%s,%s,%s,%s,%s)",(data))
         self.db.commit()
         
     def checkFields(self):
@@ -661,7 +661,7 @@ class PurchReqWindow(QtWidgets.QWidget):
         
     def getPRQStage(self):
         try:
-            self.cursor.execute(f"Select TEMPSTAGE from DOCUMENT where DOC_ID='{self.doc_id}'")
+            self.cursor.execute(f"Select tempstage from document where doc_id='{self.doc_id}'")
             result = self.cursor.fetchone()
             #print("current stage",result[0])
             if result[0] is None:
@@ -674,7 +674,7 @@ class PurchReqWindow(QtWidgets.QWidget):
     def setPRQStage(self,stage):
         try:
             #print('setting ecn to ', stage)
-            self.cursor.execute(f"UPDATE DOCUMENT SET STAGE ='{stage}', TEMPSTAGE = '{stage}' where DOC_ID='{self.doc_id}'")
+            self.cursor.execute(f"UPDATE document SET stage ='{stage}', tempstage = '{stage}' where doc_id='{self.doc_id}'")
             self.db.commit()
         except Exception as e:
             self.dispMsg(f"Error trying to set PRQ stage. Error: {e}")
@@ -686,11 +686,11 @@ class PurchReqWindow(QtWidgets.QWidget):
         #print("here are the titles",titles)
         move = True
         for title in titles:
-            self.cursor.execute(f"Select SIGNED_DATE from SIGNATURE where DOC_ID = '{self.doc_id}' and JOB_TITLE='{title}' and TYPE='Signing'")
+            self.cursor.execute(f"Select signed_date from signatures where doc_id = '{self.doc_id}' and job_title='{title}' and type='Signing'")
             results = self.cursor.fetchall()
             for result in results:
-                #print(result['SIGNED_DATE'])
-                if result['SIGNED_DATE'] is None:
+                #print(result['signed_date'])
+                if result['signed_date'] is None:
                     move = False
                     #print("not moving to next stage")
                     break
@@ -704,7 +704,7 @@ class PurchReqWindow(QtWidgets.QWidget):
             #     print("this is the last stage")
             
     def getNextStage(self):
-        self.cursor.execute(f"Select JOB_TITLE from SIGNATURE where DOC_ID='{self.doc_id}' and SIGNED_DATE is NULL and TYPE='Signing'")
+        self.cursor.execute(f"Select job_title from signatures where doc_id='{self.doc_id}' and signed_date is NULL and type='Signing'")
         results = self.cursor.fetchall()
         stage = []
         for result in results:

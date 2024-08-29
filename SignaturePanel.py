@@ -137,7 +137,7 @@ class SignaturePanel(QtWidgets.QWidget):
         
     def setBoxName(self,text=None):
         self.box_name.clear()
-        command = "Select NAME,USER_ID from USER where JOB_TITLE = '" + self.box_title.currentText() +"'"
+        command = "Select name,user_id from users where job_title = '" + self.box_title.currentText() +"'"
         self.cursor.execute(command)
         test = self.cursor.fetchall()
         names = []
@@ -151,7 +151,7 @@ class SignaturePanel(QtWidgets.QWidget):
         self.box_name.currentIndexChanged.connect(self.setUser)
         
     def setBoxUser(self, text=None):
-        command = "Select USER_ID from USER where NAME = '" + self.box_name.currentText() +"'"
+        command = "Select user_id from users where name = '" + self.box_name.currentText() +"'"
         self.cursor.execute(command)
         test = self.cursor.fetchall()
         names = []
@@ -163,7 +163,7 @@ class SignaturePanel(QtWidgets.QWidget):
             
     def setNameList(self):
         self.box_name.clear()
-        command = "Select NAME from USER where JOB_TITLE = '" + self.box_title.currentText() +"' and STATUS='Active'"
+        command = "Select name from users where job_title = '" + self.box_title.currentText() +"' and status='Active'"
         self.cursor.execute(command)
         test = self.cursor.fetchall()
         names = []
@@ -176,7 +176,7 @@ class SignaturePanel(QtWidgets.QWidget):
         
     def setUser(self):
         self.box_user.clear()
-        command = "Select USER_ID from USER where NAME = '" + self.box_name.currentText() +"'"
+        command = "Select user_id from users where name = '" + self.box_name.currentText() +"'"
         self.cursor.execute(command)
         test = self.cursor.fetchall()
         users = []
@@ -185,7 +185,7 @@ class SignaturePanel(QtWidgets.QWidget):
         self.box_user.addItems(users)
         
     def findJobTitles(self):
-        self.cursor.execute("Select DISTINCT JOB_TITLE FROM USER")
+        self.cursor.execute("Select DISTINCT job_title FROM users")
         results = self.cursor.fetchall()
         for result in results:
             self.job_titles.append(result[0])

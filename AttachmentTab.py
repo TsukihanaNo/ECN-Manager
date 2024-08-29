@@ -227,16 +227,16 @@ class AttachmentTab(QtWidgets.QWidget):
         self.dispMsg("Parts have been generated in the parts tab")
         
     def repopulateTable(self):
-        command = "Select * from ATTACHMENTS where DOC_ID= '"+self.parent.doc_id +"'"
+        command = "Select * from attachments where doc_id= '"+self.parent.doc_id +"'"
         self.parent.cursor.execute(command)
         results = self.parent.cursor.fetchall()
         for result in results:
-            #print(result['FILEPATH'])
-            file_info = QtCore.QFileInfo(result['FILEPATH'])
+            #print(result['filepath'])
+            file_info = QtCore.QFileInfo(result['filepath'])
             icon_provider=QtGui.QAbstractFileIconProvider()
             icon = icon_provider.icon(file_info)
-            self.model.add_attachment(result['FILENAME'], result['FILEPATH'],icon)
-            self.files.append(result['FILEPATH'])
+            self.model.add_attachment(result['filename'], result['filepath'],icon)
+            self.files.append(result['filepath'])
             
     def copyFile(self,pathFrom,pathTo,maxFileLoad = maxFileLoad):
         """

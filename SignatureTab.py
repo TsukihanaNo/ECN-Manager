@@ -69,7 +69,7 @@ class SignatureTab(QtWidgets.QWidget):
         
         
         if self.doc_data is not None:
-            if self.parent.parent.user_info['user']==self.doc_data["AUTHOR"]:
+            if self.parent.parent.user_info['user']==self.doc_data["author"]:
                 self.signatures.doubleClicked.connect(self.editSignature)
             else:
                 self.button_add.setDisabled(True)
@@ -86,10 +86,10 @@ class SignatureTab(QtWidgets.QWidget):
         self.setLayout(mainlayout)       
 
     def onRowSelect(self):
-        if self.parent.parent.user_permissions["reject_signer"]=="y" and self.parent.doc_data["STATUS"]!="Completed":
+        if self.parent.parent.user_permissions["reject_signer"]=="y" and self.parent.doc_data["status"]!="Completed":
             row = self.signatures.currentIndex().row()
             self.button_revoke.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()) and self.model.get_signed_date(row) is not None)
-        if self.parent.parent.user_info['user']==self.parent.doc_data["AUTHOR"] and self.parent.doc_data["STATUS"]!="Completed":
+        if self.parent.parent.user_info['user']==self.parent.doc_data["author"] and self.parent.doc_data["status"]!="Completed":
             self.button_remove.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
             self.button_edit.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
         
@@ -110,7 +110,7 @@ class SignatureTab(QtWidgets.QWidget):
                 table_dict = self.getTableDict()
                 for key in table_dict.keys():
                     if table_dict[key]>=table_dict[user] and key != self.parent.parent.user_info['user']:
-                        self.parent.cursor.execute(f"UPDATE SIGNATURE SET SIGNED_DATE = Null where DOC_ID='{self.parent.doc_id}' and USER_ID='{key}'")
+                        self.parent.cursor.execute(f"UPDATE signatures SET signed_date = Null where doc_id='{self.parent.doc_id}' and user_id='{key}'")
                         users.append(key)
                 if len(users)>1:
                     users = ",".join(users)
@@ -161,7 +161,7 @@ class SignatureTab(QtWidgets.QWidget):
                 self.model.removeRow(row)
         
     def findJobTitles(self):
-        self.parent.cursor.execute("Select DISTINCT JOB_TITLE FROM USER")
+        self.parent.cursor.execute("Select DISTINCT job_title FROM users")
         results = self.parent.cursor.fetchall()
         for result in results:
             self.job_titles.append(result[0])
@@ -174,7 +174,7 @@ class SignatureTab(QtWidgets.QWidget):
         #print(self.job_titles)
         
     def getUserRole(self,user):
-        self.parent.cursor.execute(f"select ROLE from USER where USER_ID='{user}'")
+        self.parent.cursor.execute(f"select role from users where user_id='{user}'")
         result = self.parent.cursor.fetchone()
         if result is not None:
             return result[0]
@@ -187,18 +187,18 @@ class SignatureTab(QtWidgets.QWidget):
         # print(users)
         for user in users:
             # print(user)
-            self.cursor.execute(f"Select JOB_TITLE,NAME from USER where USER_ID='{user}'")
+            self.cursor.execute(f"Select job_title,name from users where user_id='{user}'")
             result = self.cursor.fetchone()
             self.model.add_signature(result[0],result[1],user)
 
         
     def repopulateTable(self):
         self.model.clear_signatures()
-        command = f"Select * from SIGNATURE where DOC_ID='{self.parent.doc_id}' and TYPE='Signing'"
+        command = f"Select * from signatures where doc_id='{self.parent.doc_id}' and type='Signing'"
         self.parent.cursor.execute(command)
         results = self.parent.cursor.fetchall()
         for result in results:
-            self.model.add_signature(result['JOB_TITLE'], result['NAME'], result['USER_ID'], result['SIGNED_DATE'])
+            self.model.add_signature(result['job_title'], result['name'], result['user_id'], result['signed_date'])
             
     def rowCount(self):
         return self.model.rowCount(self.signatures)

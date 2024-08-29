@@ -69,13 +69,13 @@ class NotificationTab(QtWidgets.QWidget):
         
         
         if self.doc_data is not None:
-            if self.parent.parent.user_info['user']==self.doc_data["AUTHOR"]:
+            if self.parent.parent.user_info['user']==self.doc_data["author"]:
                 self.signatures.doubleClicked.connect(self.editSignature)
             else:
                 self.button_add.setDisabled(True)
 
     def onRowSelect(self):
-        if self.parent.parent.user_info['user']==self.parent.doc_data["AUTHOR"] and self.parent.doc_data["STATUS"]!="Completed":
+        if self.parent.parent.user_info['user']==self.parent.doc_data["author"] and self.parent.doc_data["status"]!="Completed":
             self.button_remove.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
             self.button_edit.setEnabled(bool(self.signatures.selectionModel().selectedIndexes()))
         
@@ -95,7 +95,7 @@ class NotificationTab(QtWidgets.QWidget):
         self.sig_editor = SignaturePanel(self,index.row())
         
     def findJobTitles(self):
-        self.parent.cursor.execute("Select DISTINCT JOB_TITLE FROM USER")
+        self.parent.cursor.execute("Select DISTINCT job_title FROM users")
         results = self.parent.cursor.fetchall()
         for result in results:
             self.job_titles.append(result[0])
@@ -109,11 +109,11 @@ class NotificationTab(QtWidgets.QWidget):
         
     def repopulateTable(self):
         self.model.clear_signatures()
-        command = f"Select * from SIGNATURE where DOC_ID='{self.parent.doc_id}' and TYPE='Notify'"
+        command = f"Select * from signatures where doc_id='{self.parent.doc_id}' and type='Notify'"
         self.parent.cursor.execute(command)
         results = self.parent.cursor.fetchall()
         for result in results:
-            self.model.add_signature(result['JOB_TITLE'], result['NAME'], result['USER_ID'], result['SIGNED_DATE'])
+            self.model.add_signature(result['job_title'], result['name'], result['user_id'], result['signed_date'])
             
     def rowCount(self):
         return self.model.rowCount(self.signatures)

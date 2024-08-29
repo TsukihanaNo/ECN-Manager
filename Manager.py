@@ -5,6 +5,7 @@ import time
 import sqlite3
 import psutil
 import platform
+import psycopg2, psycopg2.extras
 from PySide6 import QtGui, QtCore, QtWidgets
 from LoginWindow import *
 from datetime import datetime
@@ -40,7 +41,7 @@ class Manager(QtWidgets.QWidget):
     def __init__(self,doc = None):
         super(Manager, self).__init__()
         self.window_id = "Main_Window"
-        self.clientVersion = "240806"
+        self.clientVersion = "240813"
         self.windowWidth = 1000
         self.windowHeight = 600
         self.setFixedSize(self.windowWidth,self.windowHeight)
@@ -89,7 +90,7 @@ class Manager(QtWidgets.QWidget):
             
     def checkVersion(self):
         print("checking version")
-        self.cursor.execute(f"Select * from CLIENTVERSION")
+        self.cursor.execute(f"Select * from clientversion")
         result = self.cursor.fetchone()
         if result is None:
             self.dispMsg("Client Version data missing from DB, please set it up")
@@ -106,7 +107,7 @@ class Manager(QtWidgets.QWidget):
         
     def existsWindowsUser(self):
         user = os.getlogin()
-        self.cursor.execute(f"SELECT * from WINDOWSLOG where USER='{user}'")
+        self.cursor.execute(f"SELECT * from windowslog where user_id='{user}'")
         result = self.cursor.fetchone()
         if result is None:
             return False
@@ -129,10 +130,10 @@ class Manager(QtWidgets.QWidget):
         time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         if self.existsWindowsUser():
             data = ("online",time,user)
-            self.cursor.execute("UPDATE WINDOWSLOG SET STATUS = ?, DATETIME = ? WHERE USER = ?",(data))
+            self.cursor.execute("UPDATE windowslog SET status = %s, datetime = %s WHERE user_id = %s",(data))
         else:
             data = (user,"online",time)
-            self.cursor.execute("INSERT INTO WINDOWSLOG(USER, STATUS, DATETIME) VALUES(?,?,?)",(data))
+            self.cursor.execute("INSERT INTO windowslog(user_id, status, datetime) VALUES(%s,%s,%s)",(data))
         self.db.commit()
         
     def logOutWindowsUser(self):
@@ -140,7 +141,7 @@ class Manager(QtWidgets.QWidget):
         user = os.getlogin()
         time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         data = ("offline",time,user)
-        self.cursor.execute("UPDATE WINDOWSLOG SET STATUS = ?, DATETIME = ? WHERE USER = ?",(data))
+        self.cursor.execute("UPDATE windowslog SET status = %s, DATETIME = %s WHERE user_id = %s",(data))
         self.db.commit()
 
     def loginDone(self):
@@ -184,9 +185,16 @@ class Manager(QtWidgets.QWidget):
                     f.close()
                     self.loadSettings()
                     self.checkSettings()
-                self.db = sqlite3.connect(db_loc)
-                self.cursor = self.db.cursor()
-                self.cursor.row_factory = sqlite3.Row
+                # self.db = sqlite3.connect(db_loc)
+                # self.cursor = self.db.cursor()
+                # self.cursor.row_factory = sqlite3.Row
+                self.db = psycopg2.connect(database=self.settings['database'],
+                        host=self.settings['host'],
+                        user=self.settings['user'],
+                        password=self.settings['password'],
+                        port=self.settings['port'])
+                # self.db.autocommit = True
+                self.cursor = self.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
                 self.logWindowsUser()
                 self.loginWindow = LoginWindow(self)
             elif msgbox.clickedButton() == addbutton:
@@ -196,9 +204,16 @@ class Manager(QtWidgets.QWidget):
         else:
             self.loadSettings()
             self.checkSettings()
-            self.db = sqlite3.connect(self.settings["DB_LOC"])
-            self.cursor = self.db.cursor()
-            self.cursor.row_factory = sqlite3.Row
+            # self.db = sqlite3.connect(self.settings["DB_LOC"])
+            # self.cursor = self.db.cursor()
+            # self.cursor.row_factory = sqlite3.Row
+            self.db = psycopg2.connect(database=self.settings['database'],
+                        host=self.settings['host'],
+                        user=self.settings['user'],
+                        password=self.settings['password'],
+                        port=self.settings['port'])
+            # self.db.autocommit = True
+            self.cursor = self.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
             if self.checkVersion():
                 self.logWindowsUser()
                 self.loginWindow = LoginWindow(self)
@@ -233,7 +248,7 @@ class Manager(QtWidgets.QWidget):
         timer.start(30000)
         
     def selfKillcheck(self):
-        self.cursor.execute(f"SELECT SHUTDOWN from SHUTDOWN")
+        self.cursor.execute(f"SELECT shutdown from shutdown")
         result = self.cursor.fetchone()
         print(result[0])
         if result[0]=="Y":
@@ -432,13 +447,13 @@ class Manager(QtWidgets.QWidget):
         if self.radio_all.isChecked():
             return ""
         if self.radio_ecn.isChecked():
-            return "and DOC_ID like 'ECN%'"
+            return "and doc_id like 'ECN%'"
         if self.radio_pcn.isChecked():
-            return "and DOC_ID like 'PCN%'"
+            return "and doc_id like 'PCN%'"
         if self.radio_prj.isChecked():
-            return "and DOC_ID like 'PRJ%'"
+            return "and doc_id like 'PRJ%'"
         if self.radio_prq.isChecked():
-            return "and DOC_ID like 'PRQ%'"
+            return "and doc_id like 'PRQ%'"
         
     def loadMyDocs(self):
         self.table_type = "My Docs"
@@ -495,7 +510,7 @@ class Manager(QtWidgets.QWidget):
             self.button_queue.setStyleSheet("background-color:red; border:0; height: 18px")
 
     def getMyDocCount(self):
-        command = "Select Count(DOC_ID) from DOCUMENT where AUTHOR ='" + self.user_info['user'] + f"' and STATUS !='Completed'"
+        command = "Select Count(doc_id) from document where author ='" + self.user_info['user'] + f"' and status !='Completed'"
         self.cursor.execute(command)
         result = self.cursor.fetchone()
         return result[0]
@@ -511,34 +526,34 @@ class Manager(QtWidgets.QWidget):
         #table_type = self.dropdown_type.currentText()
         filter_type = self.getFilterType()
         if self.table_type=="My Docs":
-            command = "Select * from DOCUMENT where AUTHOR ='" + self.user_info['user'] + f"' and STATUS !='Completed' {filter_type}"
+            command = "Select * from document where author ='" + self.user_info['user'] + f"' and status !='Completed' {filter_type}"
         elif self.table_type=="Queue":
-            # command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and DOCUMENT.STAGE>={self.user_info['stage']} and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
-            command =f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}'and SIGNATURE.SIGNED_DATE is NULL and SIGNATURE.TYPE='Signing'"
+            # command =f"Select * from signatures INNER JOIN document ON signatures.doc_id=document.doc_id WHERE document.status='Out For Approval' and signatures.user_id='{self.user_info['user']}' and document.stage>={self.user_info['stage']} and signatures.signed_date is NULL and signatures.type='Signing'"
+            command =f"Select * from signatures INNER JOIN document ON signatures.doc_id=document.doc_id WHERE document.status='Out For Approval' and signatures.user_id='{self.user_info['user']}'and signatures.signed_date is NULL and signatures.type='Signing'"
         elif self.table_type=="Open":
-            command = f"select * from DOCUMENT where (STATUS=='Out For Approval' OR STATUS=='Rejected' OR STATUS='Started' or STATUS='Approved') {filter_type}"
+            command = f"select * from document where (status=='Out For Approval' OR status=='Rejected' OR status='Started' or status='Approved') {filter_type}"
         elif self.table_type=="Canceled":
-            command = f"select * from DOCUMENT where STATUS =='Canceled' {filter_type}"
+            command = f"select * from document where status =='Canceled' {filter_type}"
         elif self.table_type=="Draft":
-            command = f"select * from DOCUMENT where STATUS =='Draft' {filter_type}"
+            command = f"select * from document where status =='Draft' {filter_type}"
         # elif self.table_type=="Deleted":
-        #     command = f"select * from DOCUMENT where STATUS =='Deleted' {filter_type}"
+        #     command = f"select * from document where status =='Deleted' {filter_type}"
         else:
-            command = f"select * from DOCUMENT where STATUS='Completed' {filter_type} ORDER BY rowid DESC"
+            command = f"select * from document where status='Completed' {filter_type} ORDER BY rowid DESC"
 
         self.cursor.execute(command)
         self.table_data = self.cursor.fetchall()
         
-        # method for removing documents that are not your turn
+        # method for removing document that are not your turn
         # if self.table_type=="Queue":
         #     table_index = 0
         #     list_index_remove = []
         #     for item in self.table_data:
-        #         if item["DOC_ID"][:3]=="ECN":
-        #             if item["STAGE"]!=int(self.user_info['stage_ecn']):
+        #         if item["doc_id"][:3]=="ECN":
+        #             if item["stage"]!=int(self.user_info['stage_ecn']):
         #                 list_index_remove.append(table_index)
         #         else:
-        #             if item["STAGE"]!=int(self.user_info['stage_pcn']):
+        #             if item["stage"]!=int(self.user_info['stage_pcn']):
         #                 list_index_remove.append(table_index)
         #         table_index+=1
                 
@@ -552,33 +567,33 @@ class Manager(QtWidgets.QWidget):
         else:
             counter = data_size
         for x in range(counter):
-            if self.table_data[x]['STAGE']!=0 and self.table_data[x]['STAGE'] is not None:
-                if self.table_data[x]['DOC_ID'][:3]=="PCN":
-                    users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDictPCN[str(self.table_data[x]['STAGE'])])
-                elif self.table_data[x]['DOC_ID'][:3]=="PRQ":
-                    users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDictPRQ[str(self.table_data[x]['STAGE'])])
+            if self.table_data[x]['stage']!=0 and self.table_data[x]['stage'] is not None:
+                if self.table_data[x]['doc_id'][:3]=="PCN":
+                    users = self.getWaitingUser(self.table_data[x]['doc_id'], self.titleStageDictPCN[str(self.table_data[x]['stage'])])
+                elif self.table_data[x]['doc_id'][:3]=="PRQ":
+                    users = self.getWaitingUser(self.table_data[x]['doc_id'], self.titleStageDictPRQ[str(self.table_data[x]['stage'])])
                 else:
-                    users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
+                    users = self.getWaitingUser(self.table_data[x]['doc_id'], self.titleStageDict[str(self.table_data[x]['stage'])])
             else:
                 users = ""
             if self.table_type!="Completed":
-                if self.table_data[x]['STATUS']!="Draft":
+                if self.table_data[x]['status']!="Draft":
                     today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    elapsed = self.getElapsedDays(today, self.table_data[x]['FIRST_RELEASE'])
+                    elapsed = self.getElapsedDays(today, self.table_data[x]['first_release'])
                     elapsed_days = "{:.2f}".format(elapsed.days + round(elapsed.seconds/86400,2))
                 else:
                     elapsed_days =""
             else:
                 elapsed_days = str(self.table_data[x]["COMP_DAYS"])
                 
-            self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where DOC_ID='{self.table_data[x]['DOC_ID']}'")
+            self.cursor.execute(f"SELECT COUNT(comment) from comments where doc_id='{self.table_data[x]['doc_id']}'")
             comment_count = self.cursor.fetchone()
             if comment_count[0]>0:
                 comment_count = str(comment_count[0])
             else:
                 comment_count=""
-            if self.table_data[x]['STAGE'] is not None:
-                status = self.table_data[x]['STAGE']
+            if self.table_data[x]['stage'] is not None:
+                status = self.table_data[x]['stage']
             else:
                 status = ""
                 
@@ -586,7 +601,7 @@ class Manager(QtWidgets.QWidget):
                 signing = "y"
             else:
                 signing = "n"
-            self.model.add_doc(self.table_data[x]['DOC_ID'], self.table_data[x]['DOC_TITLE'], self.table_data[x]['DOC_TYPE'], self.table_data[x]['STATUS'],self.table_data[x]['LAST_MODIFIED'], status, users, elapsed_days, comment_count,signing)
+            self.model.add_doc(self.table_data[x]['doc_id'], self.table_data[x]['doc_title'], self.table_data[x]['doc_type'], self.table_data[x]['status'],self.table_data[x]['last_modified'], status, users, elapsed_days, comment_count,signing)
         self.statusbar.showMessage(f"Showing {counter} of {data_size}")
 
     def loadMoreTable(self):
@@ -609,33 +624,33 @@ class Manager(QtWidgets.QWidget):
             #print(counter, offset, rowcount)
             for x in range(counter):
                 x = x + rowcount
-                if self.table_data[x]['STAGE']!=0 and self.table_data[x]['STAGE'] is not None:
-                    if self.table_data[x]['DOC_ID'][:3]=="PCN":
-                        users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDictPCN[str(self.table_data[x]['STAGE'])])
-                    elif self.table_data[x]['DOC_ID'][:3]=="PRQ":
-                        users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDictPRQ[str(self.table_data[x]['STAGE'])])
+                if self.table_data[x]['stage']!=0 and self.table_data[x]['stage'] is not None:
+                    if self.table_data[x]['doc_id'][:3]=="PCN":
+                        users = self.getWaitingUser(self.table_data[x]['doc_id'], self.titleStageDictPCN[str(self.table_data[x]['stage'])])
+                    elif self.table_data[x]['doc_id'][:3]=="PRQ":
+                        users = self.getWaitingUser(self.table_data[x]['doc_id'], self.titleStageDictPRQ[str(self.table_data[x]['stage'])])
                     else:
-                        users = self.getWaitingUser(self.table_data[x]['DOC_ID'], self.titleStageDict[str(self.table_data[x]['STAGE'])])
+                        users = self.getWaitingUser(self.table_data[x]['doc_id'], self.titleStageDict[str(self.table_data[x]['stage'])])
                 else:
                     users = ""
                 if self.table_type!="Completed":
-                    if self.table_data[x]['STATUS']!="Draft":
+                    if self.table_data[x]['status']!="Draft":
                         today = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        elapsed = self.getElapsedDays(today, self.table_data[x]['FIRST_RELEASE'])
+                        elapsed = self.getElapsedDays(today, self.table_data[x]['first_release'])
                         elapsed_days = "{:.2f}".format(elapsed.days + round(elapsed.seconds/86400,2))
                     else:
                         elapsed_days =""
                 else:
                     elapsed_days = str(self.table_data[x]["COMP_DAYS"])
                     
-                self.cursor.execute(f"SELECT COUNT(COMMENT) from COMMENTS where DOC_ID='{self.table_data[x]['DOC_ID']}'")
+                self.cursor.execute(f"SELECT COUNT(comment) from comments where doc_id='{self.table_data[x]['doc_id']}'")
                 comment_count = self.cursor.fetchone()
                 if comment_count[0]>0:
                     comment_count = str(comment_count[0])
                 else:
                     comment_count=""
-                if self.table_data[x]['STAGE'] is not None:
-                    status = self.table_data[x]['STAGE']
+                if self.table_data[x]['stage'] is not None:
+                    status = self.table_data[x]['stage']
                 else:
                     status = ""
                     
@@ -643,7 +658,7 @@ class Manager(QtWidgets.QWidget):
                     signing = "y"
                 else:
                     signing = "n"
-                self.model.add_doc(self.table_data[x]['DOC_ID'], self.table_data[x]['DOC_TITLE'], self.table_data[x]['DOC_TYPE'], self.table_data[x]['STATUS'],self.table_data[x]['LAST_MODIFIED'], status, users, elapsed_days, comment_count,signing)
+                self.model.add_doc(self.table_data[x]['doc_id'], self.table_data[x]['doc_title'], self.table_data[x]['doc_type'], self.table_data[x]['status'],self.table_data[x]['last_modified'], status, users, elapsed_days, comment_count,signing)
             self.statusbar.showMessage(f"Showing {rowcount+counter} of {total_count}")
             
     def rowCount(self):
@@ -685,7 +700,7 @@ class Manager(QtWidgets.QWidget):
         usr_str = ""
         #print(titles)
         for title in titles:
-            self.cursor.execute(f"select USER_ID from SIGNATURE where DOC_ID='{ecn}' and JOB_TITLE='{title}' and SIGNED_DATE is Null and TYPE='Signing'")
+            self.cursor.execute(f"select user_id from signatures where doc_id='{ecn}' and job_title='{title}' and signed_date is Null and type='Signing'")
             results = self.cursor.fetchall()
             for result in results:
                 if result is not None:
@@ -699,19 +714,19 @@ class Manager(QtWidgets.QWidget):
         return usr_str
     
     def getQueueCount(self):
-        self.cursor.execute(f"Select * from SIGNATURE INNER JOIN DOCUMENT ON SIGNATURE.DOC_ID=DOCUMENT.DOC_ID WHERE DOCUMENT.STATUS='Out For Approval' and SIGNATURE.USER_ID='{self.user_info['user']}' and SIGNATURE.SIGNED_DATE is NULL and TYPE='Signing'")
+        self.cursor.execute(f"Select * from signatures INNER JOIN document ON signatures.doc_id=document.doc_id WHERE document.status='Out For Approval' and signatures.user_id='{self.user_info['user']}' and signatures.signed_date is NULL and type='Signing'")
         result = self.cursor.fetchall()
         
         table_index = 0
         list_index_remove = []
         for item in result:
-            #print(item["DOC_ID"][:3])
-            if item["DOC_ID"][:3]=="ECN":
-                if item["STAGE"]!=int(self.user_info['stage_ecn']):
+            #print(item["doc_id"][:3])
+            if item["doc_id"][:3]=="ECN":
+                if item["stage"]!=int(self.user_info['stage_ecn']):
                     list_index_remove.append(table_index)
                     #print("adding index ecn")
             else:
-                if item["STAGE"]!=int(self.user_info['stage_pcn']):
+                if item["stage"]!=int(self.user_info['stage_pcn']):
                     list_index_remove.append(table_index)
                     #print("adding index pcn")
             table_index+=1
@@ -727,7 +742,7 @@ class Manager(QtWidgets.QWidget):
         return queue_count
                 
     def getECNQty(self):
-        self.cursor.execute(f"SELECT COUNT(DOC_ID) from DOCUMENT where STATUS!='Completed'")
+        self.cursor.execute(f"SELECT COUNT(doc_id) from document where status!='Completed'")
         result = self.cursor.fetchone()
         #print("open:",result[0])
         self.label_open_docs.setText(f"Inprogress - {result[0]}")
@@ -737,7 +752,7 @@ class Manager(QtWidgets.QWidget):
         else:
             self.label_wait_docs.setStyleSheet("Color:green;font-weight:bold")
         self.label_wait_docs.setText(f"Queue - {queue_count}")
-        self.cursor.execute(f"SELECT COUNT(DOC_ID) from DOCUMENT where STATUS='Completed'")
+        self.cursor.execute(f"SELECT COUNT(doc_id) from document where status='Completed'")
         result = self.cursor.fetchone()
         #print("complete:",result[0])
         self.label_complete_docs.setText(f"Completed - {result[0]}")
@@ -803,7 +818,7 @@ class Manager(QtWidgets.QWidget):
                 
     def HookPRQ(self,doc_id=None):
         if doc_id is not None:
-            self.cursor.execute(f"select PROJECT_ID from PURCH_REQ_DOC_LINK where DOC_ID='{doc_id}'")
+            self.cursor.execute(f"select project_id from purch_req_doc_link where doc_id='{doc_id}'")
             project_id = self.cursor.fetchone()[0]
         else:
             project_id = "General"
@@ -889,7 +904,7 @@ class Manager(QtWidgets.QWidget):
             
     def setUserOffline(self):
         if 'user' in self.user_info.keys():
-            self.cursor.execute(f"UPDATE USER SET SIGNED_IN ='N' where USER_ID='{self.user_info['user']}'")
+            self.cursor.execute(f"UPDATE users SET signed_in ='N' where user_id='{self.user_info['user']}'")
             self.db.commit()
 
     def newDB(self):
@@ -937,7 +952,7 @@ class Manager(QtWidgets.QWidget):
                 self.stageDictPRQ[key.strip()] = value.strip()
         
     def getNameList(self):
-        command = "Select NAME from USER where STATUS ='Active'"
+        command = "Select name from users where status ='Active'"
         self.cursor.execute(command)
         results = self.cursor.fetchall()
         for result in results:
@@ -961,17 +976,17 @@ class Manager(QtWidgets.QWidget):
         if self.line_search.text()!="":
             search = self.line_search.text()
             matches = []
-            self.cursor.execute(f"Select DOC_ID from DOCUMENT where DOC_TITLE like '%{search}%' OR DOC_REASON like '%{search}%' OR DOC_SUMMARY like '%{search}%' OR DOC_ID like '%{search}%'")
+            self.cursor.execute(f"Select doc_id from document where doc_title like '%{search}%' OR doc_reason like '%{search}%' OR doc_summary like '%{search}%' OR doc_id like '%{search}%'")
             results = self.cursor.fetchall()
             for result in results:
                 if result[0] not in matches:
                     matches.append(result[0])
-            self.cursor.execute(f"Select DOC_ID from ATTACHMENTS where FILENAME like '%{search}%'")
+            self.cursor.execute(f"Select doc_id from attachments where filename like '%{search}%'")
             results = self.cursor.fetchall()
             for result in results:
                 if result[0] not in matches:
                     matches.append(result[0])
-            self.cursor.execute(f"Select DOC_ID from PARTS where PART_ID like '%{search}%' OR DESC like '%{search}%'")
+            self.cursor.execute(f"Select doc_id from parts where part_id like '%{search}%' OR descriptiom like '%{search}%'")
             results = self.cursor.fetchall()
             for result in results:
                 if result[0] not in matches:

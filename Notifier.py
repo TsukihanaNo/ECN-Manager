@@ -396,6 +396,7 @@ class Notifier(QtWidgets.QWidget):
         if doc_id[:3]=="ECN":
             self.releaseFiles(doc_id)
             self.archiveFiles(doc_id)
+            self.updateFileLocation(doc_id)
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
         self.sendEmail(doc_id,receivers, message,"Completion",attach)
         self.log_text.append(f"-Completion Email sent for {doc_id} to {receivers}")
@@ -878,6 +879,20 @@ class Notifier(QtWidgets.QWidget):
         self.log_text.append(f"Moving -- {src} to {dst}")
         shutil.move(src,dst)
         QtWidgets.QApplication.processEvents()
+        
+    def updateFileLocation(self,doc_id):
+        self.cursor.execute(f"SELECT FILEPATH FROM ATTACHMENTS WHERE DOC_ID='{doc_id}'")
+        results = self.cursor.fetchall()
+        for result in results:
+            src = result[0]
+            dst = result[0].replace(self.settings["ECN_Temp"],self.settings["ECN_Archive"])
+            data = (dst,src,doc_id)
+            self.cursor.execute("UPDATE ATTACHMENTS SET FILEPATH = ? WHERE FILEPATH = ? and DOC_ID = ?",(data))
+            self.log_text.append(f"DB reference updated from {src} to {dst}")
+            QtWidgets.QApplication.processEvents()
+        self.db.commit()
+        self.log_text.append("DB saved")
+        
     
     def checkForReminder(self):
         self.cursor.execute("SELECT DOC_ID, LAST_NOTIFIED, FIRST_RELEASE, LAST_MODIFIED FROM DOCUMENT WHERE STATUS !='Completed' and STATUS!='Draft' and STATUS!='Approved'and STAGE!='0'")

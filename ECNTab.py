@@ -150,7 +150,7 @@ class ECNTab(QtWidgets.QWidget):
         
         
     def getNameList(self):
-        command = "Select NAME from USER where STATUS ='Active'"
+        command = "Select name from users where status ='Active'"
         self.parent.cursor.execute(command)
         results = self.parent.cursor.fetchall()
         for result in results:
@@ -158,7 +158,7 @@ class ECNTab(QtWidgets.QWidget):
         self.nameList.sort()
             
     def getUserList(self):
-        command = "Select USER_ID from USER where STATUS ='Active'"
+        command = "Select user_id from users where status ='Active'"
         self.parent.cursor.execute(command)
         results = self.parent.cursor.fetchall()
         for result in results:

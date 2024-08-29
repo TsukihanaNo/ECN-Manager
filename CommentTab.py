@@ -33,7 +33,7 @@ class CommentTab(QtWidgets.QWidget):
         
         
     def getUserNameDict(self):
-        self.parent.cursor.execute(f"Select USER_ID, NAME from USER")
+        self.parent.cursor.execute(f"Select user_id, name from users")
         results = self.parent.cursor.fetchall()
         self.user_name = {}
         for result in results:
@@ -52,23 +52,23 @@ class CommentTab(QtWidgets.QWidget):
         
     def loadComments(self):
         self.model.clear_message()
-        command = "Select * from COMMENTS where DOC_ID = '" + self.parent.doc_id+"'"
+        command = "Select * from comments where doc_id = '" + self.parent.doc_id+"'"
         self.parent.cursor.execute(command)
         results = self.parent.cursor.fetchall()
         for result in results:
             comment_type = ""
-            if "Reject" in result["TYPE"]:
+            if "Reject" in result["type"]:
                 comment_type="Reject"
-            if self.parent.doc_data["AUTHOR"] == result['USER']:
-                self.model.add_message(USER_ME,f"{self.user_name[result['USER']]} ({result['USER']})  -  {result['COMM_DATE']}  [{result['TYPE']}]:",result['COMMENT'],comment_type)
+            if self.parent.doc_data["author"] == result['user_id']:
+                self.model.add_message(USER_ME,f"{self.user_name[result['user_id']]} ({result['user_id']})  -  {result['comm_date']}  [{result['type']}]:",result['comment'],comment_type)
             else:
-                self.model.add_message(USER_THEM,f"{self.user_name[result['USER']]} ({result['USER']})  -  {result['COMM_DATE']}  [{result['TYPE']}]:",result['COMMENT'],comment_type)
+                self.model.add_message(USER_THEM,f"{self.user_name[result['user_id']]} ({result['user_id']})  -  {result['comm_date']}  [{result['type']}]:",result['comment'],comment_type)
                 
     def addComment(self,user,comm_date,comm_type,comment):
         comment_type = ""
         if "Reject" in comm_type:
             comment_type="Reject"
-        if self.parent.doc_data["AUTHOR"] == user:
+        if self.parent.doc_data["author"] == user:
             self.model.add_message(USER_ME,f"{self.user_name[user]} ({user})  -  {comm_date}  [{comm_type}]:",comment,comment_type)
         else:
             self.model.add_message(USER_THEM,f"{self.user_name[user]} ({user})  -  {comm_date}  [{comm_type}]:",comment,comment_type)
