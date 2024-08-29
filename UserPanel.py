@@ -78,26 +78,26 @@ class UserPanel(QtWidgets.QWidget):
         self.setLayout(main_layout)
         
     def loadInfo(self):
-        self.cursor.execute(f"Select * from USER where USER_ID='{self.user}'")
+        self.cursor.execute(f"Select * from users where user_id='{self.user}'")
         result = self.cursor.fetchone()
-        self.tab_general.line_user.setText(result['USER_ID'])
-        self.tab_general.line_pass.setText(result['PASSWORD'])
-        self.tab_general.line_name.setText(result['NAME'])
-        self.tab_general.combo_title.setCurrentText(result['JOB_TITLE'])
-        self.tab_general.combo_dept.setCurrentText(result['DEPT'])
-        self.tab_general.combo_status.setCurrentText(result['STATUS'])
-        self.tab_general.line_email.setText(result['EMAIL'])
-        self.cursor.execute(f"Select * from PERMISSIONS where USER_ID='{self.user}'")
+        self.tab_general.line_user.setText(result['user_id'])
+        self.tab_general.line_pass.setText(result['password'])
+        self.tab_general.line_name.setText(result['name'])
+        self.tab_general.combo_title.setCurrentText(result['job_title'])
+        self.tab_general.combo_dept.setCurrentText(result['dept'])
+        self.tab_general.combo_status.setCurrentText(result['status'])
+        self.tab_general.line_email.setText(result['email'])
+        self.cursor.execute(f"Select * from permissions where user_id='{self.user}'")
         result = self.cursor.fetchone()
         check_dict = {"y":QtCore.Qt.Checked,"n":QtCore.Qt.Unchecked, None : QtCore.Qt.Unchecked}
         if result is not None:
-            self.tab_permissions.check_ecn.setCheckState(check_dict[result["CREATE_ECN"]])
-            self.tab_permissions.check_pcn.setCheckState(check_dict[result["CREATE_PCN"]])
-            self.tab_permissions.check_create_user.setCheckState(check_dict[result["CREATE_USER"]])
-            self.tab_permissions.check_settings.setCheckState(check_dict[result["ACCESS_SETTINGS"]])
-            self.tab_permissions.check_view_analytics.setCheckState(check_dict[result["VIEW_ANALYTICS"]])
-            self.tab_permissions.check_reject_signer.setCheckState(check_dict[result["REJECT_SIGNER"]])
-            self.tab_permissions.check_rerouting.setCheckState(check_dict[result["REROUTING"]])
+            self.tab_permissions.check_ecn.setCheckState(check_dict[result["create_ecn"]])
+            self.tab_permissions.check_pcn.setCheckState(check_dict[result["create_pcn"]])
+            self.tab_permissions.check_create_user.setCheckState(check_dict[result["create_user"]])
+            self.tab_permissions.check_settings.setCheckState(check_dict[result["access_settings"]])
+            self.tab_permissions.check_view_analytics.setCheckState(check_dict[result["view_analytics"]])
+            self.tab_permissions.check_reject_signer.setCheckState(check_dict[result["reject_signer"]])
+            self.tab_permissions.check_rerouting.setCheckState(check_dict[result["rerouting"]])
         
     def checkFields(self):
         if self.tab_general.line_user.text()=="":
@@ -123,7 +123,7 @@ class UserPanel(QtWidgets.QWidget):
         return True
     
     def existUser(self):
-        self.cursor.execute(f"Select * from USER where USER_ID='{self.tab_general.line_user.text()}'")
+        self.cursor.execute(f"Select * from users where user_id='{self.tab_general.line_user.text()}'")
         result = self.cursor.fetchone()
         print(result)
         if result is None:
@@ -136,14 +136,14 @@ class UserPanel(QtWidgets.QWidget):
             if self.checkPassField() and self.checkEmailField():
                 if self.existUser():
                     data = (self.tab_general.line_pass.text(),self.tab_general.line_name.text(),self.tab_general.combo_title.currentText(),self.tab_general.combo_status.currentText(),self.tab_general.combo_dept.currentText(),self.tab_general.line_email.text(),self.tab_general.line_user.text())
-                    self.cursor.execute("UPDATE USER SET PASSWORD = %s , NAME = %s, JOB_TITLE = %s, STATUS = %s, DEPT = %s, EMAIL = %s WHERE USER_ID = %s",(data))
+                    self.cursor.execute("UPDATE users SET password = %s , name = %s, job_title = %s, status = %s, dept = %s, email = %s WHERE user_id = %s",(data))
                     self.db.commit()
                     if self.func != "user_edit":
                         self.savePermissions()
                     self.dispMsg("User Info has been updated!")
                 else:
                     data = (self.tab_general.line_user.text(),self.tab_general.line_pass.text(),self.tab_general.line_name.text(),self.tab_general.combo_title.currentText(),self.tab_general.combo_status.currentText(),self.tab_general.combo_dept.currentText(),self.tab_general.line_email.text())
-                    self.cursor.execute('INSERT INTO USER(USER_ID, PASSWORD, NAME, JOB_TITLE, STATUS, DEPT, EMAIL) VALUES(%s,%s,%s,%s,%s,%s,%s)',(data))
+                    self.cursor.execute('INSERT INTO users(user_id, password, name, job_title, status, dept, email) VALUES(%s,%s,%s,%s,%s,%s,%s)',(data))
                     self.db.commit()
                     if self.func != "user_edit":
                         self.savePermissions()
@@ -153,18 +153,18 @@ class UserPanel(QtWidgets.QWidget):
             self.dispMsg("There are empty fields.")
             
     def savePermissions(self):
-        self.cursor.execute(f"select * from PERMISSIONS where USER_ID='{self.user}'")
+        self.cursor.execute(f"select * from permissions where user_id='{self.user}'")
         result = self.cursor.fetchone()
         check_dict = {QtCore.Qt.Checked:"y",QtCore.Qt.Unchecked:"n"}
         if result is not None:
             data = (check_dict[self.tab_permissions.check_ecn.checkState()],check_dict[self.tab_permissions.check_pcn.checkState()],check_dict[self.tab_permissions.check_prj.checkState()],check_dict[self.tab_permissions.check_prq.checkState()],check_dict[self.tab_permissions.check_create_user.checkState()],check_dict[self.tab_permissions.check_reject_signer.checkState()],check_dict[self.tab_permissions.check_settings.checkState()],check_dict[self.tab_permissions.check_view_analytics.checkState()],check_dict[self.tab_permissions.check_rerouting.checkState()],self.tab_general.line_user.text())
-            self.cursor.execute(f"UPDATE PERMISSIONS SET CREATE_ECN = %s, CREATE_PCN = %s, CREATE_PRJ = %s, CREATE_PRQ = %s, CREATE_USER = %s, REJECT_SIGNER = %s, ACCESS_SETTINGS = %s, VIEW_ANALYTICS = %s, REROUTING = %s WHERE USER_ID = %s", (data))
+            self.cursor.execute(f"UPDATE permissions SET create_ecn = %s, create_pcn = %s, CREATE_PRJ = %s, CREATE_PRQ = %s, create_user = %s, reject_signer = %s, access_settings = %s, view_analytics = %s, rerouting = %s WHERE user_id = %s", (data))
         else:
             data = (self.tab_general.line_user.text(),check_dict[self.tab_permissions.check_ecn.checkState()],check_dict[self.tab_permissions.check_pcn.checkState()],check_dict[self.tab_permissions.check_prj.checkState()],check_dict[self.tab_permissions.check_prq.checkState()],check_dict[self.tab_permissions.check_create_user.checkState()],check_dict[self.tab_permissions.check_reject_signer.checkState()],check_dict[self.tab_permissions.check_settings.checkState()],check_dict[self.tab_permissions.check_view_analytics.checkState()],check_dict[self.tab_permissions.check_rerouting.checkState()])
-            self.cursor.execute(f"INSERT INTO PERMISSIONS(USER_ID,CREATE_ECN, CREATE_PCN,CREATE_PRJ,CREATE_PRQ, CREATE_USER, REJECT_SIGNER, ACCESS_SETTINGS, VIEW_ANALYTICS, REROUTING) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(data))
+            self.cursor.execute(f"INSERT INTO permissions(user_id,create_ecn, create_pcn,CREATE_PRJ,CREATE_PRQ, create_user, reject_signer, access_settings, view_analytics, rerouting) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(data))
         self.db.commit()
             
-#cursor.execute('CREATE TABLE PERMISSIONS(USER_ID TEXT, CREATE_ECN TEXT, CREATE_PCN TEXT, CREATE_USER TEXT, REJECT_SIGNER TEXT, ACCESS_SETTINGS TEXT, VIEW_ANALYTICS TEXT)')
+#cursor.execute('CREATE TABLE permissions(user_id TEXT, create_ecn TEXT, create_pcn TEXT, create_user TEXT, reject_signer TEXT, access_settings TEXT, view_analytics TEXT)')
     def clearFields(self):
         self.tab_general.line_user.clear()
         self.tab_general.line_pass.clear()
@@ -220,7 +220,7 @@ class GeneralTab(QtWidgets.QWidget):
 
     def initUI(self):
         main_layout = QtWidgets.QVBoxLayout(self)
-        #USER(USER_ID TEXT, PASSWORD TEXT, NAME TEXT, ROLE TEXT, JOB_TITLE TEXT, DEPT TEXT, STATUS TEXT, EMAIL TEXT)        
+        #USER(user_id TEXT, password TEXT, name TEXT, ROLE TEXT, job_title TEXT, dept TEXT, status TEXT, email TEXT)        
         label_user = QtWidgets.QLabel("User ID:")
         self.line_user = QtWidgets.QLineEdit(self)
         label_pass = QtWidgets.QLabel("Password:")
