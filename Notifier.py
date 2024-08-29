@@ -305,6 +305,7 @@ class Notifier(QtWidgets.QWidget):
                     self.removeECNX(result[0])
                     #self.removeHTML(result[0])
                     self.updateStatus(result[0])
+                QtWidgets.QApplication.processEvents()
         else:
             self.log_text.append("-No notifications found to be sent")
         self.repopulateTable()
@@ -654,7 +655,7 @@ class Notifier(QtWidgets.QWidget):
 
                 #attachments
                 #print('exporting attachments')
-                self.cursor.execute(f"SELECT * FROM atttachments where doc_id='{doc_id}'")
+                self.cursor.execute(f"SELECT * FROM attachments where doc_id='{doc_id}'")
                 results = self.cursor.fetchall()
                 if results is not None:
                     for result in results:
