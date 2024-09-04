@@ -876,7 +876,7 @@ class Notifier(QtWidgets.QWidget):
         return elapsed
     
     def releaseFiles(self,doc_id):
-        self.cursor.execute(f"SELECT filename,filepath FROM atttachments WHERE doc_id='{doc_id}'")
+        self.cursor.execute(f"SELECT filename,filepath FROM attachments WHERE doc_id='{doc_id}'")
         results = self.cursor.fetchall()
         for result in results:
             dst = os.path.join(self.settings["ECN_Released"],result[0])
@@ -897,13 +897,13 @@ class Notifier(QtWidgets.QWidget):
         QtWidgets.QApplication.processEvents()
         
     def updateFileLocation(self,doc_id):
-        self.cursor.execute(f"SELECT filepath FROM atttachments WHERE doc_id='{doc_id}'")
+        self.cursor.execute(f"SELECT filepath FROM attachments WHERE doc_id='{doc_id}'")
         results = self.cursor.fetchall()
         for result in results:
             src = result[0]
             dst = result[0].replace(self.settings["ECN_Temp"],self.settings["ECN_Archive"])
             data = (dst,src,doc_id)
-            self.cursor.execute("UPDATE atttachments SET filepath = %s WHERE filepath = %s and doc_id = %s",(data))
+            self.cursor.execute("UPDATE attachments SET filepath = %s WHERE filepath = %s and doc_id = %s",(data))
             self.log_text.append(f"DB reference updated from {src} to {dst}")
             QtWidgets.QApplication.processEvents()
         self.db.commit()
