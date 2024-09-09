@@ -15,6 +15,7 @@ import ssl
 import imaplib
 import time
 import psycopg2, psycopg2.extras
+import stat
 
 if getattr(sys, 'frozen', False):
     # frozen
@@ -65,6 +66,7 @@ class Notifier(QtWidgets.QWidget):
         self.center()
         self.show()
         self.startTask()
+        QtWidgets.QApplication.processEvents()
         
         # self.checkDBTables()
         
@@ -883,7 +885,7 @@ class Notifier(QtWidgets.QWidget):
             self.log_text.append(f"copying -- {result[1]} to {dst}")
             if os.path.exists(dst):
                 self.log_text.append(f"destination folder found, starting removal")
-                shutil.rmtree(dst)
+                shutil.rmtree(dst,onerror=self.onerror)
                 QtWidgets.QApplication.processEvents()
                 self.log_text.append(f"destination folder removed, initiating copy")
             shutil.copytree(result[1],dst)
@@ -892,8 +894,15 @@ class Notifier(QtWidgets.QWidget):
     def archiveFiles(self,doc_id):
         src = os.path.join(self.settings["ECN_Temp"],doc_id)
         dst = os.path.join(self.settings["ECN_Archive"],doc_id)
-        self.log_text.append(f"Moving -- {src} to {dst}")
-        shutil.move(src,dst)
+        self.log_text.append(f"Archiving {src} to {dst}")
+        # print(f"Moving -- {src} to {dst}")
+        # self.log_text.append(f"Moving -- {src} to {dst}")
+        print(os.access(src, os.W_OK))
+        # print(f"Copying -- {src} to {dst}")
+        shutil.copytree(src,dst)
+        # print(f"Removing -- {src}")
+        shutil.rmtree(src,onerror=self.onerror)
+        self.log_text.append(f"Archiving Completed")
         QtWidgets.QApplication.processEvents()
         
     def updateFileLocation(self,doc_id):
@@ -942,6 +951,7 @@ class Notifier(QtWidgets.QWidget):
                     secondary_receivers.append(self.userList[user])
                 total_days = self.getElapsedDays(today, first_release)
                 self.lateReminder(doc_id,direct_receivers,secondary_receivers, total_days)
+                QtWidgets.QApplication.processEvents()
                 
                 
         #check for prq reminders
@@ -989,6 +999,7 @@ class Notifier(QtWidgets.QWidget):
                     #     secondary_receivers.append(self.userList[user])
                     total_days = self.getElapsedDays(today, first_release)
                     self.lateReminder(doc_id,direct_receivers,secondary_receivers, total_days)
+            QtWidgets.QApplication.processEvents()        
 
 
     def setElapsedDays(self):
@@ -1049,6 +1060,24 @@ class Notifier(QtWidgets.QWidget):
             print(result[0],doc_id)
             receivers.append(self.userList[result[0]])
         return receivers
+    
+    def onerror(self,func, path, exc_info):
+        """
+        Error handler for ``shutil.rmtree``.
+
+        If the error is due to an access error (read only file)
+        it attempts to add write permission and then retries.
+
+        If the error is for another reason it re-raises the error.
+        
+        Usage : ``shutil.rmtree(path, onerror=onerror)``
+        """
+        # Is the error an access error?
+        if not os.access(path, os.W_OK):
+            os.chmod(path, stat.S_IWUSR)
+            func(path)
+        else:
+            raise
     
     
     def closeEvent(self, event):

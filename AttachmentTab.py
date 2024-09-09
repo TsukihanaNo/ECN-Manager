@@ -248,10 +248,13 @@ class AttachmentTab(QtWidgets.QWidget):
             if os.path.getsize(pathFrom)<=maxFileLoad:
                 #if file is less than 15mb
                 #read the entire image file into memory
+                # print('reading file')
                 fileFrom = open(pathFrom,'rb')
+                # print('reading bytes')
                 bytesFrom = fileFrom.read()
                 #write all bytes into new file
                 bytesTo = open(pathTo, 'wb')
+                # print('writing bytes')
                 bytesTo.write(bytesFrom)
                 #manual closure of file objects
                 fileFrom.close()
@@ -283,24 +286,30 @@ class AttachmentTab(QtWidgets.QWidget):
     def fullDirCopy(self,dirFrom,dirTo,file_count):
         for filename in os.listdir(dirFrom):
             pathFrom = os.path.join(dirFrom,filename)
-            pathTo = os.path.join(dirTo,filename)
-            if not os.path.isdir(pathFrom): #if the tested file is not a directory
-                try:
-                    # print ('Copying: ',pathFrom,' to ',pathTo)
-                    self.current_count+=1
-                    self.copyFile(pathFrom,pathTo)
-                    self.fileTransferWidget.label_count.setText(f"Uploading {self.current_count} / {file_count}")
-                except:
-                    self.fileTransferWidget.text_error.append('Error copying: ', pathFrom,' to ',pathTo,'--skipped')
-                    self.fileTransferWidget.text_error.append(sys.exc_info()[0],sys.exc_info()[1])
+            if filename[0]!="~":
+                pathTo = os.path.join(dirTo,filename)
+                if not os.path.isdir(pathFrom): #if the tested file is not a directory
+                    try:
+                        # print ('Copying: ',pathFrom,' to ',pathTo)
+                        self.current_count+=1
+                        # print("copying: ", pathFrom, " to ", pathTo)
+                        self.copyFile(pathFrom,pathTo)
+                        self.fileTransferWidget.label_count.setText(f"Uploading {self.current_count} / {file_count}")
+                        # self.fileTransferWidget.text_error.append('Copying: ',pathFrom, ' to ', pathTo)
+                    except:
+                        self.fileTransferWidget.text_error.append('Error copying: ', pathFrom,' to ',pathTo,'--skipped')
+                        self.fileTransferWidget.text_error.append(sys.exc_info()[0],sys.exc_info()[1])
+                else:
+                    try:
+                        if not os.path.exists(pathTo):
+                            os.mkdir(pathTo)
+                            self.fullDirCopy(pathFrom,pathTo,file_count)
+                    except:
+                        self.fileTransferWidget.text_error.append('Error Diving into directory ',pathFrom)
+                        self.fileTransferWidget.text_error.append(sys.exc_info()[0],sys.exc_info()[1])
             else:
-                try:
-                    if not os.path.exists(pathTo):
-                        os.mkdir(pathTo)
-                        self.fullDirCopy(pathFrom,pathTo,file_count)
-                except:
-                    self.fileTransferWidget.text_error.append('Error Diving into directory ',pathFrom)
-                    self.fileTransferWidget.text_error.append(sys.exc_info()[0],sys.exc_info()[1])
+                self.fileTransferWidget.text_error.append('skipping: lock file ',pathFrom)
+            # QtWidgets.QApplication.processEvents()
     
     def getFileCount(self,dirFrom):
         fileCount = 0
