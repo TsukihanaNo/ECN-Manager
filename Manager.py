@@ -256,7 +256,7 @@ class Manager(QtWidgets.QWidget):
 
     def initAtt(self):
         self.setGeometry(100, 50, self.windowWidth, self.windowHeight)
-        title = "ECN-Manager - User: " + self.user_info["user"]
+        title = "ECN-Manager - User: " + self.user_info["user"] +" | DB: " + self.settings['database']
         self.setWindowIcon(self.ico)
         self.setWindowTitle(title)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)

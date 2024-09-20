@@ -367,7 +367,8 @@ class Notifier(QtWidgets.QWidget):
         result = self.cursor.fetchone()
         if result[0]!=from_user:
             receivers.append(self.userList[result[0]])
-        self.cursor.execute(f"select user_id from signatures where doc_id='{doc_id}' and type='Signing' and signed_date!=''")
+        # self.cursor.execute(f"select user_id from signatures where doc_id='{doc_id}' and type='Signing' and signed_date!=''")
+        self.cursor.execute(f"select user_id from signatures where doc_id='{doc_id}' and type='Signing'") #changing it so that the comments are sent to everyone on the signoffs
         results = self.cursor.fetchall()
         for result in results:
             if result[0]!=from_user:

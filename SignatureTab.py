@@ -104,29 +104,29 @@ class SignatureTab(QtWidgets.QWidget):
         row = self.signatures.currentIndex().row()
         user = self.model.get_user(row)
         users = []
-        if self.getUserRole(user)=="Signer":
-            comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Rejection reason", "")
-            if ok and comment!="":
-                table_dict = self.getTableDict()
-                for key in table_dict.keys():
-                    if table_dict[key]>=table_dict[user] and key != self.parent.parent.user_info['user']:
-                        self.parent.cursor.execute(f"UPDATE signatures SET signed_date = Null where doc_id='{self.parent.doc_id}' and user_id='{key}'")
-                        users.append(key)
-                if len(users)>1:
-                    users = ",".join(users)
-                else:
-                    users = users[0]
-                comment = f'For user: {user} - additionally the approval for the following users have also been resetted: {users}\n  --Reason: ' + comment
-                self.parent.addComment(self.parent.doc_id, comment, f"Rejecting to signer")
-                self.parent.db.commit()
-                self.parent.setECNStage(table_dict[user])
-                self.dispMsg(f"Rejection successful. ECN stage has been set to {table_dict[user]}")
-                # users = user+','+users
-                self.parent.addNotification(self.parent.doc_id,"Rejected To Signer",from_user=self.parent.parent.user_info['user'],userslist=users,msg=comment)
-            if ok and comment=="":
-                self.dispMsg("Rejection failed. Comment field was left blank.")
-        else:
-            self.dispMsg(f"Rejection failed: you do not have permissions to reject {user}'s approval")
+        # if self.getUserRole(user)=="Signer":
+        comment, ok = QtWidgets.QInputDialog().getMultiLineText(self, "Comment", "Rejection reason", "")
+        if ok and comment!="":
+            table_dict = self.getTableDict()
+            for key in table_dict.keys():
+                if table_dict[key]>=table_dict[user] and key != self.parent.parent.user_info['user']:
+                    self.parent.cursor.execute(f"UPDATE signatures SET signed_date = Null where doc_id='{self.parent.doc_id}' and user_id='{key}'")
+                    users.append(key)
+            if len(users)>1:
+                users = ",".join(users)
+            else:
+                users = users[0]
+            comment = f'For user: {user} - additionally the approval for the following users have also been resetted: {users}\n  --Reason: ' + comment
+            self.parent.addComment(self.parent.doc_id, comment, f"Rejecting to signer")
+            self.parent.db.commit()
+            self.parent.setECNStage(table_dict[user])
+            self.dispMsg(f"Rejection successful. ECN stage has been set to {table_dict[user]}")
+            # users = user+','+users
+            self.parent.addNotification(self.parent.doc_id,"Rejected To Signer",from_user=self.parent.parent.user_info['user'],userslist=users,msg=comment)
+        if ok and comment=="":
+            self.dispMsg("Rejection failed. Comment field was left blank.")
+        # else:
+        #     self.dispMsg(f"Rejection failed: you do not have permissions to reject {user}'s approval")
         self.repopulateTable()
         
     def getTableDict(self):
