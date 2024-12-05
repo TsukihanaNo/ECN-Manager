@@ -120,7 +120,7 @@ class Notifier(QtWidgets.QWidget):
             self.log_text.clear()
         now  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.log_text.append(f"{now}: checking for standard and lateness notifications")
-        self.checkForReminder()
+        # self.checkForReminder()
         self.sendNotification()
         if datetime.now().strftime('%H:%M')=="09:30":
             self.notifierOnlineNotification("ONLINE")
@@ -413,9 +413,11 @@ class Notifier(QtWidgets.QWidget):
             self.exportPDF(doc_id,filepath ,"PCN")
             self.exportHTMLPCNWeb(doc_id, filepath)
         if doc_id[:3]=="ECN":
-            self.releaseFiles(doc_id)
-            self.archiveFiles(doc_id)
-            self.updateFileLocation(doc_id)
+            src = os.path.join(self.settings["ECN_Temp"],doc_id)
+            if os.path.exists(src):
+                self.releaseFiles(doc_id)
+                self.archiveFiles(doc_id)
+                self.updateFileLocation(doc_id)
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
         self.sendEmail(doc_id,receivers, message,"Completion",attach)
         self.log_text.append(f"-Completion Email sent for {doc_id} to {receivers}")
@@ -439,6 +441,10 @@ class Notifier(QtWidgets.QWidget):
             os.mkdir(filepath)
             self.exportPDF(doc_id,filepath ,"PCN")
             self.exportHTMLPCNWeb(doc_id, filepath)
+        if doc_id[:3]=="ECN":
+            self.releaseFiles(doc_id)
+            self.archiveFiles(doc_id)
+            self.updateFileLocation(doc_id)
         #attach.append(os.path.join(program_location,ecn_id+'.html'))
         self.sendEmail(doc_id,receivers, message,"Approved",attach)
         self.log_text.append(f"-Approved Email sent for {doc_id} to {receivers}")
@@ -551,7 +557,7 @@ class Notifier(QtWidgets.QWidget):
                         #print(ecnx, filename)
                         payload.add_header('Content-Disposition','attachment',filename = os.path.basename(file))
                         msg.attach(payload)
-                    server.sendmail(self.settings["From_Address"], receivers, msg.as_string())
+                    # server.sendmail(self.settings["From_Address"], receivers, msg.as_string())
                     self.log_text.append(f"Successfully sent email to {receivers}")
             
             #smtp with authorization
@@ -590,7 +596,7 @@ class Notifier(QtWidgets.QWidget):
                 server.ehlo()
                 server.starttls(context=context)
                 server.login(self.settings["From_Address2"],self.settings["Mail_Pass"])
-                server.sendmail(self.settings["From_Address2"], receivers, msg.as_string())
+                # server.sendmail(self.settings["From_Address2"], receivers, msg.as_string())
                 # imap = imaplib.IMAP4_SSL(self.settings["IMAP"],self.settings["IMAP_Port"])
                 # imap.login(self.settings["From_Address2"],self.settings["Mail_Pass"])
                 # imap.append("INBOX.Sent","\\Seen",imaplib.Time2Internaldate(time.time()),msg.as_string().encode('utf8'))
@@ -962,6 +968,7 @@ class Notifier(QtWidgets.QWidget):
         for result in results:
             #check for prq visual status
             doc_id = result["doc_id"]
+            print(doc_id)
             self.cursor.execute(f"SELECT req_id FROM purch_req_doc_link WHERE doc_id='{doc_id}'")
             get_req = self.cursor.fetchone()
             req_id = get_req[0]

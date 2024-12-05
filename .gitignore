@@ -5,6 +5,7 @@ __pycache__/
 build/
 #ignore file
 setting.ini
+setting_test.ini
 test.py
 db_inquiries.py
 *.csv

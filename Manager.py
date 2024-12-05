@@ -34,7 +34,7 @@ else:
 os.environ['QTWEBENGINE_DISABLE_SANDBOX'] = "1"
 
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
-initfile = os.path.join(program_location, "setting.ini")
+initfile = os.path.join(program_location, "setting_test.ini")
 icon = os.path.join(program_location,"icons","manager.ico")
 
 class Manager(QtWidgets.QWidget):
@@ -358,24 +358,33 @@ class Manager(QtWidgets.QWidget):
         self.button_open_docs = QtWidgets.QPushButton("Inprogress")
         self.button_open_docs.setFixedWidth(button_size)
         self.button_open_docs.clicked.connect(self.loadOpenDocs)
+        self.button_rejected = QtWidgets.QPushButton("Rejected")
+        self.button_rejected.setFixedWidth(button_size)
+        self.button_rejected.clicked.connect(self.loadRejectedDocs)
         self.button_canceled = QtWidgets.QPushButton("Canceled")
         self.button_canceled.setFixedWidth(button_size)
         self.button_canceled.clicked.connect(self.loadCanceledDocs)
+        
         self.button_draft = QtWidgets.QPushButton("Drafts")
         self.button_draft.setFixedWidth(button_size)
         self.button_draft.clicked.connect(self.loadDrafts)
         # self.button_deleted = QtWidgets.QPushButton("Deleted")
         # self.button_deleted.clicked.connect(self.loadDeletedDocs)
         # self.button_deleted.setFixedWidth(button_size)
+        self.button_approved = QtWidgets.QPushButton("Approved")
+        self.button_approved.setFixedWidth(button_size)
+        self.button_approved.clicked.connect(self.loadApprovedDocs)
         self.button_completed = QtWidgets.QPushButton("Completed")
         self.button_completed.setFixedWidth(button_size)
         self.button_completed.clicked.connect(self.loadCompletedDocs)
         self.navbar.addWidget(self.button_doc)
         self.navbar.addWidget(self.button_queue)
         self.navbar.addWidget(self.button_open_docs)
+        self.navbar.addWidget(self.button_rejected)
         self.navbar.addWidget(self.button_canceled)
         self.navbar.addWidget(self.button_draft)
         # self.navbar.addWidget(self.button_deleted)
+        self.navbar.addWidget(self.button_approved)
         self.navbar.addWidget(self.button_completed)
 
         for child in self.navbar.children():
@@ -462,6 +471,10 @@ class Manager(QtWidgets.QWidget):
     def loadOpenDocs(self):
         self.table_type = "Open"
         self.repopulateTable()
+        
+    def loadRejectedDocs(self):
+        self.table_type = "Rejected"
+        self.repopulateTable()
 
     def loadCanceledDocs(self):
         self.table_type = "Canceled"
@@ -478,6 +491,10 @@ class Manager(QtWidgets.QWidget):
     def loadQueueDocs(self):
         self.table_type = "Queue"
         self.repopulateTable()
+        
+    def loadApprovedDocs(self):
+        self.table_type = "Approved"
+        self.repopulateTable()
 
     def loadCompletedDocs(self):
         self.table_type = "Completed"
@@ -491,12 +508,16 @@ class Manager(QtWidgets.QWidget):
             self.button_queue.setStyleSheet(style)
         if self.table_type=="Open":
             self.button_open_docs.setStyleSheet(style)
+        if self.table_type=="Rejected":
+            self.button_rejected.setStyleSheet(style)
         if self.table_type=="Canceled":
             self.button_canceled.setStyleSheet(style)
         if self.table_type=="Draft":
             self.button_draft.setStyleSheet(style)
         # if self.table_type=="Deleted":
         #     self.button_deleted.setStyleSheet(style)
+        if self.table_type=="Approved":
+            self.button_approved.setStyleSheet(style)
         if self.table_type=="Completed":
             self.button_completed.setStyleSheet(style)
 
@@ -531,11 +552,15 @@ class Manager(QtWidgets.QWidget):
             # command =f"Select * from signatures INNER JOIN document ON signatures.doc_id=document.doc_id WHERE document.status='Out For Approval' and signatures.user_id='{self.user_info['user']}' and document.stage>={self.user_info['stage']} and signatures.signed_date is NULL and signatures.type='Signing'"
             command =f"Select * from signatures INNER JOIN document ON signatures.doc_id=document.doc_id WHERE document.status='Out For Approval' and signatures.user_id='{self.user_info['user']}'and signatures.signed_date is NULL and signatures.type='Signing'"
         elif self.table_type=="Open":
-            command = f"select * from document where (status='Out For Approval' OR status='Rejected' OR status='Started' or status='Approved') {filter_type}"
+            command = f"select * from document where (status='Out For Approval' OR status='Started') {filter_type}"
+        elif self.table_type=="Rejected":
+            command = f"select * from document where status ='Rejected' {filter_type}"
         elif self.table_type=="Canceled":
             command = f"select * from document where status ='Canceled' {filter_type}"
         elif self.table_type=="Draft":
             command = f"select * from document where status ='Draft' {filter_type}"
+        elif self.table_type=="Approved":
+            command = f"select * from document where status ='Approved' {filter_type}"
         # elif self.table_type=="Deleted":
         #     command = f"select * from document where status =='Deleted' {filter_type}"
         else:

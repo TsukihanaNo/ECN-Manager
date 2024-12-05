@@ -814,15 +814,44 @@ class ECNWindow(QtWidgets.QWidget):
         #print(self.now_title)
         #print(self.now_req_details)
         
+    # def checkApproved(self,sig_stage_list):
+    #     # stage_check = range(1,int(self.settings['ECN_Approve_Stage'])+1)
+    #     # for stage in stage_check:
+    #     #     print(stage)
+    #     #     if str(stage) in sig_stage_list:
+    #     #         return False
+    #     # return True
+    #     command = f"Select * from signatures where doc_id ='{self.doc_id}' and type='Signing'"
+    #     self.cursor.execute(command)
+    #     results = self.cursor.fetchall()
+    #     sig_stage_list = []
+    #     for result in results:
+    #         if result['signed_date'] == None or result['signed_date']== "":
+    #             sig_stage_list.append(self.stageDict[result['job_title']])
+    #     sig_stage_list.sort()
+    #     print(sig_stage_list)
+    #     if sig_stage_list[0]==self.settings['ECN_Approve_Stage']:
+    #         return True
+    #     return False
+        
     def checkComplete(self):
         try:
             command = f"Select * from signatures where doc_id ='{self.doc_id}' and type='Signing'"
             self.cursor.execute(command)
             results = self.cursor.fetchall()
             completed = True
+            approved = False
+            sig_stage_list = []
             for result in results:
                 if result['signed_date'] == None or result['signed_date']== "":
                     completed = False
+                    sig_stage_list.append(self.stageDict[result['job_title']])
+            print('sig_stage_list',sig_stage_list)
+            if not completed:
+                sig_stage_list.sort()
+                print('sig_stage_list',sig_stage_list,self.settings['ECN_Approve_Stage'])
+                approved = sig_stage_list[0]==self.settings['ECN_Approve_Stage']
+            print("approved",approved)
             if completed:
                 completeddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 self.cursor.execute(f"select first_release from document where doc_id='{self.doc_id}'")
@@ -842,6 +871,19 @@ class ECNWindow(QtWidgets.QWidget):
                 self.tab_attach.button_add.setDisabled(True)
                 self.tab_signature.button_add.setDisabled(True)
                 self.tab_notification.button_add.setDisabled(True)
+                self.tab_ecn.line_status.setText("Completed")
+            elif approved:
+                approveddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                data = (approveddate,approveddate, "Approved",self.doc_id)
+                self.cursor.execute("UPDATE document SET last_modified = %s,approved_date = %s, status = %s WHERE doc_id = %s",(data))
+                self.parent.repopulateTable()
+                self.dispMsg("ECN is now approved")
+                self.addNotification(self.doc_id, "Approved")
+                self.tab_parts.button_add.setDisabled(True)
+                self.tab_attach.button_add.setDisabled(True)
+                self.tab_signature.button_add.setDisabled(True)
+                self.tab_notification.button_add.setDisabled(True)
+                self.tab_ecn.line_status.setText("Approved")
             else:
                 self.parent.repopulateTable()
         except Exception as e:
