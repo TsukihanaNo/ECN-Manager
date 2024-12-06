@@ -550,7 +550,7 @@ class Manager(QtWidgets.QWidget):
             command = "Select * from document where author ='" + self.user_info['user'] + f"' and status !='Completed' {filter_type}"
         elif self.table_type=="Queue":
             # command =f"Select * from signatures INNER JOIN document ON signatures.doc_id=document.doc_id WHERE document.status='Out For Approval' and signatures.user_id='{self.user_info['user']}' and document.stage>={self.user_info['stage']} and signatures.signed_date is NULL and signatures.type='Signing'"
-            command =f"Select * from signatures INNER JOIN document ON signatures.doc_id=document.doc_id WHERE document.status='Out For Approval' and signatures.user_id='{self.user_info['user']}'and signatures.signed_date is NULL and signatures.type='Signing'"
+            command =f"Select * from signatures INNER JOIN document ON signatures.doc_id=document.doc_id WHERE (document.status='Out For Approval' or document.status='Approved') and signatures.user_id='{self.user_info['user']}'and signatures.signed_date is NULL and signatures.type='Signing'"
         elif self.table_type=="Open":
             command = f"select * from document where (status='Out For Approval' OR status='Started') {filter_type}"
         elif self.table_type=="Rejected":
@@ -739,7 +739,7 @@ class Manager(QtWidgets.QWidget):
         return usr_str
     
     def getQueueCount(self):
-        self.cursor.execute(f"Select * from signatures INNER JOIN document ON signatures.doc_id=document.doc_id WHERE document.status='Out For Approval' and signatures.user_id='{self.user_info['user']}' and signatures.signed_date is NULL and type='Signing'")
+        self.cursor.execute(f"Select * from signatures INNER JOIN document ON signatures.doc_id=document.doc_id WHERE (document.status='Out For Approval' or document.status='Approved') and signatures.user_id='{self.user_info['user']}' and signatures.signed_date is NULL and type='Signing'")
         result = self.cursor.fetchall()
         
         table_index = 0

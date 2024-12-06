@@ -1107,12 +1107,12 @@ class ECNWindow(QtWidgets.QWidget):
         if from_user is None:
             from_user = ""
                 
-        if self.existNotification(doc_id) and notificationType!="User Comment":
-            data = (notificationType,from_user,users,msg, doc_id)
-            self.cursor.execute("UPDATE notifications SET type = %s, from_user = %s, users = %s, msg = %s WHERE doc_id = %s",(data))
-        else:
-            data = (doc_id,"Not Sent",notificationType,from_user, users, msg)
-            self.cursor.execute("INSERT INTO notifications(doc_id, status, type,from_user, users, msg) VALUES(%s,%s,%s,%s,%s,%s)",(data))
+        # if self.existNotification(doc_id) and notificationType!="User Comment":
+        #     data = (notificationType,from_user,users,msg, doc_id)
+        #     self.cursor.execute("UPDATE notifications SET type = %s, from_user = %s, users = %s, msg = %s WHERE doc_id = %s",(data))
+        # else:
+        data = (doc_id,"Not Sent",notificationType,from_user, users, msg)
+        self.cursor.execute("INSERT INTO notifications(doc_id, status, type,from_user, users, msg) VALUES(%s,%s,%s,%s,%s,%s)",(data))
         self.db.commit()
         
     def existNotification(self,doc_id):

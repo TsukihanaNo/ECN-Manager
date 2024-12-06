@@ -25,7 +25,7 @@ else:
     program_location = os.path.dirname(os.path.realpath(__file__))
 
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
-initfile = os.path.join(program_location, "setting.ini")
+initfile = os.path.join(program_location, "setting_test.ini")
 lockfile = os.path.join(program_location, "notifier.lock")
 os.environ['QTWEBENGINE_DISABLE_SANDBOX'] = "1"
 
@@ -122,6 +122,7 @@ class Notifier(QtWidgets.QWidget):
         self.log_text.append(f"{now}: checking for standard and lateness notifications")
         # self.checkForReminder()
         self.sendNotification()
+        self.cleanNotifications()
         if datetime.now().strftime('%H:%M')=="09:30":
             self.notifierOnlineNotification("ONLINE")
         
@@ -344,6 +345,12 @@ class Notifier(QtWidgets.QWidget):
         self.sendEmail(doc_id,receivers, message,"Rejection",attach)
         self.log_text.append(f"-Rejection Email sent for {doc_id} to {receivers}")
         
+    def cleanNotifications(self):
+        self.log_text.append("-Cleaning up Sent Notifications")
+        self.cursor.execute(f"delete from notifications where status='Sent'")
+        self.db.commit()
+        self.repopulateTable()
+        self.log_text.append("-Cleaning Completed!")
     
     def rejectSignerNotification(self,doc_id,from_user,users,msg):
         users = users.split(',')
