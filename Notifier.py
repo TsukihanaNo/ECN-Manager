@@ -25,7 +25,7 @@ else:
     program_location = os.path.dirname(os.path.realpath(__file__))
 
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
-initfile = os.path.join(program_location, "setting_test.ini")
+initfile = os.path.join(program_location, "setting.ini")
 lockfile = os.path.join(program_location, "notifier.lock")
 os.environ['QTWEBENGINE_DISABLE_SANDBOX'] = "1"
 
@@ -564,7 +564,7 @@ class Notifier(QtWidgets.QWidget):
                         #print(ecnx, filename)
                         payload.add_header('Content-Disposition','attachment',filename = os.path.basename(file))
                         msg.attach(payload)
-                    # server.sendmail(self.settings["From_Address"], receivers, msg.as_string())
+                    server.sendmail(self.settings["From_Address"], receivers, msg.as_string())
                     self.log_text.append(f"Successfully sent email to {receivers}")
             
             #smtp with authorization
@@ -603,7 +603,7 @@ class Notifier(QtWidgets.QWidget):
                 server.ehlo()
                 server.starttls(context=context)
                 server.login(self.settings["From_Address2"],self.settings["Mail_Pass"])
-                # server.sendmail(self.settings["From_Address2"], receivers, msg.as_string())
+                server.sendmail(self.settings["From_Address2"], receivers, msg.as_string())
                 # imap = imaplib.IMAP4_SSL(self.settings["IMAP"],self.settings["IMAP_Port"])
                 # imap.login(self.settings["From_Address2"],self.settings["Mail_Pass"])
                 # imap.append("INBOX.Sent","\\Seen",imaplib.Time2Internaldate(time.time()),msg.as_string().encode('utf8'))

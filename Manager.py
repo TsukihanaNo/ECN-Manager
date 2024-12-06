@@ -34,7 +34,7 @@ else:
 os.environ['QTWEBENGINE_DISABLE_SANDBOX'] = "1"
 
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
-initfile = os.path.join(program_location, "setting_test.ini")
+initfile = os.path.join(program_location, "setting.ini")
 icon = os.path.join(program_location,"icons","manager.ico")
 
 class Manager(QtWidgets.QWidget):
