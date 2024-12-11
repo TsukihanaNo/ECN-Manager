@@ -66,6 +66,7 @@ class Notifier(QtWidgets.QWidget):
         self.center()
         self.show()
         self.startTask()
+        # self.generateWeeklyReport()
         QtWidgets.QApplication.processEvents()
         
         # self.checkDBTables()
@@ -120,11 +121,14 @@ class Notifier(QtWidgets.QWidget):
             self.log_text.clear()
         now  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.log_text.append(f"{now}: checking for standard and lateness notifications")
-        # self.checkForReminder()
+        self.checkForReminder()
         self.sendNotification()
         self.cleanNotifications()
         if datetime.now().strftime('%H:%M')=="09:30":
             self.notifierOnlineNotification("ONLINE")
+        if datetime.now().strftime('%H:%M')=="07:00" and datetime.today().weekday()==2:
+            # print('send weekly report')
+            self.generateWeeklyReport()
         
     def startUpCheck(self):
         if not os.path.exists(initfile):
@@ -505,7 +509,7 @@ class Notifier(QtWidgets.QWidget):
         self.log_text.append(f"-Stage Release Email sent for {doc_id} to {receivers}")
         
     def userInfoNotification(self,email):
-        self.cursor.execute(f"Select user_id, PASSWORD from user where email='{email}'")
+        self.cursor.execute(f"Select user_id, password from user where email='{email}'")
         result = self.cursor.fetchone()
         attach = []
         receivers = [email]
@@ -544,7 +548,7 @@ class Notifier(QtWidgets.QWidget):
                         msg['Subject']=f"{subject} Notification for {doc_id}"
                     
                         message +="\n\n"
-                        if subject!="Online Reminder":
+                        if subject!="Online Reminder" and subject!="Weekly Report":
                             if doc_id[:3]=="PCN":
                                 html = self.generateHTMLPCN(doc_id)
                             elif doc_id[:3]=="PRQ":
@@ -578,7 +582,7 @@ class Notifier(QtWidgets.QWidget):
                     msg['Subject']=f"{subject} Notification for {doc_id}"
                 
                     message +="\n\n"
-                    if subject!="Online Reminder":
+                    if subject!="Online Reminder" and subject!="Weekly Report":
                         if doc_id[:3]=="PCN":
                             html = self.generateHTMLPCN(doc_id)
                         elif doc_id[:3]=="PRQ":
@@ -934,7 +938,8 @@ class Notifier(QtWidgets.QWidget):
         
     
     def checkForReminder(self):
-        self.cursor.execute("SELECT doc_id, last_notified, first_release, last_modified FROM document WHERE status !='Completed' and status!='Draft' and status!='Approved'and stage!='0'")
+        #check for ecn reminders
+        self.cursor.execute("SELECT doc_id, last_notified, first_release, last_modified FROM document WHERE status='Out For Approval' and stage!='0' and doc_id like 'ECN%'")
         results = self.cursor.fetchall()
         today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         for result in results:
@@ -969,7 +974,7 @@ class Notifier(QtWidgets.QWidget):
                 
                 
         #check for prq reminders
-        self.cursor.execute("SELECT doc_id, last_notified, first_release, last_modified FROM document WHERE status ='Approved'")
+        self.cursor.execute("SELECT doc_id, last_notified, first_release, last_modified FROM document WHERE status ='Approved' and doc_id like 'PRQ%'")
         results = self.cursor.fetchall()
         today  = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         for result in results:
@@ -993,6 +998,18 @@ class Notifier(QtWidgets.QWidget):
                 self.generateECNX(doc_id)
                 self.completionNotification(doc_id)
                 self.removeECNX(doc_id)
+            elif req_status=="X":
+                # print('Requisition has been canceled/voided')
+                modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                data = (modifieddate,"Canceled",doc_id)
+                print(data)
+                self.cursor.execute("UPDATE document SET last_modified = %s, status = %s WHERE doc_id = %s",(data))
+                # self.cursor.execute("UPDATE document SET status = %s WHERE doc_id = %s",(data))
+                self.db.commit()
+                self.log_text.append(f"{doc_id} has been set as Canceled")
+                # self.generateECNX(doc_id)
+                # self.completionNotification(doc_id)
+                # self.removeECNX(doc_id)
             else:
                 if result['last_notified'] is not None:
                     elapsed = self.getElapsedDays(today, result["last_notified"])
@@ -1075,6 +1092,29 @@ class Notifier(QtWidgets.QWidget):
             print(result[0],doc_id)
             receivers.append(self.userList[result[0]])
         return receivers
+    
+    def generateWeeklyReport(self):
+        self.cursor.execute(f"select doc_id,doc_title from document where status='Approved' and doc_id like 'ECN%'")
+        results = self.cursor.fetchall()
+        message = f"<p>Weekly Report! Here are the ECNs awaiting for accounting approval!</p>"
+        message+="<ul>"
+        for result in results:
+            message+=f"<li>{result[0]} - {result[1]}</li>"
+        message+="</ul>"
+        
+        # print(message)
+        
+        # print(self.settings["Weekly_Report_Users"])
+        users = self.settings["Weekly_Report_Users"].split(',')
+        receivers = []
+        for user in users:
+            receivers.append(self.userList[user])
+        print(f"send email these addresses: {receivers} notifying weekly ecn report")
+        attach = []
+        # attach.append(os.path.join(program_location,doc_id+'.ecnx'))
+        self.sendEmail('Approved ECNs',receivers, message,"Weekly Report",attach)
+        self.log_text.append(f"-ECN NWeekly Report email sent to {receivers}")
+        
     
     def onerror(self,func, path, exc_info):
         """
