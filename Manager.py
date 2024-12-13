@@ -10,6 +10,7 @@ from PySide6 import QtGui, QtCore, QtWidgets
 from LoginWindow import *
 from datetime import datetime
 from ECNWindow import *
+from ECRWindow import *
 from PCNWindow import *
 from PurchReqWindow import *
 from ProjectWindow import *
@@ -34,7 +35,7 @@ else:
 os.environ['QTWEBENGINE_DISABLE_SANDBOX'] = "1"
 
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
-initfile = os.path.join(program_location, "setting.ini")
+initfile = os.path.join(program_location, "setting_test.ini")
 icon = os.path.join(program_location,"icons","manager.ico")
 
 class Manager(QtWidgets.QWidget):
@@ -45,6 +46,7 @@ class Manager(QtWidgets.QWidget):
         self.windowWidth = 1000
         self.windowHeight = 600
         self.setFixedSize(self.windowWidth,self.windowHeight)
+        self.ecrWindow = None
         self.ecnWindow = None
         self.pcnWindow = None
         self.projectWindow = None
@@ -100,10 +102,6 @@ class Manager(QtWidgets.QWidget):
                 return False
             else:
                 return True
-        
-        
-    def removeLockFile(self):
-        os.remove(lockfile)
         
     def existsWindowsUser(self):
         user = os.getlogin()
@@ -324,6 +322,8 @@ class Manager(QtWidgets.QWidget):
         self.button_add3.clicked.connect(self.newProject)
         self.button_add4 = QtWidgets.QPushButton("New PRQ")
         self.button_add4.clicked.connect(self.newPurchReq)
+        self.button_add5 = QtWidgets.QPushButton("NEW ECR")
+        self.button_add5.clicked.connect(self.newECR)
 
         icon_loc = os.path.join(program_location,"icons","new.png")
         self.button_add.setIcon(QtGui.QIcon(icon_loc))
@@ -400,6 +400,7 @@ class Manager(QtWidgets.QWidget):
         self.toolbar.addWidget(self.button_add2)
         self.toolbar.addWidget(self.button_add3)
         self.toolbar.addWidget(self.button_add4)
+        self.toolbar.addWidget(self.button_add5)
         self.toolbar.addWidget(self.button_open)
         self.toolbar.addWidget(self.button_refresh)
         # self.toolbar.addWidget(self.dropdown_type)
@@ -820,6 +821,17 @@ class Manager(QtWidgets.QWidget):
         msgbox.setText(msg+"        ")
         msgbox.exec()
         
+    def HookEcr(self,doc_id=None):
+        #print("info received",ecn_id)
+        if self.ecrWindow is None:
+            self.ecrWindow = ECRWindow(self,doc_id)
+        else:
+            if self.ecrWindow.doc_id !=doc_id:
+                self.ecrWindow.close()
+                self.ecrWindow = ECRWindow(self,doc_id)
+            else:
+                self.ecrWindow.activateWindow()
+        
     def HookEcn(self,doc_id=None):
         #print("info received",ecn_id)
         if self.ecnWindow is None:
@@ -866,6 +878,8 @@ class Manager(QtWidgets.QWidget):
             else:
                 self.projectWindow.activateWindow()
             
+    def newECR(self):
+        self.HookEcr()
     
     def newECN(self):
         self.HookEcn()
