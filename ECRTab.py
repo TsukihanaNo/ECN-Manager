@@ -28,6 +28,7 @@ class ECRTab(QtWidgets.QWidget):
         self.label_status = QtWidgets.QLabel("Status:")
         self.label_dept = QtWidgets.QLabel("Department:")
         self.label_ECN = QtWidgets.QLabel("Linked ECN:")
+        self.label_assigned_to = QtWidgets.QLabel("Assigned To:")
         #self.label_due_date = QtWidgets.QLabel("Due Date:")
         #self.label_department = QtWidgets.QLabel("Department")
 
@@ -65,6 +66,11 @@ class ECRTab(QtWidgets.QWidget):
         self.line_ecn.setReadOnly(True)
         self.line_ecn.setDisabled(True)
         self.line_ecn.setFixedWidth(150)
+        
+        self.line_assigned_to = QtWidgets.QLineEdit(self)
+        self.line_assigned_to.setReadOnly(True)
+        self.line_assigned_to.setDisabled(True)
+        self.line_assigned_to.setFixedWidth(150)
 
         self.line_title = QtWidgets.QLineEdit(self)
 
@@ -75,14 +81,17 @@ class ECRTab(QtWidgets.QWidget):
         headersubLayout.addWidget(self.line_status,1,1)
         headersubLayout.addWidget(self.label_author,0,2)
         headersubLayout.addWidget(self.line_author,1,2)
-        headersubLayout.addWidget(self.label_ECN,0,3)
-        headersubLayout.addWidget(self.line_ECN,1,3)
+        headersubLayout.addWidget(self.label_assigned_to,0,3)
+        headersubLayout.addWidget(self.line_assigned_to,1,3)
         headersubLayout.addWidget(self.label_type,2,0)
         headersubLayout.addWidget(self.combo_type,3,0)
         headersubLayout.addWidget(self.label_reason,2,1)
         headersubLayout.addWidget(self.combo_reason,3,1)
         headersubLayout.addWidget(self.label_dept,2,2)
         headersubLayout.addWidget(self.combo_dept,3,2)
+        headersubLayout.addWidget(self.label_ECN,2,3)
+        headersubLayout.addWidget(self.line_ECN,3,3)
+        
         
         # headersubLayout2.addWidget(self.label_status)
         # headersubLayout2.addWidget(self.line_status)
@@ -126,15 +135,13 @@ class ECRTab(QtWidgets.QWidget):
         self.userList.remove("admin")
         
     def checkFields(self):
-        if self.box_requestor.currentText()=="":
-            return False
         if self.combo_dept.currentText()==" ":
             return False
         if self.combo_reason.currentText()==" ":
             return False
         if self.combo_type.currentText()==" ":
             return False
-        if len(self.line_ecntitle.text())<3:
+        if len(self.line_title.text())<3:
             return False
         return True
 

@@ -25,7 +25,7 @@ else:
     program_location = os.path.dirname(os.path.realpath(__file__))
 
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
-initfile = os.path.join(program_location, "setting_test.ini")
+initfile = os.path.join(program_location, "setting.ini")
 lockfile = os.path.join(program_location, "notifier.lock")
 os.environ['QTWEBENGINE_DISABLE_SANDBOX'] = "1"
 

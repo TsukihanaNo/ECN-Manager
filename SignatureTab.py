@@ -25,7 +25,9 @@ class SignatureTab(QtWidgets.QWidget):
         self.initAtt()
         self.initUI()
         if self.parent.window_id == "ECN_Window":
-            self.addDefaultUsers()
+            self.addDefaultUsers("Sig_Tab_Default_ECN")
+        if self.parent.window_id == "ECR_Window":
+            self.addDefaultUsers("Sig_Tab_Default_ECR")
 
     def initAtt(self):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -182,8 +184,8 @@ class SignatureTab(QtWidgets.QWidget):
             self.dispMsg(f"Error: no role found for {user}")
             return None
         
-    def addDefaultUsers(self):
-        users = self.parent.parent.settings["Sig_Tab_Default"].split(",")
+    def addDefaultUsers(self, option):
+        users = self.parent.parent.settings[option].split(",")
         # print(users)
         for user in users:
             # print(user)

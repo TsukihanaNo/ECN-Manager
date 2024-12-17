@@ -898,6 +898,8 @@ class Manager(QtWidgets.QWidget):
         doc_id = index.data(QtCore.Qt.DisplayRole)[0]
         if doc_id[:3]=="ECN":
             self.HookEcn(doc_id)
+        elif doc_id[:3]=="ECR":
+            self.HookEcr(doc_id)
         elif doc_id[:3]=="PCN":
             self.HookPCN(doc_id)
         elif doc_id[:3]=="PRJ":
