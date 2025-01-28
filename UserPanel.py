@@ -92,7 +92,10 @@ class UserPanel(QtWidgets.QWidget):
         check_dict = {"y":QtCore.Qt.Checked,"n":QtCore.Qt.Unchecked, None : QtCore.Qt.Unchecked}
         if result is not None:
             self.tab_permissions.check_ecn.setCheckState(check_dict[result["create_ecn"]])
+            self.tab_permissions.check_ecr.setCheckState(check_dict[result["create_ecr"]])
             self.tab_permissions.check_pcn.setCheckState(check_dict[result["create_pcn"]])
+            self.tab_permissions.check_prq.setCheckState(check_dict[result["create_prq"]])
+            self.tab_permissions.check_prj.setCheckState(check_dict[result["create_prj"]])
             self.tab_permissions.check_create_user.setCheckState(check_dict[result["create_user"]])
             self.tab_permissions.check_settings.setCheckState(check_dict[result["access_settings"]])
             self.tab_permissions.check_view_analytics.setCheckState(check_dict[result["view_analytics"]])
@@ -157,11 +160,11 @@ class UserPanel(QtWidgets.QWidget):
         result = self.cursor.fetchone()
         check_dict = {QtCore.Qt.Checked:"y",QtCore.Qt.Unchecked:"n"}
         if result is not None:
-            data = (check_dict[self.tab_permissions.check_ecn.checkState()],check_dict[self.tab_permissions.check_pcn.checkState()],check_dict[self.tab_permissions.check_prj.checkState()],check_dict[self.tab_permissions.check_prq.checkState()],check_dict[self.tab_permissions.check_create_user.checkState()],check_dict[self.tab_permissions.check_reject_signer.checkState()],check_dict[self.tab_permissions.check_settings.checkState()],check_dict[self.tab_permissions.check_view_analytics.checkState()],check_dict[self.tab_permissions.check_rerouting.checkState()],self.tab_general.line_user.text())
-            self.cursor.execute(f"UPDATE permissions SET create_ecn = %s, create_pcn = %s, CREATE_PRJ = %s, CREATE_PRQ = %s, create_user = %s, reject_signer = %s, access_settings = %s, view_analytics = %s, rerouting = %s WHERE user_id = %s", (data))
+            data = (check_dict[self.tab_permissions.check_ecn.checkState()],check_dict[self.tab_permissions.check_pcn.checkState()],check_dict[self.tab_permissions.check_prj.checkState()],check_dict[self.tab_permissions.check_prq.checkState()],check_dict[self.tab_permissions.check_create_user.checkState()],check_dict[self.tab_permissions.check_reject_signer.checkState()],check_dict[self.tab_permissions.check_settings.checkState()],check_dict[self.tab_permissions.check_view_analytics.checkState()],check_dict[self.tab_permissions.check_rerouting.checkState()],check_dict[self.tab_permissions.check_ecr.checkState()],self.tab_general.line_user.text())
+            self.cursor.execute(f"UPDATE permissions SET create_ecn = %s, create_pcn = %s, CREATE_PRJ = %s, CREATE_PRQ = %s, create_user = %s, reject_signer = %s, access_settings = %s, view_analytics = %s, rerouting = %s, create_ecr =%s WHERE user_id = %s", (data))
         else:
-            data = (self.tab_general.line_user.text(),check_dict[self.tab_permissions.check_ecn.checkState()],check_dict[self.tab_permissions.check_pcn.checkState()],check_dict[self.tab_permissions.check_prj.checkState()],check_dict[self.tab_permissions.check_prq.checkState()],check_dict[self.tab_permissions.check_create_user.checkState()],check_dict[self.tab_permissions.check_reject_signer.checkState()],check_dict[self.tab_permissions.check_settings.checkState()],check_dict[self.tab_permissions.check_view_analytics.checkState()],check_dict[self.tab_permissions.check_rerouting.checkState()])
-            self.cursor.execute(f"INSERT INTO permissions(user_id,create_ecn, create_pcn,CREATE_PRJ,CREATE_PRQ, create_user, reject_signer, access_settings, view_analytics, rerouting) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(data))
+            data = (self.tab_general.line_user.text(),check_dict[self.tab_permissions.check_ecn.checkState()],check_dict[self.tab_permissions.check_pcn.checkState()],check_dict[self.tab_permissions.check_prj.checkState()],check_dict[self.tab_permissions.check_prq.checkState()],check_dict[self.tab_permissions.check_create_user.checkState()],check_dict[self.tab_permissions.check_reject_signer.checkState()],check_dict[self.tab_permissions.check_settings.checkState()],check_dict[self.tab_permissions.check_view_analytics.checkState()],check_dict[self.tab_permissions.check_rerouting.checkState()],check_dict[self.tab_permissions.check_ecr.checkState()])
+            self.cursor.execute(f"INSERT INTO permissions(user_id,create_ecn, create_pcn,CREATE_PRJ,CREATE_PRQ, create_user, reject_signer, access_settings, view_analytics, rerouting, create_ecr) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(data))
         self.db.commit()
             
 #cursor.execute('CREATE TABLE permissions(user_id TEXT, create_ecn TEXT, create_pcn TEXT, create_user TEXT, reject_signer TEXT, access_settings TEXT, view_analytics TEXT)')
@@ -188,6 +191,7 @@ class PermissionsTab(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout()
         form_layout = QtWidgets.QFormLayout()
         self.check_ecn = QtWidgets.QCheckBox()
+        self.check_ecr = QtWidgets.QCheckBox()
         self.check_pcn = QtWidgets.QCheckBox()
         self.check_prj = QtWidgets.QCheckBox()
         self.check_prq = QtWidgets.QCheckBox()
@@ -197,6 +201,7 @@ class PermissionsTab(QtWidgets.QWidget):
         self.check_settings = QtWidgets.QCheckBox()
         self.check_rerouting = QtWidgets.QCheckBox()
         form_layout.addRow("Allow user to create ECNs:",self.check_ecn)
+        form_layout.addRow("Allow user to create ECRS:",self.check_ecr)
         form_layout.addRow("Allow user to create PCNs:",self.check_pcn)
         form_layout.addRow("Allow user to create PRJs:",self.check_prj)
         form_layout.addRow("Allow user to create PRQs",self.check_prq)

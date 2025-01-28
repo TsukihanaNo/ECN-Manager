@@ -146,8 +146,17 @@ class Visual():
         result = self.cur.fetchone()
         return result
     
+    def getReqNotation(self,req_id):
+        self.cur.execute(f"select * from NOTATION where OWNER_ID='{req_id}' and TYPE='PR'")
+        results = self.cur.fetchall()
+        notation = ""
+        for item in results:
+            notation+=str(item[3].read(),"utf-8")+"\n"
+            
+        return notation
+
     def getReqItems(self,req_id):
-        self.cur.execute(f"select PURC_REQ_LINE.LINE_NO, PURC_REQ_LINE.LINE_STATUS, PURC_REQ_LINE.PART_ID, PURC_REQ_LINE.VENDOR_PART_ID, PURC_REQ_LINE.ORDER_QTY, PURC_REQ_LINE.PURCHASE_UM, PURC_ORDER_REQ.PURC_ORD_ID, PURC_REQ_LINE.UNIT_PRICE from PURC_REQ_LINE LEFT JOIN PURC_ORDER_REQ ON PURC_REQ_LINE.PURC_REQ_ID=PURC_ORDER_REQ.PURC_REQ_ID AND PURC_REQ_LINE.LINE_NO=PURC_ORDER_REQ.PURC_REQ_LINE_NO WHERE PURC_REQ_LINE.PURC_REQ_ID='{req_id}'")
+        self.cur.execute(f"select PURC_REQ_LINE.LINE_NO, PURC_REQ_LINE.LINE_STATUS, PURC_REQ_LINE.PART_ID, PURC_REQ_LINE.VENDOR_PART_ID, PURC_REQ_LINE.ORDER_QTY, PURC_REQ_LINE.PURCHASE_UM, PURC_ORDER_REQ.PURC_ORD_ID, PURC_REQ_LINE.UNIT_PRICE, PURC_REQ_LINE.GL_EXPENSE_ACCT_ID from PURC_REQ_LINE LEFT JOIN PURC_ORDER_REQ ON PURC_REQ_LINE.PURC_REQ_ID=PURC_ORDER_REQ.PURC_REQ_ID AND PURC_REQ_LINE.LINE_NO=PURC_ORDER_REQ.PURC_REQ_LINE_NO WHERE PURC_REQ_LINE.PURC_REQ_ID='{req_id}'")
         results = self.cur.fetchall()
         # items = []
         # for result in results:

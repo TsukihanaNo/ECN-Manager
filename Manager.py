@@ -35,7 +35,7 @@ else:
 os.environ['QTWEBENGINE_DISABLE_SANDBOX'] = "1"
 
 #db_loc = os.path.join(program_location, "DB", "Request_DB.db")
-initfile = os.path.join(program_location, "setting_test.ini")
+initfile = os.path.join(program_location, "setting.ini")
 icon = os.path.join(program_location,"icons","manager.ico")
 
 class Manager(QtWidgets.QWidget):
@@ -339,6 +339,8 @@ class Manager(QtWidgets.QWidget):
             self.button_add3.hide()
         if self.user_permissions["create_prq"]!="y":
             self.button_add4.hide()
+        if self.user_permissions["create_ecr"]!="y":
+            self.button_add5.hide()
             
         self.statusbar.addPermanentWidget(self.label_doc_count)
         self.statusbar.addPermanentWidget(self.label_open_docs)

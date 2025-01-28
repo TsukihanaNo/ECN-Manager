@@ -116,6 +116,7 @@ class LoginWindow(QtWidgets.QWidget):
                 permissions = self.cursor.fetchone()
                 if permissions is None:
                     self.parent.user_permissions["create_ecn"] = "n"
+                    self.parent.user_permissions["create_ecr"] = "n"
                     self.parent.user_permissions["create_pcn"] = "n"
                     self.parent.user_permissions["create_prj"] = "n"
                     self.parent.user_permissions["create_prq"] = "n"
@@ -126,6 +127,7 @@ class LoginWindow(QtWidgets.QWidget):
                     self.parent.user_permissions["rerouting"] = "n"
                 else:
                     self.parent.user_permissions["create_ecn"] = permissions["create_ecn"]
+                    self.parent.user_permissions["create_ecr"] = permissions["create_ecr"]
                     self.parent.user_permissions["create_pcn"] = permissions["create_pcn"]
                     self.parent.user_permissions["create_prj"] = permissions["create_prj"]
                     self.parent.user_permissions["create_prq"] = permissions["create_prq"]

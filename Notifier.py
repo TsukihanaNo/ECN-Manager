@@ -788,6 +788,9 @@ class Notifier(QtWidgets.QWidget):
             visual_status = VISUAL_REQ_STATUS[req_header[1]]
             assigned_buyer = req_header[0]
             
+            #generating requisition notation
+            req_notation = self.visual.getReqNotation(req_id)
+            
             # print("generating header 4")
             requisitions = self.visual.getReqItems(req_id)
             req_lines = ""
@@ -812,6 +815,7 @@ class Notifier(QtWidgets.QWidget):
                     unit_price = req[7]
                     total_price = float(unit_price)*float(order_qty)
                     total_cost+=total_price
+                    gl_account = req[8]
 
                     req_lines += "<tr><td>"+line_no+"</td>"
                     req_lines += "<td>"+part_id+"</td>"
@@ -820,6 +824,7 @@ class Notifier(QtWidgets.QWidget):
                     req_lines += "<td>"+purchase_um+"</td>"
                     req_lines += "<td>"+str(unit_price)+"</td>"
                     req_lines += "<td>"+str(total_price)+"</td>"
+                    req_lines += "<td>"+str(gl_account)+"</td>"
                     req_lines += "<td>"+po_num+"</td></tr>"
                     
             # print("generating header 5")
@@ -840,7 +845,7 @@ class Notifier(QtWidgets.QWidget):
 
             # print('substituting text')
             
-            html = t.substitute(REQID=req_id,Title=title,author=author,DOCID=doc_id,PRJID=project_id,ORDERSTATUS=status,VISUALSTATUS=visual_status,BUYER=assigned_buyer,TOTALCOST=total_cost,DETAILS=requisition_details,REQLINE=req_lines,Signature=signature)
+            html = t.substitute(REQID=req_id,Title=title,author=author,DOCID=doc_id,PRJID=project_id,ORDERSTATUS=status,VISUALSTATUS=visual_status,BUYER=assigned_buyer,TOTALCOST=total_cost,REQNOTATION=req_notation,DETAILS=requisition_details,REQLINE=req_lines,Signature=signature)
 
             return html
         
