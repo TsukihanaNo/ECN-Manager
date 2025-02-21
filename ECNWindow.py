@@ -188,7 +188,7 @@ class ECNWindow(QtWidgets.QWidget):
             # self.tab_comments.label_enterText.setVisible(True)
             # self.tab_comments.enterText.setVisible(True)
         else:
-            self.tab_signature.button_add.setDisabled(True)
+            # self.tab_signature.button_add.setDisabled(True)
             #self.tab_signature.button_remove.setDisabled(True)
             self.tab_attach.button_add.setDisabled(True)
             #self.tab_attach.button_remove.setDisabled(True)
@@ -226,9 +226,9 @@ class ECNWindow(QtWidgets.QWidget):
                 # buttonlayout.addWidget(self.button_cancel)
                 # buttonlayout.addWidget(self.button_comment)
                 # buttonlayout.addWidget(self.button_release)
-                if self.tab_ecn.line_status.text()!="Approved":
-                    self.toolbar.addWidget(self.button_save)
-                    self.toolbar.addWidget(self.button_cancel)
+                # if self.tab_ecn.line_status.text()!="Approved":
+                self.toolbar.addWidget(self.button_save)
+                self.toolbar.addWidget(self.button_cancel)
                 self.toolbar.addWidget(self.button_comment)
                 self.toolbar.addSeparator()
                 self.toolbar.addWidget(self.button_release)
@@ -252,7 +252,7 @@ class ECNWindow(QtWidgets.QWidget):
                     self.tab_parts.button_remove.setDisabled(True)
                     self.tab_parts.button_add.setDisabled(True)
                     self.tab_parts.button_import_visual.setDisabled(True)
-                    self.tab_signature.button_add.setDisabled(True)
+                    # self.tab_signature.button_add.setDisabled(True)
             else:
                 self.button_approve = QtWidgets.QPushButton("Approve")
                 icon_loc = icon = os.path.join(program_location,"icons","approve.png")
@@ -284,7 +284,7 @@ class ECNWindow(QtWidgets.QWidget):
                 self.tab_ecn.combo_type.setDisabled(True)
                 self.tab_parts.button_remove.setDisabled(True)
                 self.tab_parts.button_add.setDisabled(True)
-                self.tab_signature.button_add.setDisabled(True)
+                # self.tab_signature.button_add.setDisabled(True)
                 #self.tab_signature.button_remove.setDisabled(True)
                 if self.tab_ecn.line_status.text()=="Rejected":
                     self.button_reject.setDisabled(True)

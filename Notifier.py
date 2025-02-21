@@ -123,7 +123,7 @@ class Notifier(QtWidgets.QWidget):
         self.log_text.append(f"{now}: checking for standard and lateness notifications")
         self.checkForReminder()
         self.sendNotification()
-        self.cleanNotifications()
+        # self.cleanNotifications()
         if datetime.now().strftime('%H:%M')=="09:30":
             self.notifierOnlineNotification("ONLINE")
         if datetime.now().strftime('%H:%M')=="07:00" and datetime.today().weekday()==2:
@@ -311,7 +311,7 @@ class Notifier(QtWidgets.QWidget):
                 if result["doc_id"] is not None:
                     self.removeECNX(result[0])
                     #self.removeHTML(result[0])
-                    self.updateStatus(result[0])
+                    # self.updateStatus(result[0])
                 QtWidgets.QApplication.processEvents()
         else:
             self.log_text.append("-No notifications found to be sent")
@@ -488,10 +488,12 @@ class Notifier(QtWidgets.QWidget):
         self.log_text.append(f"-Release Email sent for {doc_id} to {receivers}")
         
     def stageReleaseNotification(self,doc_id):
+        print('stage release notification started')
         #get stage
         self.cursor.execute(f"Select stage from document where doc_id='{doc_id}'")
         result = self.cursor.fetchone()
         stage = result[0]
+        print('getting users')
         if doc_id[:3]=="ECN":
             users = self.getWaitingUser(doc_id, self.titleStageDict[str(stage)])
         elif doc_id[:3]=="PRQ":
@@ -499,6 +501,7 @@ class Notifier(QtWidgets.QWidget):
         else:
             users = self.getWaitingUser(doc_id, self.titleStageDictPCN[str(stage)])
         receivers = []
+        print('userse gotten')
         for user in users:
             receivers.append(self.userList[user])
         message = f"<p>{doc_id} has been released and is now awaiting for your approval!</p><p>You can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN your queue in the ECN Manager application.</p>"
@@ -533,6 +536,7 @@ class Notifier(QtWidgets.QWidget):
         self.log_text.append(f"-Notifier Online Reminder Email sent for {doc_id} to {receivers}")
             
     def sendEmail(self,doc_id,receivers,message,subject,attach):
+        print('sending email')
         if not isinstance(attach, list):
             attach = [attach]
         try:
@@ -556,7 +560,7 @@ class Notifier(QtWidgets.QWidget):
                             else:
                                 html = self.generateHTML(doc_id)
                             message+=html
-                    
+                                                
                     msg.attach(MIMEText(message,'html'))
                     #ecnx = os.path.join(program_location,ecn_id+'.ecnx')
                     #filename = f'{ecn_id}.ecnx'
@@ -587,9 +591,12 @@ class Notifier(QtWidgets.QWidget):
                             html = self.generateHTMLPCN(doc_id)
                         elif doc_id[:3]=="PRQ":
                             html = self.generateHTMLPRQ(doc_id)
+                            print('prq html generated')
                         else:
                             html = self.generateHTML(doc_id)
                         message+=html
+                        
+                # print('message',message)
                 
                 msg.attach(MIMEText(message,'html'))
                 #ecnx = os.path.join(program_location,ecn_id+'.ecnx')
@@ -602,6 +609,7 @@ class Notifier(QtWidgets.QWidget):
                     #print(ecnx, filename)
                     payload.add_header('Content-Disposition','attachment',filename = os.path.basename(file))
                     msg.attach(payload)
+                print('attachments added')
                 context = ssl.SSLContext(ssl.PROTOCOL_TLS)
                 server = smtplib.SMTP(self.settings["SMTP2"],self.settings["SMTP_Port2"])
                 server.ehlo()
@@ -612,9 +620,12 @@ class Notifier(QtWidgets.QWidget):
                 # imap.login(self.settings["From_Address2"],self.settings["Mail_Pass"])
                 # imap.append("INBOX.Sent","\\Seen",imaplib.Time2Internaldate(time.time()),msg.as_string().encode('utf8'))
                 # imap.logout()
+                print('email sent successfully')
                 self.log_text.append(f"Successfully sent email to {receivers}")
+                self.updateStatus(doc_id)
         except Exception as e:
             print(e)
+            self.log_text.append(f"!!!error occured {e}:")
                 
     def generateECNX(self,doc_id):
         self.log_text.append("-generating ecnx file")
@@ -760,6 +771,7 @@ class Notifier(QtWidgets.QWidget):
             return html
         
     def generateHTMLPRQ(self,doc_id):
+        print('generating prq html')
         template_loc = os.path.join(self.programLoc,'templates','prq_template.html')
         with open(template_loc) as f:
             lines = f.read()
@@ -777,22 +789,25 @@ class Notifier(QtWidgets.QWidget):
             # print("generating header 2")
             self.cursor.execute(f"SELECT * from purch_req_doc_link where doc_id='{doc_id}'")
             result = self.cursor.fetchone()
-            print(result)
+            # print(result)
             req_id = result["req_id"]
             project_id = result["project_id"]
             
-            # print("generating header 3")
+            print("generating header 3")
             # print(req_id)
             req_header = self.visual.getReqHeader(req_id)
-            print(req_header)
+            # print(req_header)
             visual_status = VISUAL_REQ_STATUS[req_header[1]]
             assigned_buyer = req_header[0]
             
             #generating requisition notation
+            print('generating requisition notation')
             req_notation = self.visual.getReqNotation(req_id)
+            # print('req notation',req_notation)
             
-            # print("generating header 4")
+            print("generating header 4")
             requisitions = self.visual.getReqItems(req_id)
+            # print('requistion',requisitions)
             req_lines = ""
             total_cost = 0
             if requisitions is not None:
@@ -807,7 +822,7 @@ class Notifier(QtWidgets.QWidget):
                     else:
                         vendor_part_id = ""
                     order_qty = str(req[4])
-                    purchase_um = req[5]
+                    purchase_um = str(req[5])
                     if req[6] is not None:
                         po_num = req[6]
                     else:
@@ -827,7 +842,7 @@ class Notifier(QtWidgets.QWidget):
                     req_lines += "<td>"+str(gl_account)+"</td>"
                     req_lines += "<td>"+po_num+"</td></tr>"
                     
-            # print("generating header 5")
+            print("generating header 5")
             signature = "<tr>"
             self.cursor.execute(f"SELECT * from signatures where doc_id='{doc_id}' and type='Signing'")
             results = self.cursor.fetchall()
@@ -843,10 +858,10 @@ class Notifier(QtWidgets.QWidget):
                 signature="<tr><td></td><td></td><td></td></tr>"
                 
 
-            # print('substituting text')
-            
-            html = t.substitute(REQID=req_id,Title=title,author=author,DOCID=doc_id,PRJID=project_id,ORDERSTATUS=status,VISUALSTATUS=visual_status,BUYER=assigned_buyer,TOTALCOST=total_cost,REQNOTATION=req_notation,DETAILS=requisition_details,REQLINE=req_lines,Signature=signature)
+            print('substituting text')
+            html = t.substitute(REQID=req_id,Title=title,AUTHOR=author,DOCID=doc_id,PRJID=project_id,ORDERSTATUS=status,VISUALSTATUS=visual_status,BUYER=assigned_buyer,TOTALCOST=total_cost,REQNOTATION=req_notation,DETAILS=requisition_details,REQLINE=req_lines,Signature=signature)
 
+            print('html substituted')
             return html
         
     def generateCommenthistory(self,doc_id,sorting):

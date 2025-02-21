@@ -196,7 +196,7 @@ class PurchReqWindow(QtWidgets.QWidget):
                     else:
                         vendor_part_id = ""
                     order_qty = str(req[4])
-                    purchase_um = req[5]
+                    purchase_um = str(req[5])
                     if req[6] is not None:
                         po_num = req[6]
                     else:

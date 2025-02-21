@@ -151,7 +151,10 @@ class Visual():
         results = self.cur.fetchall()
         notation = ""
         for item in results:
-            notation+=str(item[3].read(),"utf-8")+"\n"
+            # print('nonformated:',item[3].read())
+            # print('formated',str(item[3].read(),"ISO-8859-1"))
+            
+            notation+=str(item[3].read(),"ISO-8859-1")+"\n"
             
         return notation
 
