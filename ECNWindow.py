@@ -181,15 +181,15 @@ class ECNWindow(QtWidgets.QWidget):
         #disable signature and attachment adding if not author and completed
         if self.user_info['user']==self.doc_data['author'] and self.doc_data['status']!="Completed" and self.doc_data['status']!="Approved":
             self.tab_signature.button_add.setEnabled(True)
-            #self.tab_signature.button_remove.setEnabled(True)
+            self.tab_signature.button_remove.setEnabled(True)
             self.tab_attach.button_add.setEnabled(True)
             #self.tab_attach.button_remove.setEnabled(True)
             # self.tab_comments.enterText.setEnabled(True)
             # self.tab_comments.label_enterText.setVisible(True)
             # self.tab_comments.enterText.setVisible(True)
         else:
-            # self.tab_signature.button_add.setDisabled(True)
-            #self.tab_signature.button_remove.setDisabled(True)
+            self.tab_signature.button_add.setDisabled(True)
+            self.tab_signature.button_remove.setDisabled(True)
             self.tab_attach.button_add.setDisabled(True)
             #self.tab_attach.button_remove.setDisabled(True)
             # self.tab_comments.enterText.setDisabled(True)
@@ -239,8 +239,8 @@ class ECNWindow(QtWidgets.QWidget):
                 self.tab_ecn.text_summary.setReadOnly(False)
                 if self.tab_ecn.line_status.text()=="Out For Approval" or self.tab_ecn.line_status.text()=="Approved":
                     self.button_release.setDisabled(True)
-                    #self.tab_signature.button_add.setDisabled(True)
-                    #self.tab_signature.button_remove.setDisabled(True)
+                    # self.tab_signature.button_add.setDisabled(True)
+                    # self.tab_signature.button_remove.setDisabled(True)
                 if self.tab_ecn.line_status.text()=="Approved":
                     self.tab_ecn.line_ecntitle.setReadOnly(True)
                     self.tab_ecn.text_summary.setReadOnly(True)
@@ -252,7 +252,7 @@ class ECNWindow(QtWidgets.QWidget):
                     self.tab_parts.button_remove.setDisabled(True)
                     self.tab_parts.button_add.setDisabled(True)
                     self.tab_parts.button_import_visual.setDisabled(True)
-                    # self.tab_signature.button_add.setDisabled(True)
+                    self.tab_signature.button_add.setDisabled(True)
             else:
                 self.button_approve = QtWidgets.QPushButton("Approve")
                 icon_loc = icon = os.path.join(program_location,"icons","approve.png")
@@ -284,8 +284,8 @@ class ECNWindow(QtWidgets.QWidget):
                 self.tab_ecn.combo_type.setDisabled(True)
                 self.tab_parts.button_remove.setDisabled(True)
                 self.tab_parts.button_add.setDisabled(True)
-                # self.tab_signature.button_add.setDisabled(True)
-                #self.tab_signature.button_remove.setDisabled(True)
+                self.tab_signature.button_add.setDisabled(True)
+                self.tab_signature.button_remove.setDisabled(True)
                 if self.tab_ecn.line_status.text()=="Rejected":
                     self.button_reject.setDisabled(True)
                     self.button_approve.setDisabled(True)

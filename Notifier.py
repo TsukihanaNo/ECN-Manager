@@ -329,6 +329,7 @@ class Notifier(QtWidgets.QWidget):
         self.log_text.append("-status updated")
         
     def rejectNotification(self,doc_id,from_user,msg):
+        web_url = self.settings['Web_Location']+doc_id
         receivers = []
         self.cursor.execute(f"select Author from document where doc_id='{doc_id}'")
         result = self.cursor.fetchone()
@@ -338,7 +339,7 @@ class Notifier(QtWidgets.QWidget):
         for result in results:
             receivers.append(self.userList[result[0]])
         from_user = self.emailNameList[self.userList[from_user]]
-        message = f"<p>{doc_id} has been rejected to the author by {from_user}! All Signatures have been removed and the ECN approval will start from the beginning once the ECN is released again. See comment below.</p><p>Comment - {from_user}: {msg}</p>"
+        message = f'<p><a href="{web_url}">{doc_id}</a> has been rejected to the author by {from_user}! All Signatures have been removed and the ECN approval will start from the beginning once the ECN is released again. See comment below.</p><p>Comment - {from_user}: {msg}</p>'
         #print(f"send email to these addresses: {receivers} notifying ecn rejection")
         #print(message)
         comments = self.generateCommenthistory(doc_id,"Desc")
@@ -357,11 +358,12 @@ class Notifier(QtWidgets.QWidget):
         self.log_text.append("-Cleaning Completed!")
     
     def rejectSignerNotification(self,doc_id,from_user,users,msg):
+        web_url = self.settings['Web_Location']+doc_id
         users = users.split(',')
         receivers = []
         for user in users:
             receivers.append(self.userList[user])
-        message = f"<p>{doc_id} has been rejected to : {users[0]} by {from_user}. Signatures for the following users have also been removed: {users}.See comment below.</p><p>Comment: {msg}</p>"
+        message = f'<p><a href="{web_url}">{doc_id}</a> has been rejected to : {users[0]} by {from_user}. Signatures for the following users have also been removed: {users}.See comment below.</p><p>Comment: {msg}</p>'
         #print(f"send email to these addresses: {receivers} notifying ecn completion")
         #print(message)
         comments = self.generateCommenthistory(doc_id,"Desc")
@@ -373,6 +375,7 @@ class Notifier(QtWidgets.QWidget):
         self.log_text.append(f"-Rejection to Signer Email sent for {doc_id} to {receivers}")
         
     def commentNotification(self,doc_id,from_user,msg):
+        web_url = self.settings['Web_Location']+doc_id
         receivers = []
         self.cursor.execute(f"select Author from document where doc_id='{doc_id}'")
         result = self.cursor.fetchone()
@@ -391,7 +394,7 @@ class Notifier(QtWidgets.QWidget):
                 receivers.append(self.userList[result[0]])
             
         from_user = self.emailNameList[self.userList[from_user]]
-        message = f"<p>a comment has been added to {doc_id}! See comment history below.</p>"
+        message = f'<p>a comment has been added to <a href="{web_url}">{doc_id}</a>! See comment history below.</p>'
         comments = self.generateCommenthistory(doc_id,"Desc")
         message +=comments
         #print(f"send email to these addresses: {receivers} notifying ecn comment")
@@ -404,13 +407,14 @@ class Notifier(QtWidgets.QWidget):
         
     
     def completionNotification(self,doc_id):
+        web_url = self.settings['Web_Location']+doc_id
         receivers = []
         self.cursor.execute(f"select Author from document where doc_id='{doc_id}'")
         result = self.cursor.fetchone()
         receivers.append(self.userList[result[0]])
         self.cursor.execute(f"select user_id from signatures where doc_id='{doc_id}'")
         results = self.cursor.fetchall()
-        message = f"<p>{doc_id} has been completed!</p><p>You can now view it in the completed section of your viewer.</p>"
+        message = f'<p><a href="{web_url}">{doc_id}</a> has been completed!</p><p>You can now view it in the completed section of your viewer.</p>'
         for result in results:
             print(result[0],doc_id)
             receivers.append(self.userList[result[0]])
@@ -434,13 +438,14 @@ class Notifier(QtWidgets.QWidget):
         self.log_text.append(f"-Completion Email sent for {doc_id} to {receivers}")
         
     def ApprovedNotification(self,doc_id):
+        web_url = self.settings['Web_Location']+doc_id
         receivers = []
         self.cursor.execute(f"select Author from document where doc_id='{doc_id}'")
         result = self.cursor.fetchone()
         receivers.append(self.userList[result[0]])
         self.cursor.execute(f"select user_id from signatures where doc_id='{doc_id}'")
         results = self.cursor.fetchall()
-        message = f"<p>{doc_id} has been Approved!</p><p>You can now view it in the Inprogress section of your viewer.</p>"
+        message = f'<p><a href="{web_url}">{doc_id}</a> has been Approved!</p><p>You can now view it in the Inprogress section of your viewer.</p>'
         for result in results:
             receivers.append(self.userList[result[0]])
         #print(f"send email to these addresses: {receivers} notifying ecn completion")
@@ -462,10 +467,11 @@ class Notifier(QtWidgets.QWidget):
         
         
     def cancelNotification(self,doc_id,msg):
+        web_url = self.settings['Web_Location']+doc_id
         self.cursor.execute(f"select user_id from signatures where doc_id='{doc_id}' and type='Signing'")
         results = self.cursor.fetchall()
         receivers = []
-        message = f"<p>{doc_id} has been canceled by the author! See comment below.</p><p>Comment: {msg}</p>"
+        message = f'<p><a href="{web_url}">{doc_id}</a> has been canceled by the author! See comment below.</p><p>Comment: {msg}</p>'
         for result in results:
             receivers.append(self.userList[result[0]])
         print(f"send email these addresses: {receivers} notifying ecn cancelation")
@@ -475,10 +481,11 @@ class Notifier(QtWidgets.QWidget):
         self.log_text.append(f"-Rejection Email sent for {doc_id} to {receivers}")
         
     def releaseNotification(self,doc_id):
+        web_url = self.settings['Web_Location']+doc_id
         self.cursor.execute(f"select user_id from signatures where doc_id='{doc_id}' and type='Signing'")
         results = self.cursor.fetchall()
         receivers = []
-        message = f"<p>{doc_id} has been released! You can see it in the queue section once it is your turn for approval.<\p><p>You can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN in the open section in the ECN Manager application.</p>"
+        message = f'<p><a href="{web_url}">{doc_id}</a> has been released! You can see it in the queue section once it is your turn for approval.<\p><p>You can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN in the open section in the ECN Manager application or you can click the following link to access the web version <a href="{web_url}">{web_url}</a>.</p>'
         for result in results:
             receivers.append(self.userList[result[0]])
         print(f"send email these addresses: {receivers} notifying ecn release")
@@ -489,6 +496,7 @@ class Notifier(QtWidgets.QWidget):
         
     def stageReleaseNotification(self,doc_id):
         print('stage release notification started')
+        web_url = self.settings['Web_Location']+doc_id
         #get stage
         self.cursor.execute(f"Select stage from document where doc_id='{doc_id}'")
         result = self.cursor.fetchone()
@@ -504,7 +512,7 @@ class Notifier(QtWidgets.QWidget):
         print('userse gotten')
         for user in users:
             receivers.append(self.userList[user])
-        message = f"<p>{doc_id} has been released and is now awaiting for your approval!</p><p>You can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN your queue in the ECN Manager application.</p>"
+        message = f'<p><a href="{web_url}">{doc_id}</a> has been released and is now awaiting for your approval!</p><p>You can open the attached ECNX file to launch the ECN Manager directly to the ECN or you can view the ECN your queue in the ECN Manager application</p>'
         #print(f"send email these addresses: {receivers} notifying ecn release stage move")
         attach = []
         attach.append(os.path.join(program_location,doc_id+'.ecnx'))
