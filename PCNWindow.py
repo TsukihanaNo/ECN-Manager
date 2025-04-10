@@ -180,6 +180,7 @@ class PCNWindow(QtWidgets.QWidget):
             reference = self.tab_pcn.text_reference.toHtml()
             response = self.tab_pcn.text_response.toHtml()
             web_desc = self.tab_pcn.line_web.text()
+            folder_desc = self.tab_pcn.line_folder.text()
             modifieddate = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             #dept = self.tab_ecn.combo_dept.currentText()
             
@@ -188,16 +189,16 @@ class PCNWindow(QtWidgets.QWidget):
                 if self.checkSigNotiDuplicate():
                     self.dispMsg("duplicates found in signature and notification tab")
                 else:
-                    data = (doc_id,doc_type,author,status,title,overview,reason,change,products,replacement,reference,response,web_desc,modifieddate)
-                    self.cursor.execute("INSERT INTO document(doc_id,doc_type,author,status,doc_title,doc_text_1,doc_reason,doc_summary,doc_text_2,doc_text_3,doc_text_4,doc_text_5,doc_text_6,last_modified) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(data))
+                    data = (doc_id,doc_type,author,status,title,overview,reason,change,products,replacement,reference,response,web_desc,folder_desc,modifieddate)
+                    self.cursor.execute("INSERT INTO document(doc_id,doc_type,author,status,doc_title,doc_text_1,doc_reason,doc_summary,doc_text_2,doc_text_3,doc_text_4,doc_text_5,doc_text_6,doc_text_7,last_modified) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(data))
                     self.AddSignatures()
                     self.dispMsg("PCN Saved!")
             else:
                 if self.checkSigNotiDuplicate():
                     self.dispMsg("duplicates found in signature and notification tab")
                 else:
-                    data = (title,overview,reason,change,products,replacement,reference,response,web_desc,modifieddate,doc_id)
-                    self.cursor.execute("UPDATE document SET doc_title = %s, doc_text_1 = %s, doc_reason = %s, doc_summary = %s, doc_text_2 = %s, doc_text_3 = %s, doc_text_4 = %s, doc_text_5 = %s, doc_text_6 = %s, last_modified = %s WHERE doc_id = %s",(data))
+                    data = (title,overview,reason,change,products,replacement,reference,response,web_desc,folder_desc,modifieddate,doc_id)
+                    self.cursor.execute("UPDATE document SET doc_title = %s, doc_text_1 = %s, doc_reason = %s, doc_summary = %s, doc_text_2 = %s, doc_text_3 = %s, doc_text_4 = %s, doc_text_5 = %s, doc_text_6 = %s,doc_text_7 = %s, last_modified = %s WHERE doc_id = %s",(data))
                     self.AddSignatures()
                     if not msg:
                         self.dispMsg("PCN Updated!")
@@ -247,6 +248,7 @@ class PCNWindow(QtWidgets.QWidget):
         self.tab_pcn.text_reference.setHtml(result["doc_text_4"])
         self.tab_pcn.text_response.setHtml(result["doc_text_5"])
         self.tab_pcn.line_web.setText(result["doc_text_6"])
+        self.tab_pcn.line_folder.setText(result["doc_text_7"])
         
         self.tab_signature.repopulateTable()
         if self.doc_data["author"]==self.parent.user_info["user"] and self.doc_data["status"]!="Out For Approval" and self.doc_data["status"]!="Completed":

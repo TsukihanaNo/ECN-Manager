@@ -49,6 +49,10 @@ class PCNTab(QtWidgets.QWidget):
         self.line_web = QtWidgets.QLineEdit()
         self.line_web.setPlaceholderText("Format: [sales name/model] [action] [date (MM DD, YYYY)]")
         self.line_web.setMaxLength(75)
+        self.label_folder = QtWidgets.QLabel("Folder Description:")
+        self.line_folder = QtWidgets.QLineEdit()
+        self.line_folder.setPlaceholderText("something short like CLA100-A26 Discontinued")
+        self.line_folder.setMaxLength(50)
         
         headerLayout.addWidget(self.label_id)
         headerLayout.addWidget(self.line_id)
@@ -75,6 +79,8 @@ class PCNTab(QtWidgets.QWidget):
         mainLayout.addWidget(self.text_response)
         mainLayout.addWidget(self.label_web)
         mainLayout.addWidget(self.line_web)
+        mainLayout.addWidget(self.label_folder)
+        mainLayout.addWidget(self.line_folder)
         
         
         

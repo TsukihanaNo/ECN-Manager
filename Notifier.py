@@ -422,8 +422,11 @@ class Notifier(QtWidgets.QWidget):
         attach = []
         attach.append(os.path.join(program_location,doc_id+'.ecnx'))
         if doc_id[:3]=="PCN":
+            self.cursor.execute(f"select doc_text_7 from document where doc_id='{doc_id}'")
+            result = self.cursor.fetchone()
+            folder_desc = result[0]
             self.log_text.append("-exporting PCN files to server")
-            filepath = os.path.join(self.settings["PCN_Export_Loc"],doc_id)
+            filepath = os.path.join(self.settings["PCN_Export_Loc"],doc_id + f" ({folder_desc})")
             os.mkdir(filepath)
             self.exportPDF(doc_id,filepath ,"PCN")
             self.exportHTMLPCNWeb(doc_id, filepath)
@@ -505,6 +508,7 @@ class Notifier(QtWidgets.QWidget):
         if doc_id[:3]=="ECN":
             users = self.getWaitingUser(doc_id, self.titleStageDict[str(stage)])
         elif doc_id[:3]=="PRQ":
+            print(doc_id, stage)
             users = self.getWaitingUser(doc_id, self.titleStageDictPRQ[str(stage)])
         else:
             users = self.getWaitingUser(doc_id, self.titleStageDictPCN[str(stage)])
