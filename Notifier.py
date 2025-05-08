@@ -147,7 +147,11 @@ class Notifier(QtWidgets.QWidget):
                         host=self.settings['host'],
                         user=self.settings['user'],
                         password=self.settings['password'],
-                        port=self.settings['port'])
+                        port=self.settings['port'],
+                        keepalives=1,
+                        keepalives_idle=30,
+                        keepalives_interval=10,
+                        keepalives_count=5)
                 # self.db.autocommit = True
                 self.cursor = self.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
                 #save setting
@@ -172,7 +176,11 @@ class Notifier(QtWidgets.QWidget):
                         host=self.settings['host'],
                         user=self.settings['user'],
                         password=self.settings['password'],
-                        port=self.settings['port'])
+                        port=self.settings['port'],
+                        keepalives=1,
+                        keepalives_idle=30,
+                        keepalives_interval=10,
+                        keepalives_count=5)
             # self.db.autocommit = True
             self.cursor = self.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
             
@@ -948,6 +956,10 @@ class Notifier(QtWidgets.QWidget):
         # print(f"Moving -- {src} to {dst}")
         # self.log_text.append(f"Moving -- {src} to {dst}")
         print(os.access(src, os.W_OK))
+        print('dst exists already',os.path.exists(dst))
+        if os.path.exists(dst):
+            shutil.rmtree(dst,onerror=self.onerror)
+            print('dst removed: ',dst)
         # print(f"Copying -- {src} to {dst}")
         shutil.copytree(src,dst)
         # print(f"Removing -- {src}")
